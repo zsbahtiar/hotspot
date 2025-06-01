@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { Menu, X } from 'lucide-react';
@@ -20,7 +21,7 @@ const Navbar = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center space-x-2">
-            <img src="/assets/ipb.png" alt="Logo" className="h-8 w-8" />
+            <Image  src="/assets/ipb.png" alt="Logo" width={32} height={32} />
             <h1 className="text-sm md:text-lg font-bold">
               OLAP Hotspot | Sistem Pemantauan Hotspot Karhutla
             </h1>

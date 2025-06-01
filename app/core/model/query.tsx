@@ -10,10 +10,10 @@ export interface QueryData {
     semester?: string,
     kuartal?: string,
     bulan?: string,
+    minggu?: string,
     hari?: string,
     confidence?: string,
     satelite?: string,
-    [key: string]: any;
 }
 
 export interface IChart {

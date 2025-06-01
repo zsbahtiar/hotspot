@@ -2,24 +2,22 @@
 
 import { useState, useEffect } from 'react';
 import Navbar from "../components/Navbar";
-import OlapComponent from "../components/Olaps/OlapComponent";
-import MapComponent from "../components/Maps/MapComponent";
+import dynamic from 'next/dynamic';
+const OlapComponent = dynamic(() => import('../components/Olaps/OlapComponent'), { ssr: false });
 
 export default function Olaps() {
-  const [selectedData, setSelectedData] = useState<any>(null);
   const [showPopup, setShowPopup] = useState(true);
-
-  const handleSelect = (data: any) => {
-    setSelectedData(data); 
-    console.log('Selected Data:', data); 
-  };
+  const [today, setToday] = useState('');
 
   // tanggal sekarang
-  const today = new Date().toLocaleDateString('id-ID', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  });
+  useEffect (() => {
+    const currentDate = new Date().toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+    setToday(currentDate);
+  }, []);
 
   return (
     <div className="relative">
@@ -44,18 +42,7 @@ export default function Olaps() {
       <Navbar />
       <main>
         <OlapComponent
-          query={{}} 
-          value="someValue"
-          index={0}
-          tipe="pulau" 
-          onSelect={handleSelect} 
         />
-        {selectedData && (
-          <div>
-            <h4>Selected Data:</h4>
-            <pre>{JSON.stringify(selectedData, null, 2)}</pre>
-          </div>
-        )}
       </main>
     </div>
   );

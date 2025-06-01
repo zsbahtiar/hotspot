@@ -1,9 +1,12 @@
 'use client';
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend , CategoryScale, LinearScale, BarElement} from 'chart.js';
 import { Bar } from 'react-chartjs-2';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 
 ChartJS.register(ArcElement, 
   Tooltip, 
@@ -80,7 +83,7 @@ const Main = () => {
     datasets: [
       {
         label: 'Jumlah Hotspot',
-        data: islandDistribution.map(([_, count]) => count),
+        data: islandDistribution.map(([, count]) => count),
         backgroundColor: [
           'rgba(255, 99, 132, 0.7)',
           'rgba(54, 162, 235, 0.7)',
@@ -181,10 +184,8 @@ const Main = () => {
       {/* Hero Section */}
       <section className="relative w-full h-screen min-h-[600px] pt-24">
         <div className="absolute inset-0">
-          <img
-            src="/assets/kebakaran2.png"
-            alt="Kebakaran Hutan"
-            className="absolute inset-0 w-full h-full object-cover object-center"
+          <Image
+            src="/assets/kebakaran2.png" alt="Kebakaran Hutan" fill style={{objectFit: 'cover', objectPosition: 'center'}}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/30"></div>
         </div>
@@ -258,9 +259,10 @@ const Main = () => {
                 </div>
                 
                 {isLoading ? (
-                  <div className="flex justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-                  </div>
+                <div className="flex flex-col items-center justify-center py-16">
+                  <FontAwesomeIcon icon={faSpinner} spin size="3x" className="text-green-600 mb-4" />
+                  <p className="text-gray-700 text-lg">Loading data hotspot...</p>
+                </div>
                 ) : latestHotspots.length > 0 ? (
                   <div className="space-y-4">
                      {latestHotspots.map((hotspot, index) => (
@@ -352,7 +354,16 @@ const Main = () => {
                       />
                     </div>
                   ) : (
-                    <p className="text-gray-500">Tidak ada data untuk grafik</p>
+                    <div className="flex flex-col items-center justify-center h-full w-full bg-gray-100 rounded-lg">
+                      {isLoading ? (
+                        <>
+                          <FontAwesomeIcon icon={faSpinner} spin size="3x" className="text-blue-500 mb-4" />
+                          <p className="text-gray-700">Loading grafik...</p>
+                        </>
+                      ) : (
+                        <p className="text-gray-500">Tidak ada data untuk grafik</p>
+                      )}
+                    </div>
                   )}
                 </div>
                 

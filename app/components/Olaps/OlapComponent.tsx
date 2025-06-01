@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { IChart, QueryData, DrillDownLevel } from "../../core/model/query";
 import { OlapService } from "../../core/services/OlapService";
 import { Type } from "../Modals/ModalTime";
@@ -20,35 +20,54 @@ ChartJS.register(
 );
 
 interface Data {
-  [x: string]: any;
   data: string | number;
-  query: QueryData;
+  query: QueryData & { lat?: number; lng?: number };
   modal: boolean;
   total: number;
   child: Data[];
   isOpen?: boolean;
 }
 
+interface LocationData {
+    lat: number;
+    lng: number;
+    pulau?: string;
+    provinsi?: string;
+    kab_kota?: string;
+    kecamatan?: string;
+    desa?: string;
+}
+
+interface TimeFilters {
+  tahun?: string;
+  semester?: string;
+  kuartal?: string;
+  bulan?: string;
+  hari?: string;
+}
+
+type OlapData = [string, number];
+
 const OlapComponent = () => {
   const hasFetched = useRef(false);
-  const [show, setShow] = useState(true);
+  const [, setShow] = useState(true);
   const [data, setData] = useState<Data[]>([]);
-  const [dataConfidence, setDataConfidence] = useState<any[]>([]);
-  const [dataSatelite, setDataSatelite] = useState<any[]>([]);
+  const [dataConfidence, setDataConfidence] = useState<OlapData[]>([]);
+  const [dataSatelite, setDataSatelite] = useState<OlapData[]>([]);
   const [barChartData, setBarChartData] = useState<ChartData<"bar"> | null>(null);
   const [mapBounds, setMapBounds] = useState<L.LatLngBoundsExpression | null>(null);
-  const [selectedLocation, setSelectedLocation] = useState<any>(null);
+  const [selectedLocation, setSelectedLocation] = useState<LocationData>();
   const [olapData, setOlapData] = useState({});
   const [drillDownLevel, setDrillDownLevel] = useState<DrillDownLevel>("pulau");
-  const [selectedHotspot, setSelectedHotspot] = useState<number | null>(null);
+  const [, setSelectedHotspot] = useState<number | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [globalFilters, setGlobalFilters] = useState({
-    confidence: null as string | null,
-    satelite: null as string | null,
-    time: {} as any,
+    confidence: undefined as string | undefined,
+    satelite: undefined as string | undefined,   
+    time: {} as TimeFilters,
   });
 
-  const fetchOlapData = async () => {
+  const fetchOlapData = useCallback(async () => {
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/hotspot`
@@ -58,9 +77,19 @@ const OlapComponent = () => {
     } catch (error) {
       console.error("Error fetching OLAP data:", error);
     }
-  };
+  }, []);
 
-  const applyGlobalFilters = async () => {
+  const setChart = useCallback((data: IChart) => {
+    const chartData: ChartData<"bar"> = {
+      labels: data.labels,
+      datasets: [
+        { data: data.values, label: "Titik Panas", backgroundColor: "#898989" },
+      ],
+    };
+    setBarChartData(chartData);
+  },[]);
+
+  const applyGlobalFilters = useCallback(async () => {
     try {
       const timeParams = {
         ...(globalFilters.time.tahun && { tahun: globalFilters.time.tahun }),
@@ -83,11 +112,10 @@ const OlapComponent = () => {
         ...timeParams,
       };
 
-      console.log("Applying filters with params:", params);
       setData([]);
       setShow(true);
 
-      const res = await OlapService.query("location", params);
+      const res = (await OlapService.query("location", params)) as [string, number][];
 
       if (!Array.isArray(res)) {
         throw new Error("Invalid response format: expected array");
@@ -99,7 +127,7 @@ const OlapComponent = () => {
       };
 
       const newData: Data[] = [];
-      res.forEach((d: any) => {
+      res.forEach((d: [string, number]) => {
         if (!Array.isArray(d) || d.length < 2) {
           console.warn("Skipping invalid data item:", d);
           return;
@@ -128,12 +156,12 @@ const OlapComponent = () => {
       console.error("Error applying global filters:", err);
       setShow(false);
     }
-  };
+  }, [globalFilters.confidence, globalFilters.satelite, globalFilters.time, setShow, setData, setChart]);
 
   const resetAllFilters = () => {
     setGlobalFilters({
-      confidence: null,
-      satelite: null,
+      confidence: undefined,
+      satelite: undefined,
       time: {},
     });
     getDataLocation("location");
@@ -156,7 +184,7 @@ const OlapComponent = () => {
     setMapBounds(bounds);
   };
 
-  const handleSelection = async (selectedData: any) => {
+  const handleSelection = async (selectedData: { wilayah?: string | number; name?: string; lat?: number; lng?: number }) => {
     if (!selectedData || (!selectedData.wilayah && !selectedData.name)) {
       console.error("Tidak tersedia", selectedData);
       return;
@@ -166,10 +194,10 @@ const OlapComponent = () => {
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/api/location`
     );
-    const locationData = await response.json();
+    const locationData: LocationData[] = await response.json();
 
     const matchingLocations = locationData.filter(
-      (loc: any) =>
+      (loc: LocationData) =>
         loc.pulau === wilayahDicari ||
         loc.provinsi === wilayahDicari ||
         loc.kab_kota === wilayahDicari ||
@@ -188,10 +216,10 @@ const OlapComponent = () => {
     }
 
     const avgLat =
-      matchingLocations.reduce((sum: number, loc: any) => sum + loc.lat, 0) /
+      matchingLocations.reduce((sum: number, loc: LocationData) => sum + loc.lat, 0) /
       matchingLocations.length;
     const avgLng =
-      matchingLocations.reduce((sum: number, loc: any) => sum + loc.lng, 0) /
+      matchingLocations.reduce((sum: number, loc: LocationData) => sum + loc.lng, 0) /
       matchingLocations.length;
     setSelectedLocation({ lat: avgLat, lng: avgLng });
   };
@@ -231,23 +259,21 @@ const OlapComponent = () => {
       dimension: "location",
     };
 
-    console.log("Drilldown query:", filteredQuery);
-
     OlapService.query("location", filteredQuery)
-      .then((res) => {
-        console.log("Drilldown response:", res);
+      .then((res: unknown) => {
+        const typedRes = res as [string, number][];
         const chart: IChart = {
           labels: [],
           values: [],
         };
 
-        let hasil: Data[] = [];
-        res.forEach((d: any) => {
+        const hasil: Data[] = [];
+        typedRes.forEach((d: [string, number]) => {
           if (!Array.isArray(d) || d.length < 2) {
             console.warn("Invalid drilldown data item:", d);
             return;
           }
-          let param = {
+          const param = {
             ...filteredQuery,
             [tipe]: d[0],
           };
@@ -366,6 +392,48 @@ const OlapComponent = () => {
     query: {},
     tipe: "pulau",
   });
+  
+  const getDataLocation = useCallback(async (target: string) => {
+    try {
+      const queryParams: QueryData = {
+        dimension: target,
+      };
+      
+      const res = (await OlapService.query("location", queryParams)) as [string, number][];
+
+      const chart: IChart = {
+        labels: [],
+        values: [],
+      };
+
+      if (Array.isArray(res)) {
+        res.forEach((d: [string, number]) => {
+          chart.labels.push(d[0]);
+          chart.values.push(d[1]);
+
+          setData((prevData) => [
+            ...prevData,
+            {
+              data: d[0],
+              total: d[1],
+              modal: false,
+              query: { pulau: d[0] as string },
+              child: [],
+              isOpen: false,
+            },
+          ]);
+        });
+
+        setShow(false);
+        setChart(chart);
+      } else {
+        console.error("Data is not an array:", res);
+      }
+    } catch (err) {
+      console.error("Error fetching data:", err);
+      setShow(false);
+    }
+  }, [setChart, setShow, setData]);
 
   useEffect(() => {
     if (!hasFetched.current) {
@@ -373,13 +441,13 @@ const OlapComponent = () => {
       fetchOlapData();
       hasFetched.current = true;
     }
-  }, []);
+  }, [getDataLocation, fetchOlapData]);
 
   useEffect(() => {
     if (hasFetched.current) {
       applyGlobalFilters();
     }
-  }, [globalFilters.confidence, globalFilters.satelite, globalFilters.time]);
+  }, [globalFilters.confidence, globalFilters.satelite, globalFilters.time, applyGlobalFilters, hasFetched]);
 
   const openModalTime = (index: number[], query: QueryData, tipe: Type) => {
     setModalTime({
@@ -405,14 +473,12 @@ const OlapComponent = () => {
     tipe: Type;
   }) => {
     const timeFilters = {
-      tahun: filterData.data.tahun || null,
-      semester: filterData.data.semester || null,
-      kuartal: filterData.data.kuartal || null,
-      bulan: filterData.data.bulan || null,
-      hari: filterData.data.hari || null,
+      tahun: filterData.data.tahun || undefined,
+      semester: filterData.data.semester || undefined,
+      kuartal: filterData.data.kuartal || undefined,
+      bulan: filterData.data.bulan || undefined,
+      hari: filterData.data.hari || undefined,
     };
-
-    console.log("Setting time filters:", timeFilters);
 
     setGlobalFilters((prev) => ({
       ...prev,
@@ -423,7 +489,7 @@ const OlapComponent = () => {
   };
 
   const getSatelite = (query: QueryData, tipe: Type) => {
-    var q = { ...query, dimension: "satelite" };
+    const q = { ...query, dimension: "satelite" };
     setShow(true);
 
     switch (tipe) {
@@ -451,7 +517,7 @@ const OlapComponent = () => {
 
     OlapService.query("satelite", q).then((res) => {
       setShow(false);
-      setDataSatelite(res);
+      setDataSatelite(res as OlapData[]);
     });
   };
 
@@ -484,51 +550,13 @@ const OlapComponent = () => {
 
     OlapService.query("confidence", q).then((res) => {
       setShow(false);
-      setDataConfidence(res);
+      setDataConfidence(res as OlapData[]);
     });
   };
 
   useEffect(() => {
     getConfidence({}, "pulau");
   }, []);
-
-  const getDataLocation = async (target: any) => {
-    try {
-      const res = await OlapService.query("location", target);
-
-      const chart: IChart = {
-        labels: [],
-        values: [],
-      };
-
-      if (Array.isArray(res)) {
-        res.forEach((d: any) => {
-          chart.labels.push(d[0]);
-          chart.values.push(d[1]);
-
-          setData((prevData) => [
-            ...prevData,
-            {
-              data: d[0],
-              total: d[1],
-              modal: false,
-              query: { pulau: d[0] },
-              child: [],
-              isOpen: false,
-            },
-          ]);
-        });
-
-        setShow(false);
-        setChart(chart);
-      } else {
-        console.error("Data is not an array:", res);
-      }
-    } catch (err) {
-      console.error("Error fetching data:", err);
-      setShow(false);
-    }
-  };
 
   const handleChartClick = (
     event: ChartEvent,
@@ -538,7 +566,6 @@ const OlapComponent = () => {
     if (elements.length > 0) {
       const index = elements[0].index;
       const label = chart.data.labels?.[index] as string;
-      const value = chart.data.datasets?.[0].data?.[index] as number;
 
       let selectedItem = null;
 
@@ -567,7 +594,7 @@ const OlapComponent = () => {
           setDrillDownLevel("desa");
         } else if (selectedItem.query.kecamatan) {
           setDrillDownLevel("kecamatan");
-        } else if (selectedItem.query.kota || selectedItem.query.kabupaten) {
+        } else if (selectedItem.query.kota) {
           setDrillDownLevel("kabupaten");
         } else if (selectedItem.query.provinsi) {
           setDrillDownLevel("provinsi");
@@ -606,16 +633,6 @@ const OlapComponent = () => {
       },
     },
     onClick: handleChartClick,
-  };
-
-  const setChart = (data: IChart) => {
-    const chartData: ChartData<"bar"> = {
-      labels: data.labels,
-      datasets: [
-        { data: data.values, label: "Titik Panas", backgroundColor: "#898989" },
-      ],
-    };
-    setBarChartData(chartData);
   };
 
   const getStatusColor = (confidence: string | null | undefined) => {
@@ -666,13 +683,13 @@ const OlapComponent = () => {
                 onChange={(e) =>
                   setGlobalFilters({
                     ...globalFilters,
-                    confidence: e.target.value || null,
+                    confidence: e.target.value || undefined,
                   })
                 }
               >
                 <option value="">All Confidence</option>
                 {dataConfidence &&
-                  dataConfidence.map((conf: any, i: number) => (
+                  dataConfidence.map((conf: OlapData, i: number) => (
                     <option key={i} value={conf[0]}>
                       {conf[0]}
                     </option>
@@ -692,12 +709,12 @@ const OlapComponent = () => {
                   if (e.target.value === "") {
                     setGlobalFilters({
                       ...globalFilters,
-                      satelite: null,
+                      satelite: undefined,
                     });
                   } else {
                     setGlobalFilters({
                       ...globalFilters,
-                      satelite: e.target.value,
+                      satelite: e.target.value || undefined,
                     });
                   }
                 }}
@@ -705,7 +722,7 @@ const OlapComponent = () => {
               >
                 <option value="">All Satellites</option>
                 {dataSatelite &&
-                  dataSatelite.map((sat: any, i: number) => (
+                  dataSatelite.map((sat: OlapData, i: number) => (
                     <option key={i} value={sat[0]}>
                       {sat[0]}
                     </option>

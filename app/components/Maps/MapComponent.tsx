@@ -1,14 +1,14 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { MapContainer, TileLayer, GeoJSON, Popup, Marker } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { scaleThreshold } from "d3-scale";
 import L, { LatLngBoundsExpression, Map, GeoJSON as LeafletGeoJSON, Control, Layer } from "leaflet";
 import { Tooltip } from "react-tooltip";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronLeft, faChevronRight, faExpand, faCompress } from "@fortawesome/free-solid-svg-icons";
+import { faChevronLeft, faChevronRight, faExpand, faCompress, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { DrillDownLevel } from "../../core/model/query";
 
 //Interfaces
@@ -259,7 +259,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
   //hitung hotspot
 
-  const { minHotspot, maxHotspot, threshold1, threshold2 } = useMemo(() => {
+  const { minHotspot, threshold1, threshold2 } = useMemo(() => {
     const hotspotValues = Object.values(calculateHotspotCounts);
     const min = hotspotValues.length > 0 ? Math.min(...hotspotValues) : 0;
     const max = hotspotValues.length > 0 ? Math.max(...hotspotValues) : 1;
@@ -276,7 +276,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
       .range(["green", "yellow", "red"]);
   }, [threshold1, threshold2]);
 
-  const styleFeature = (feature?: CustomFeature): L.PathOptions => {
+  const styleFeature = useCallback((feature?: CustomFeature): L.PathOptions => {
     if (!feature) return {};
     const featureName = getFeatureName(feature, drillDownLevel);
     
@@ -290,7 +290,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
       weight: 0.8,
       fillOpacity: 0.7,
     };
-  };
+  }, [drillDownLevel, calculateHotspotCounts,colorScale]);
 
   useEffect(() => {
     const fetchGeoJSON = async () => {
@@ -399,7 +399,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
       );
       geoJsonLayer.setStyle(styleFeature);
     }
-  }, [geoData, drillDownLevel, calculateHotspotCounts, showOLAPHotspot]);
+  }, [geoData, drillDownLevel, calculateHotspotCounts, showOLAPHotspot, styleFeature]);
 
   const filteredHotspots = hotspotData.filter((feature) => {
     const coords = feature.geometry?.coordinates;
@@ -449,7 +449,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
       };
       legend.addTo(map);
     }
-  }, [calculateHotspotCounts, showOLAPHotspot]);
+  }, [calculateHotspotCounts, showOLAPHotspot, minHotspot, threshold1, threshold2]);
 
   useEffect(() => {
     if (mapRef.current && geoData[drillDownLevel]) {
@@ -470,7 +470,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
     }
   }, [drillDownLevel, geoData, selectedLocation]);
 
-  const getCurrentFeatureName = () => {
+  const getCurrentFeatureName = useCallback(() => {
     if (!olapData?.query) return null;
 
     switch (drillDownLevel) {
@@ -487,7 +487,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
       default:
         return null;
     }
-  };
+  }, [olapData, drillDownLevel]);
 
   useEffect(() => {
     if (mapRef.current && olapData?.query && geoJsonRef.current) {
@@ -521,7 +521,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
         }
       }
     }
-  }, [olapData, drillDownLevel, geoData]);
+  }, [olapData, drillDownLevel, geoData, getCurrentFeatureName]);
 
   return (
     <div
@@ -708,8 +708,9 @@ const MapComponent: React.FC<MapComponentProps> = ({
       )}
 
       {loading ? (
-        <div className="flex items-center justify-center h-full w-full bg-gray-100 rounded-lg">
-          <div className="animate-pulse text-gray-500">Loading map...</div>
+        <div className="flex flex-col items-center justify-center h-full w-full bg-gray-100 rounded-lg">
+          <FontAwesomeIcon icon={faSpinner} spin size="3x" className="text-blue-500 mb-4" />
+          <p className="animate-pulse text-gray-700 text-lg">Loading peta dan data hotspot...</p>
         </div>
       ) : (
         <MapContainer
