@@ -752,7 +752,7 @@ const OlapComponent = () => {
   useEffect(() => {
     getConfidenceData({}, "pulau");
     getSatelliteData({}, "pulau");
-  }, []);
+  }, [getConfidenceData, getSatelliteData]);
 
   const handleChartClick = useCallback(
     (event: ChartEvent, elements: ActiveElement[], chart: Chart) => {
