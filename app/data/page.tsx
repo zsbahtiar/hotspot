@@ -1,150 +1,194 @@
 "use client";
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, useMemo } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import DatePicker, { DateObject } from "react-multi-date-picker";
 import { utils, writeFile } from "xlsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
-
-type HotspotFeature = {
-  geometry: {
-    coordinates: [number, number];
-    type: string;
-  };
-  properties: {
-    confidence: "high" | "medium" | "low";
-    hotspot_count: number;
-    location: {
-      pulau: string;
-      provinsi: string;
-      kecamatan: string;
-      kab_kota: string;
-      desa: string;
-    };
-    satellite: string;
-    time: string;
-    hotspot_time: string;
-  };
-};
-
-type HotspotData = {
-  features: HotspotFeature[];
-};
-
-type AccumulatedData = {
-  tanggal: string;
-  satelit: string;
-  confidence: "high" | "medium" | "low";
-  provinsi: string;
-  kabupaten: string;
-  jumlah: number;
-};
+import {
+  HotspotFeature,
+  HotspotData,
+  AccumulatedData,
+} from "../core/model/hotspot";
 
 export default function HotspotTable() {
   const [data, setData] = useState<HotspotFeature[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [dates, setDates] = useState<DateObject[]>([]);
+  const [dates, setDates] = useState<DateObject[]>([new DateObject()]);
   const [selectedConfidence, setSelectedConfidence] = useState<string[]>([]);
   const [selectedSatellites, setSelectedSatellites] = useState<string[]>([]);
   const [exportFormat, setExportFormat] = useState<"xlsx" | "csv">("xlsx");
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState<"detail" | "akumulasi">("detail");
   const itemsPerPage = 10;
+  const [sortBy, setSortBy] = useState<string>("");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+
   const getLatestDate = (hotspots: HotspotFeature[]) => {
     if (!hotspots || hotspots.length === 0) return null;
-    const sorted = [...hotspots].sort((a, b) =>
-    new Date(b.properties.time).getTime() - new Date(a.properties.time).getTime());
-
-    return sorted[0].properties.time.split('T')[0];
+    const sorted = [...hotspots].sort(
+      (a, b) =>
+        new Date(b.properties.time).getTime() -
+        new Date(a.properties.time).getTime()
+    );
+    return sorted[0].properties.time.split("T")[0];
   };
-   
-  // Fetch data
+
+  // Fetch data hotspot
   useEffect(() => {
-    const fetchData = async () => {
+    const getDataHotspot = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/hotspot`);
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/hotspot`
+        );
         const result: HotspotData = await response.json();
         setData(result.features);
 
         const latestDate = getLatestDate(result.features);
         if (latestDate) {
           setDates([new DateObject(latestDate)]);
+        } else {
+          setDates([new DateObject()]);
         }
-      } catch (error) {
-        console.error("Error fetching hotspot data:", error);
+      } catch {
+        setDates([new DateObject()]);
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
+    getDataHotspot();
   }, []);
 
-  // Filter data
-  const filteredData = data.filter((item) => {
-    // Filter by search
+  // Filter data hotspot
+  const filteredData = useMemo(() => { 
+    return data.filter((item) => {
+    // Filter SEARCH
     const searchMatch =
-      item.properties.location.desa.toLowerCase().includes(search.toLowerCase()) ||
-      item.properties.location.kecamatan.toLowerCase().includes(search.toLowerCase()) ||
-      item.properties.location.kab_kota.toLowerCase().includes(search.toLowerCase()) ||
-      item.properties.location.provinsi.toLowerCase().includes(search.toLowerCase()) ||
-      item.properties.location.pulau.toLowerCase().includes(search.toLowerCase());
+      item.properties.location.desa
+        .toLowerCase()
+        .includes(search.toLowerCase()) ||
+      item.properties.location.kecamatan
+        .toLowerCase()
+        .includes(search.toLowerCase()) ||
+      item.properties.location.kab_kota
+        .toLowerCase()
+        .includes(search.toLowerCase()) ||
+      item.properties.location.provinsi
+        .toLowerCase()
+        .includes(search.toLowerCase()) ||
+      item.properties.location.pulau
+        .toLowerCase()
+        .includes(search.toLowerCase());
 
-    // Filter by date
+    // Filter DATE
     const dateMatch =
       dates.length === 0 ||
-      dates.some((date) => item.properties.time.includes(date.toString().split("T")[0]));
+      dates.some((date) => {
+        const dateStr = date.format("YYYY-MM-DD");
+        const itemDate = item.properties.time.split("T")[0];
 
-    // Filter by confidence
+        return dateStr === itemDate;
+      });
+
+    // Filter CONFIDENCE
     const confidenceMatch =
-      selectedConfidence.length === 0 || selectedConfidence.includes(item.properties.confidence);
+      selectedConfidence.length === 0 ||
+      selectedConfidence.includes(item.properties.confidence);
 
-    // Filter by satellite
+    // Filter SATELLITE
     const satelliteMatch =
-      selectedSatellites.length === 0 || selectedSatellites.includes(item.properties.satellite);
+      selectedSatellites.length === 0 ||
+      selectedSatellites.includes(item.properties.satellite);
 
     return searchMatch && dateMatch && confidenceMatch && satelliteMatch;
   });
+  }, [data, search, dates, selectedConfidence, selectedSatellites]); 
 
-  // Accumulated data
-  const accumulatedData = filteredData.reduce<AccumulatedData[]>((acc, item) => {
-    const tanggal = item.properties.time;
-    const satelit = item.properties.satellite;
-    const confidence = item.properties.confidence;
-    const provinsi = item.properties.location.provinsi;
-    const kabupaten = item.properties.location.kab_kota;
+  const accumulatedData = useMemo(() => {
+    return filteredData.reduce<AccumulatedData[]>(
+    (acc, item) => {
+      const date = item.properties.time;
+      const satellite = item.properties.satellite;
+      const confidence = item.properties.confidence;
+      const provinsi = item.properties.location.provinsi;
+      const kab_kota = item.properties.location.kab_kota;
 
-    const existing = acc.find(
-      (x) =>
-        x.tanggal === tanggal &&
-        x.satelit === satelit &&
-        x.confidence === confidence &&
-        x.provinsi === provinsi &&
-        x.kabupaten === kabupaten
-    );
+      const existing = acc.find(
+        (x) =>
+          x.date === date &&
+          x.satellite === satellite &&
+          x.confidence === confidence &&
+          x.provinsi === provinsi &&
+          x.kab_kota === kab_kota
+      );
 
-    if (existing) {
-      existing.jumlah += item.properties.hotspot_count;
-    } else {
-      acc.push({
-        tanggal: tanggal,
-        satelit: satelit,
-        confidence: confidence,
-        provinsi: provinsi,
-        kabupaten: kabupaten,
-        jumlah: item.properties.hotspot_count,
-      });
-    }
-    return acc;
-  }, []);
+      if (existing) {
+        existing.total += item.properties.hotspot_count;
+      } else {
+        acc.push({
+          date: date,
+          satellite: satellite,
+          confidence: confidence,
+          provinsi: provinsi,
+          kab_kota: kab_kota,
+          total: item.properties.hotspot_count,
+        });
+      }
+      return acc;
+    },
+    []
+  );
+  }, [filteredData]);
 
-  const satellites = [...new Set(data.map((item) => item.properties.satellite))];
+  const satellites = useMemo(() => [
+    ...new Set(data.map((item) => item.properties.satellite)),
+  ], [data]);
+
+  // Sorting data
+  function getNested(obj: Record<string, unknown>, path: string): unknown {
+    return path.split(".").reduce((o: unknown, k: string) => {
+      return o && typeof o === "object"
+        ? (o as Record<string, unknown>)[k]
+        : undefined;
+    }, obj);
+  }
+
+  const displayData = viewMode === "detail" ? filteredData : accumulatedData;
+  const sortedData = useMemo(() => {
+    const sortableData = [...displayData];
+    if (!sortBy) return sortableData;
+
+    return sortableData.sort((a, b) => {
+      const aValueRaw = getNested(a, sortBy);
+      const bValueRaw = getNested(b, sortBy);
+      
+      let aValueTyped: number | string;
+      let bValueTyped: number | string;
+
+      if (sortBy === "properties.time" || sortBy === "tanggal") {
+        aValueTyped = typeof aValueRaw === "string" ? new Date(aValueRaw).getTime() : 0;
+        bValueTyped = typeof bValueRaw === "string" ? new Date(bValueRaw).getTime() : 0;
+      } else if (sortBy === "jumlah" || sortBy === "properties.hotspot_count") {
+        aValueTyped = Number(aValueRaw);
+        bValueTyped = Number(bValueRaw);
+      } else {
+        aValueTyped = String(aValueRaw).toLowerCase();
+        bValueTyped = String(bValueRaw).toLowerCase();
+      }
+
+      if (aValueTyped < bValueTyped) return sortOrder === "asc" ? -1 : 1;
+      if (aValueTyped > bValueTyped) return sortOrder === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [displayData, sortBy, sortOrder]);
+
 
   // Pagination
-  const displayData = viewMode === "detail" ? filteredData : accumulatedData;
-  const totalPages = Math.ceil(displayData.length / itemsPerPage);
-  const currentItems = displayData.slice(
+  const totalPages = Math.ceil(sortedData.length / itemsPerPage);
+  const currentItems = sortedData.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -161,43 +205,56 @@ export default function HotspotTable() {
             Jumlah: item.properties.hotspot_count,
             Pulau: item.properties.location.pulau,
             Provinsi: item.properties.location.provinsi,
-            Kabupaten: item.properties.location.kab_kota,
+            Kota: item.properties.location.kab_kota,
             Kecamatan: item.properties.location.kecamatan,
             Desa: item.properties.location.desa,
             Latitude: item.geometry.coordinates[1],
-            Longitude: item.geometry.coordinates[0]
+            Longitude: item.geometry.coordinates[0],
           }))
         : accumulatedData.map((item) => ({
-            Tanggal: item.tanggal,
-            Satelit: item.satelit,
+            Tanggal: item.date,
+            Satelit: item.satellite,
             Confidence: item.confidence,
             Provinsi: item.provinsi,
-            Kabupaten: item.kabupaten,
-            Jumlah: item.jumlah,
+            Kota: item.kab_kota,
+            Jumlah: item.total,
           }));
 
-    if (exportContent.length === 0) {
-      alert("Tidak ada data untuk diekspor.");
-      return;
+    let dateStr;
+
+    if (dates.length === 0) {
+      dateStr = new Date().toISOString().split("T")[0];
+    } else if (dates.length === 1) {
+      dateStr = dates[0].format("YYYY-MM-DD");
+    } else {
+      const sortedDates = [...dates].sort(
+        (a, b) =>
+          new Date(a.format("YYYY-MM-DD")).getTime() -
+          new Date(b.format("YYYY-MM-DD")).getTime()
+      );
+      dateStr = `${sortedDates[0].format("YYYY-MM-DD")}_to_${sortedDates[
+        sortedDates.length - 1
+      ].format("YYYY-MM-DD")}`;
     }
 
     if (exportFormat === "xlsx") {
       const ws = utils.json_to_sheet(exportContent);
       const wb = utils.book_new();
       utils.book_append_sheet(wb, ws, "Hotspot Data");
-      writeFile(wb, `hotspot_${viewMode}.xlsx`);
+      writeFile(wb, `hotspot_${viewMode}_data_${dateStr}.xlsx`);
     } else {
       // CSV export
       const headers = Object.keys(exportContent[0]).join(",");
-      const csv = [headers, ...exportContent.map((row) => Object.values(row).join(","))].join(
-        "\n"
-      );
+      const csv = [
+        headers,
+        ...exportContent.map((row) => Object.values(row).join(",")),
+      ].join("\n");
 
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `hotspot_${viewMode}.csv`;
+      a.download = `hotspot_${viewMode}_data_${dateStr}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -208,9 +265,34 @@ export default function HotspotTable() {
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col justify-center items-center bg-gray-50">
-        <FontAwesomeIcon icon={faSpinner} spin size="3x" className="text-blue-500 mb-4" />
-        <p className="text-gray-700 text-lg">Loading data hotspot, mohon tunggu...</p>
+        <FontAwesomeIcon
+          icon={faSpinner}
+          spin
+          size="3x"
+          className="text-blue-500 mb-4"
+        />
+        <p className="text-gray-700 text-lg">
+          Loading data hotspot, mohon tunggu...
+        </p>
       </div>
+    );
+  }
+
+  function sortHeader(label: string, col: string) {
+    return (
+      <th
+        className="px-4 py-2 text-left cursor-pointer select-none"
+        onClick={() => {
+          if (sortBy === col)
+            setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+          else {
+            setSortBy(col);
+            setSortOrder("asc");
+          }
+        }}
+      >
+        {label} {sortBy === col ? (sortOrder === "asc" ? "▲" : "▼") : ""}
+      </th>
     );
   }
 
@@ -220,7 +302,7 @@ export default function HotspotTable() {
       <main className="flex-grow container mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-6">Data Hotspot</h1>
 
-        {/* Filter Section */}
+        {/* Filter */}
         <div className="bg-white p-4 rounded-lg shadow-md mb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             {/* View Mode */}
@@ -233,7 +315,9 @@ export default function HotspotTable() {
                     setCurrentPage(1);
                   }}
                   className={`px-4 py-2 rounded ${
-                    viewMode === "detail" ? "bg-blue-500 text-white" : "bg-gray-200"
+                    viewMode === "detail"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-200"
                   }`}
                 >
                   Detail
@@ -244,7 +328,9 @@ export default function HotspotTable() {
                     setCurrentPage(1);
                   }}
                   className={`px-4 py-2 rounded ${
-                    viewMode === "akumulasi" ? "bg-blue-500 text-white" : "bg-gray-200"
+                    viewMode === "akumulasi"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-200"
                   }`}
                 >
                   Akumulasi
@@ -252,32 +338,45 @@ export default function HotspotTable() {
               </div>
             </div>
 
-            {/* Export Options */}
+            {/* Export */}
             <div>
-              <label className="block text-sm font-medium mb-1">Format Ekspor</label>
-              <div className="flex gap-2">
+              <label className="block text-sm font-medium mb-1">
+                Format Data
+              </label>
+              <div className="flex gap-2 mb-2">
                 <button
+                  type="button"
                   onClick={() => setExportFormat("xlsx")}
-                  className={`px-4 py-2 rounded ${
-                    exportFormat === "xlsx" ? "bg-green-500 text-white" : "bg-gray-200"
+                  className={`px-4 py-2 rounded border ${
+                    exportFormat === "xlsx"
+                      ? "border-green-600 bg-green-50 text-green-700 font-bold"
+                      : "border-gray-300 bg-white text-gray-700"
                   }`}
                 >
-                  Excel
+                  Excel (.xlsx)
                 </button>
                 <button
+                  type="button"
                   onClick={() => setExportFormat("csv")}
-                  className={`px-4 py-2 rounded ${
-                    exportFormat === "csv" ? "bg-green-500 text-white" : "bg-gray-200"
+                  className={`px-4 py-2 rounded border ${
+                    exportFormat === "csv"
+                      ? "border-green-600 bg-green-50 text-green-700 font-bold"
+                      : "border-gray-300 bg-white text-gray-700"
                   }`}
                 >
-                  CSV
+                  CSV (.csv)
                 </button>
                 <button
+                  type="button"
                   onClick={exportData}
-                  disabled={displayData.length === 0}
-                  className="px-4 py-2 bg-blue-500 text-white rounded disabled:bg-gray-400"
+                  disabled={!currentItems.length}
+                  className={`px-4 py-2 rounded font-semibold ${
+                    !currentItems.length
+                      ? "bg-blue-300 cursor-not-allowed"
+                      : "bg-blue-600 hover:bg-blue-700"
+                  } text-white`}
                 >
-                  Ekspor
+                  Unduh Data
                 </button>
               </div>
             </div>
@@ -286,7 +385,9 @@ export default function HotspotTable() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Search Input */}
             <div>
-              <label className="block text-sm font-medium mb-1">Cari Lokasi</label>
+              <label className="block text-sm font-medium mb-1">
+                Cari Lokasi
+              </label>
               <input
                 type="text"
                 placeholder="Cari lokasi..."
@@ -316,24 +417,28 @@ export default function HotspotTable() {
 
             {/* Confidence Filter */}
             <div>
-              <label className="block text-sm font-medium mb-1">Confidence</label>
+              <label className="block text-sm font-medium mb-1">
+                Confidence
+              </label>
               <div className="flex flex-wrap gap-2">
                 {["high", "medium", "low"].map((conf) => (
                   <button
                     key={conf}
                     onClick={() => {
                       setSelectedConfidence((prev) =>
-                        prev.includes(conf) ? prev.filter((c) => c !== conf) : [...prev, conf]
+                        prev.includes(conf)
+                          ? prev.filter((c) => c !== conf)
+                          : [...prev, conf]
                       );
                       setCurrentPage(1);
                     }}
                     className={`px-3 py-1 text-xs rounded-full ${
                       selectedConfidence.includes(conf)
                         ? conf === "high"
-                          ? "bg-red-500 text-white"
+                          ? "bg-red-100 text-black"
                           : conf === "medium"
-                          ? "bg-yellow-500 text-white"
-                          : "bg-green-500 text-white"
+                          ? "bg-yellow-100 text-black"
+                          : "bg-green-100 text-black"
                         : "bg-gray-200"
                     }`}
                   >
@@ -352,12 +457,16 @@ export default function HotspotTable() {
                     key={sat}
                     onClick={() => {
                       setSelectedSatellites((prev) =>
-                        prev.includes(sat) ? prev.filter((s) => s !== sat) : [...prev, sat]
+                        prev.includes(sat)
+                          ? prev.filter((s) => s !== sat)
+                          : [...prev, sat]
                       );
                       setCurrentPage(1);
                     }}
                     className={`px-3 py-1 text-xs rounded-full ${
-                      selectedSatellites.includes(sat) ? "bg-blue-500 text-white" : "bg-gray-200"
+                      selectedSatellites.includes(sat)
+                        ? "bg-blue-200 text-black"
+                        : "bg-gray-200"
                     }`}
                   >
                     {sat}
@@ -377,26 +486,29 @@ export default function HotspotTable() {
                   <th className="px-4 py-2 text-left">No</th>
                   {viewMode === "detail" ? (
                     <>
-                      <th className="px-4 py-2 text-left">Tanggal</th>
-                      <th className="px-4 py-2 text-left">Waktu</th>
-                      <th className="px-4 py-2 text-left">Satelit</th>
-                      <th className="px-4 py-2 text-left">Confidence</th>
-                      <th className="px-4 py-2 text-left">Jumlah</th>
-                      <th className="px-4 py-2 text-left">Pulau</th>
-                      <th className="px-4 py-2 text-left">Provinsi</th>
-                      <th className="px-4 py-2 text-left">Kabupaten/Kota</th>
-                      <th className="px-4 py-2 text-left">Kecamatan</th>
-                      <th className="px-4 py-2 text-left">Desa</th>
-                      <th className="px-4 py-2 text-left">Koordinat</th>
+                      {sortHeader("Tanggal", "properties.time")}
+                      {sortHeader("Waktu", "properties.hotspot_time")}
+                      {sortHeader("Satelit", "properties.satellite")}
+                      {sortHeader("Confidence", "properties.confidence")}
+                      {sortHeader("Jumlah", "properties.hotspot_count")}
+                      {sortHeader("Pulau", "properties.location.pulau")}
+                      {sortHeader("Provinsi", "properties.location.provinsi")}
+                      {sortHeader(
+                        "Kabupaten/Kota",
+                        "properties.location.kab_kota"
+                      )}
+                      {sortHeader("Kecamatan", "properties.location.kecamatan")}
+                      {sortHeader("Desa", "properties.location.desa")}
+                      {sortHeader("Koordinat", "geometry.coordinates")}
                     </>
                   ) : (
                     <>
-                      <th className="px-4 py-2 text-left">Tanggal</th>
-                      <th className="px-4 py-2 text-left">Satelit</th>
-                      <th className="px-4 py-2 text-left">Confidence</th>
-                      <th className="px-4 py-2 text-left">Provinsi</th>
-                      <th className="px-4 py-2 text-left">Kabupaten/Kota</th>
-                      <th className="px-4 py-2 text-left">Jumlah</th>
+                      {sortHeader("Tanggal", "tanggal")}
+                      {sortHeader("Satelit", "satelit")}
+                      {sortHeader("Confidence", "confidence")}
+                      {sortHeader("Provinsi", "provinsi")}
+                      {sortHeader("Kabupaten/Kota", "kota")}
+                      {sortHeader("Jumlah", "jumlah")}
                     </>
                   )}
                 </tr>
@@ -405,32 +517,63 @@ export default function HotspotTable() {
                 {currentItems.length > 0 ? (
                   currentItems.map((item, index) => (
                     <tr key={index} className="border-b hover:bg-gray-50">
-                      <td className="px-4 py-2">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                      <td className="px-4 py-2">
+                        {(currentPage - 1) * itemsPerPage + index + 1}
+                      </td>
 
                       {viewMode === "detail" ? (
                         <>
-                          <td className="px-4 py-2">{(item as HotspotFeature).properties.time}</td>
-                          <td className="px-4 py-2">{(item as HotspotFeature).properties.hotspot_time}</td>
-                          <td className="px-4 py-2">{(item as HotspotFeature).properties.satellite}</td>
+                          <td className="px-4 py-2">
+                            {(item as HotspotFeature).properties.time}
+                          </td>
+                          <td className="px-4 py-2">
+                            {(item as HotspotFeature).properties.hotspot_time}
+                          </td>
+                          <td className="px-4 py-2">
+                            {(item as HotspotFeature).properties.satellite}
+                          </td>
                           <td className="px-4 py-2">
                             <span
                               className={`px-2 py-1 rounded-full text-xs ${
-                                (item as HotspotFeature).properties.confidence === "high"
-                                  ? "bg-red-100 text-red-800"
-                                  : (item as HotspotFeature).properties.confidence === "medium"
-                                  ? "bg-yellow-100 text-yellow-800"
-                                  : "bg-green-100 text-green-800"
+                                (item as HotspotFeature).properties
+                                  .confidence === "high"
+                                  ? "bg-red-100 text-black"
+                                  : (item as HotspotFeature).properties
+                                      .confidence === "medium"
+                                  ? "bg-yellow-100 text-black"
+                                  : "bg-green-100 text-black"
                               }`}
                             >
                               {(item as HotspotFeature).properties.confidence}
                             </span>
                           </td>
-                          <td className="px-4 py-2">{(item as HotspotFeature).properties.hotspot_count}</td>
-                          <td className="px-4 py-2">{(item as HotspotFeature).properties.location.pulau}</td>
-                          <td className="px-4 py-2">{(item as HotspotFeature).properties.location.provinsi}</td>
-                          <td className="px-4 py-2">{(item as HotspotFeature).properties.location.kab_kota}</td>
-                          <td className="px-4 py-2">{(item as HotspotFeature).properties.location.kecamatan}</td>
-                          <td className="px-4 py-2">{(item as HotspotFeature).properties.location.desa}</td>
+                          <td className="px-4 py-2">
+                            {(item as HotspotFeature).properties.hotspot_count}
+                          </td>
+                          <td className="px-4 py-2">
+                            {(item as HotspotFeature).properties.location.pulau}
+                          </td>
+                          <td className="px-4 py-2">
+                            {
+                              (item as HotspotFeature).properties.location
+                                .provinsi
+                            }
+                          </td>
+                          <td className="px-4 py-2">
+                            {
+                              (item as HotspotFeature).properties.location
+                                .kab_kota
+                            }
+                          </td>
+                          <td className="px-4 py-2">
+                            {
+                              (item as HotspotFeature).properties.location
+                                .kecamatan
+                            }
+                          </td>
+                          <td className="px-4 py-2">
+                            {(item as HotspotFeature).properties.location.desa}
+                          </td>
                           <td className="px-4 py-2">
                             {(item as HotspotFeature).geometry.coordinates[1]},{" "}
                             {(item as HotspotFeature).geometry.coordinates[0]}
@@ -438,24 +581,35 @@ export default function HotspotTable() {
                         </>
                       ) : (
                         <>
-                          <td className="px-4 py-2">{(item as AccumulatedData).tanggal}</td>
-                          <td className="px-4 py-2">{(item as AccumulatedData).satelit}</td>
+                          <td className="px-4 py-2">
+                            {(item as AccumulatedData).date}
+                          </td>
+                          <td className="px-4 py-2">
+                            {(item as AccumulatedData).satellite}
+                          </td>
                           <td className="px-4 py-2">
                             <span
                               className={`px-2 py-1 rounded-full text-xs ${
                                 (item as AccumulatedData).confidence === "high"
-                                  ? "bg-red-100 text-red-800"
-                                  : (item as AccumulatedData).confidence === "medium"
-                                  ? "bg-yellow-100 text-yellow-800"
-                                  : "bg-green-100 text-green-800"
+                                  ? "bg-red-100 text-black"
+                                  : (item as AccumulatedData).confidence ===
+                                    "medium"
+                                  ? "bg-yellow-100 text-black"
+                                  : "bg-green-100 text-black"
                               }`}
                             >
                               {(item as AccumulatedData).confidence}
                             </span>
                           </td>
-                          <td className="px-4 py-2">{(item as AccumulatedData).provinsi}</td>
-                          <td className="px-4 py-2">{(item as AccumulatedData).kabupaten}</td>
-                          <td className="px-4 py-2">{(item as AccumulatedData).jumlah}</td>
+                          <td className="px-4 py-2">
+                            {(item as AccumulatedData).provinsi}
+                          </td>
+                          <td className="px-4 py-2">
+                            {(item as AccumulatedData).kab_kota}
+                          </td>
+                          <td className="px-4 py-2">
+                            {(item as AccumulatedData).total}
+                          </td>
                         </>
                       )}
                     </tr>
@@ -488,7 +642,9 @@ export default function HotspotTable() {
                 Halaman {currentPage} dari {totalPages}
               </span>
               <button
-                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
                 disabled={currentPage === totalPages}
                 className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
               >

@@ -21,16 +21,18 @@ const Navbar = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center space-x-2">
-            <Image  src="/assets/ipb.png" alt="Logo" width={32} height={32} />
-            <h1 className="text-sm md:text-lg font-bold">
-              OLAP Hotspot | Sistem Pemantauan Hotspot Karhutla
-            </h1>
+            <Link href="/" className="flex items-center space-x-2">
+              <Image src="/assets/ipb.png" alt="Logo" width={32} height={32} />
+              <h1 className="text-sm md:text-lg font-bold">
+                OLAP Hotspot | Sistem Pemantauan Hotspot Karhutla
+              </h1>
+            </Link>
           </div>
 
-          {/* Desktop menu */}
+          {/* Menu */}
           <div className="hidden md:flex space-x-6">
             <Link href="/" className={linkClass('/')}>Beranda</Link>
-            <Link href="/olaps" className={linkClass('/olaps')}>OLAP Hotspot</Link>
+            <Link href="/olaps" className={linkClass('/olaps')}>Peta Hotspot</Link>
             <Link href="/data" className={linkClass('/data')}>Data</Link>
             <Link href="/about" className={linkClass('/about')}>Tentang</Link>
           </div>
@@ -47,7 +49,7 @@ const Navbar = () => {
       {isOpen && (
         <div className="md:hidden px-4 pb-3 space-y-1 bg-green-700">
           <Link href="/" className={linkClass('/')}>Beranda</Link>
-          <Link href="/olaps" className={linkClass('/olaps')}>OLAP Hotspot</Link>
+          <Link href="/olaps" className={linkClass('/olaps')}>Peta Hotspot</Link>
           <Link href="/data" className={linkClass('/data')}>Data</Link>
           <Link href="/about" className={linkClass('/about')}>Tentang</Link>
         </div>

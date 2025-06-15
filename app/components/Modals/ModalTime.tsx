@@ -1,27 +1,12 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useForm } from "react-hook-form";
-import { OlapService } from '../../core/services/OlapService';
+import { OlapService } from "../../core/services/OlapService";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown, faChevronUp, faSpinner, faTimesCircle } from "@fortawesome/free-solid-svg-icons";
-
-export type Time = "tahun" | "semester" | "kuartal" | "bulan" | "hari";
-export type Type = "pulau" | "provinsi" | "kota" | "kecamatan" | "desa";
-
-export interface QueryData {
-  tahun?: string;
-  semester?: string;
-  kuartal?: string;
-  bulan?: string;
-  hari?: string;
-  point?: string;
-  dimension?: string;
-  pulau?: string;
-  provinsi?: string;
-  kota?: string;
-  kabupaten?: string;
-  kecamatan?: string;
-  desa?: string;
-}
+import { QueryData } from "@/app/core/model/query";
+import { Time } from "@/app/core/model/time";
+import { DrillDownLevel } from "@/app/core/model/location";
+import { monthNames } from "@/app/core/model/time";
 
 interface FormattedDataItem {
   value: string;
@@ -34,8 +19,8 @@ interface ModalTimeProps {
   query: QueryData;
   value: string;
   index: number[];
-  tipe: Type;
-  onSelect: (data: { data: QueryData; index: number[]; tipe: Type }) => void;
+  tipe: DrillDownLevel;
+  onSelect: (data: { data: QueryData; index: number[]; tipe: DrillDownLevel }) => void;
   onClose: () => void;
 }
 
@@ -52,20 +37,20 @@ export default function ModalTime({
   const [dataSemester, setDataSemester] = useState<FormattedDataItem[]>([]);
   const [datakuartal, setDatakuartal] = useState<FormattedDataItem[]>([]);
   const [dataBulan, setDataBulan] = useState<FormattedDataItem[]>([]);
-  const [dataHari, setDataHari] = useState<FormattedDataItem[]>([]);
+  const [dataMinggu, setDataMinggu] = useState<FormattedDataItem[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState<Record<Time, boolean>>({
     tahun: false,
     semester: false,
     kuartal: false,
     bulan: false,
-    hari: false
+    minggu: false,
   });
   const [loading, setLoading] = useState<Record<Time, boolean>>({
     tahun: false,
     semester: false,
     kuartal: false,
     bulan: false,
-    hari: false
+    minggu: false,
   });
 
   const [tahunError, setTahunError] = useState<string | null>(null);
@@ -73,169 +58,281 @@ export default function ModalTime({
   const semesterValue = watch("semester");
   const kuartalValue = watch("kuartal");
   const bulanValue = watch("bulan");
-  const hariValue = watch("hari");
+  const mingguValue = watch("minggu");
 
   const tahunRef = useRef<HTMLDivElement>(null);
   const semesterRef = useRef<HTMLDivElement>(null);
   const kuartalRef = useRef<HTMLDivElement>(null);
   const bulanRef = useRef<HTMLDivElement>(null);
-  const hariRef = useRef<HTMLDivElement>(null);
+  const mingguRef = useRef<HTMLDivElement>(null);
 
-  const dropdownRefs = useMemo(() => ({
-    tahun: tahunRef,
-    semester: semesterRef,
-    kuartal: kuartalRef,
-    bulan: bulanRef,
-    hari: hariRef,
-  }), [tahunRef, semesterRef, kuartalRef, bulanRef, hariRef]);
+  const dropdownRefs = useMemo(
+    () => ({
+      tahun: tahunRef,
+      semester: semesterRef,
+      kuartal: kuartalRef,
+      bulan: bulanRef,
+      minggu: mingguRef,
+    }),
+    [tahunRef, semesterRef, kuartalRef, bulanRef, mingguRef]
+  );
 
-  const buildQueryParams = useCallback((type: Time): QueryData => {
-    const params: QueryData = {
-      dimension: 'time',
-      ...(tipe === 'pulau' && value && { pulau: value }),
-      ...(tipe === 'provinsi' && value && { provinsi: value }),
-      ...(tipe === 'kota' && value && { kota: value }),
-      ...(tipe === 'kecamatan' && value && { kecamatan: value }),
-      ...(tipe === 'desa' && value && { desa: value })
-    };
+  const buildQueryParams = useCallback(
+    (type: Time): QueryData => {
+      const params: QueryData = {
+        dimension: "time",
+        ...(tipe === "pulau" && value && { pulau: value }),
+        ...(tipe === "provinsi" && value && { provinsi: value }),
+        ...(tipe === "kota" && value && { kota: value }),
+        ...(tipe === "kecamatan" && value && { kecamatan: value }),
+        ...(tipe === "desa" && value && { desa: value }),
+      };
 
-    switch (type) {
-      case "semester":
-        if (tahunValue) params.tahun = tahunValue;
-        break;
-      case "kuartal":
-        if (tahunValue) params.tahun = tahunValue;
-        if (semesterValue) params.semester = semesterValue;
-        break;
-      case "bulan":
-        if (tahunValue) params.tahun = tahunValue;
-        if (semesterValue) params.semester = semesterValue;
-        if (kuartalValue) params.kuartal = kuartalValue;
-        break;
-      case "hari":
-        if (tahunValue) params.tahun = tahunValue;
-        if (semesterValue) params.semester = semesterValue;
-        if (kuartalValue) params.kuartal = kuartalValue;
-        if (bulanValue) params.bulan = bulanValue;
-        break;
-    }
-    return params;
-  }, [tipe, value, tahunValue, semesterValue, kuartalValue, bulanValue]);
+      switch (type) {
+        case "semester":
+          if (tahunValue) params.tahun = tahunValue;
+          break;
+        case "kuartal":
+          if (tahunValue) params.tahun = tahunValue;
+          if (semesterValue) params.semester = semesterValue;
+          break;
+        case "bulan":
+          if (tahunValue) params.tahun = tahunValue;
+          if (semesterValue) params.semester = semesterValue;
+          if (kuartalValue) params.kuartal = kuartalValue;
+          break;
+        case "minggu":
+          if (tahunValue) params.tahun = tahunValue;
+          if (semesterValue) params.semester = semesterValue;
+          if (kuartalValue) params.kuartal = kuartalValue;
+          if (bulanValue) params.bulan = bulanValue;
+          break;
+      }
+      return params;
+    },
+    [
+      tipe,
+      value,
+      tahunValue,
+      semesterValue,
+      kuartalValue,
+      bulanValue,
+    ]
+  );
 
-  const fetchTimeData = useCallback(async (type: Time) => {
-    setLoading(prev => ({ ...prev, [type]: true }));
-    try {
-      const params = buildQueryParams(type);
-      const response = await OlapService.query("time", params);
+  // Mengambil data waktu
+  const getTimeData = useCallback(
+    async (type: Time) => {
+      setLoading((prev) => ({ ...prev, [type]: true }));
+      try {
+        const params = buildQueryParams(type);
+        const response = await OlapService.query("time", params);
 
-      if (response && Array.isArray(response)) {
-        const formattedData: FormattedDataItem[] = response
-          .map(item => {
-            if (Array.isArray(item) && item.length > 0) {
-              const val = String(item[0]).trim();
-              return val ? { value: val, label: val } : null;
-            }
-            else if (typeof item === 'object' && item !== null) {
-              const typedItem = item as FormattedDataItem;
-              const val = String(typedItem.value ?? typedItem.id ?? '').trim();
-              const lbl = String(typedItem.label ?? typedItem.name ?? '').trim();
-              return val && lbl ? { value: val, label: lbl } : null;
-            }
-            else if (item !== undefined && item !== null) {
-              const val = String(item).trim();
-              return val ? { value: val, label: val } : null;
-            }
-            return null;
-          })
-          .filter((item: FormattedDataItem | null): item is FormattedDataItem =>
-            item !== null && item.value !== "" && item.label !== "");
+        if (response && Array.isArray(response)) {
+          let formattedData: FormattedDataItem[] = response
+            .map((item) => {
+              if (Array.isArray(item) && item.length > 0) {
+                const val = String(item[0]).trim();
+                return val ? { value: val, label: val } : null;
+              } else if (typeof item === "object" && item !== null) {
+                const typedItem = item as FormattedDataItem;
+                const val = String(
+                  typedItem.value ?? typedItem.id ?? ""
+                ).trim();
+                const lbl = String(
+                  typedItem.label ?? typedItem.name ?? ""
+                ).trim();
+                return val && lbl ? { value: val, label: lbl } : null;
+              } else if (item !== undefined && item !== null) {
+                const val = String(item).trim();
+                return val ? { value: val, label: val } : null;
+              }
+              return null;
+            })
+            .filter(
+              (item: FormattedDataItem | null): item is FormattedDataItem =>
+                item !== null && item.value !== "" && item.label !== ""
+            );
 
-        if (formattedData.length === 0) {
-          console.warn(`No valid data received for ${type}`);
+          if (formattedData.length === 0) {
+            console.warn(`No valid data received for ${type}`);
+          }
+
+          switch (type) {
+            case "tahun":
+              formattedData = formattedData.sort(
+                (a, b) => Number(a.value) - Number(b.value)
+              );
+              break;
+            case "semester":
+              formattedData = formattedData.sort(
+                (a, b) => Number(a.value) - Number(b.value)
+              );
+              break;
+            case "kuartal":
+              const orderKuartal = ["Q1", "Q2", "Q3", "Q4"];
+              formattedData = formattedData.sort(
+                (a, b) =>
+                  orderKuartal.indexOf(a.value.toUpperCase()) -
+                  orderKuartal.indexOf(b.value.toUpperCase())
+              );
+              break;
+            case "bulan":
+              formattedData = formattedData.sort(
+                (a, b) =>
+                  monthNames.indexOf(a.value) - monthNames.indexOf(b.value)
+              );
+              break;
+            case "minggu":
+              formattedData = formattedData.sort(
+                (a, b) => Number(a.value) - Number(b.value)
+              );
+              break;
+          }
+
+          // Sorting data
+          switch (type) {
+            case "tahun":
+              setDataTahun(formattedData);
+              break;
+            case "semester":
+              const validSemester = formattedData.filter((item) =>
+                ["1", "2"].includes(item.value)
+              );
+              setDataSemester(validSemester);
+              if (
+                semesterValue &&
+                !validSemester.some((s) => s.value === semesterValue)
+              ) {
+                setValue("semester", "");
+              }
+              break;
+            case "kuartal":
+              const validKuartal = formattedData.filter((item) =>
+                ["Q1", "Q2", "Q3", "Q4"].includes(item.value.toUpperCase())
+              );
+              setDatakuartal(validKuartal);
+              if (
+                kuartalValue &&
+                !validKuartal.some((q) => q.value === kuartalValue)
+              ) {
+                setValue("kuartal", "");
+              }
+              break;
+            case "bulan":
+              setDataBulan(formattedData);
+              if (
+                bulanValue &&
+                !formattedData.some((b) => b.value === bulanValue)
+              ) {
+                setValue("bulan", "");
+              }
+              break;
+            case "minggu":
+              setDataMinggu(formattedData);
+              if (
+                mingguValue &&
+                !formattedData.some((b) => b.value === mingguValue)
+              ) {
+                setValue("minggu", "");
+              }
+              break;
+          }
+        } else {
+          console.warn(`Response for ${type} is not an array:`, response);
+          switch (type) {
+            case "tahun":
+              setDataTahun([]);
+              setValue("tahun", "");
+              break;
+            case "semester":
+              setDataSemester([]);
+              setValue("semester", "");
+              break;
+            case "kuartal":
+              setDatakuartal([]);
+              setValue("kuartal", "");
+              break;
+            case "bulan":
+              setDataBulan([]);
+              setValue("bulan", "");
+              break;
+            case "minggu":
+              setDataMinggu([]);
+              setValue("minggu", "");
+              break;
+          }
         }
+      } catch (error: unknown) {
+        console.error(`Error fetching ${type} data:`, error);
 
         switch (type) {
           case "tahun":
-            setDataTahun(formattedData);
+            setDataTahun([]);
+            setValue("tahun", "");
             break;
           case "semester":
-            const validSemester = formattedData.filter(item => ["1", "2"].includes(item.value));
-            setDataSemester(validSemester);
-            if (semesterValue && !validSemester.some(s => s.value === semesterValue)) {
-                setValue("semester", "");
-            }
+            setDataSemester([]);
+            setValue("semester", "");
             break;
           case "kuartal":
-            const validKuartal = formattedData.filter(item =>
-              ["Q1", "Q2", "Q3", "Q4"].includes(item.value.toUpperCase())
-            );
-            setDatakuartal(validKuartal);
-               if (kuartalValue && !validKuartal.some(q => q.value === kuartalValue)) {
-                setValue("kuartal", "");
-            }
+            setDatakuartal([]);
+            setValue("kuartal", "");
             break;
           case "bulan":
-            setDataBulan(formattedData);
-            if (bulanValue && !formattedData.some(b => b.value === bulanValue)) {
-                setValue("bulan", "");
-            }
+            setDataBulan([]);
+            setValue("bulan", "");
             break;
-          case "hari":
-            setDataHari(formattedData);
-            if (hariValue && !formattedData.some(h => h.value === hariValue)) {
-                setValue("hari", "");
-            }
+          case "minggu":
+            setDataMinggu([]);
+            setValue("minggu", "");
             break;
         }
-      } else {
-        console.warn(`Response for ${type} is not an array:`, response);
-        switch (type) {
-            case "tahun": setDataTahun([]); setValue("tahun", ""); break;
-            case "semester": setDataSemester([]); setValue("semester", ""); break;
-            case "kuartal": setDatakuartal([]); setValue("kuartal", ""); break;
-            case "bulan": setDataBulan([]); setValue("bulan", ""); break;
-            case "hari": setDataHari([]); setValue("hari", ""); break;
-        }
+      } finally {
+        setLoading((prev) => ({ ...prev, [type]: false }));
       }
-    } catch (error: unknown) {
-      console.error(`Error fetching ${type} data:`, error);
-
-      switch (type) {
-        case "tahun": setDataTahun([]); setValue("tahun", ""); break;
-        case "semester": setDataSemester([]); setValue("semester", ""); break;
-        case "kuartal": setDatakuartal([]); setValue("kuartal", ""); break;
-        case "bulan": setDataBulan([]); setValue("bulan", ""); break;
-        case "hari": setDataHari([]); setValue("hari", ""); break;
-      }
-    } finally {
-      setLoading(prev => ({ ...prev, [type]: false }));
-    }
-  }, [buildQueryParams, setValue, semesterValue, kuartalValue, bulanValue, hariValue]);
-
+    },
+    [
+      buildQueryParams,
+      setValue,
+      semesterValue,
+      kuartalValue,
+      bulanValue,
+      mingguValue,
+    ]
+  );
 
   useEffect(() => {
-    fetchTimeData("tahun");
+    getTimeData("tahun");
 
     if (query.tahun) {
-        setValue("tahun", query.tahun);
+      setValue("tahun", query.tahun);
     }
     if (query.semester) {
-        setValue("semester", query.semester);
+      setValue("semester", query.semester);
     }
     if (query.kuartal) {
-        setValue("kuartal", query.kuartal);
+      setValue("kuartal", query.kuartal);
     }
     if (query.bulan) {
-        setValue("bulan", query.bulan);
+      setValue("bulan", query.bulan);
     }
-    if (query.hari) {
-        setValue("hari", query.hari);
+    if (query.minggu) {
+      setValue("minggu", query.minggu);
     }
-  }, [fetchTimeData, query.tahun, query.semester, query.kuartal, query.bulan, query.hari, setValue]);
+  }, [
+    getTimeData,
+    query.tahun,
+    query.semester,
+    query.kuartal,
+    query.bulan,
+    query.minggu,
+    setValue,
+  ]);
 
   useEffect(() => {
     if (tahunValue) {
-      fetchTimeData("semester");
+      getTimeData("semester");
       setTahunError(null);
     } else {
       setDataSemester([]);
@@ -244,44 +341,43 @@ export default function ModalTime({
       setValue("kuartal", "");
       setDataBulan([]);
       setValue("bulan", "");
-      setDataHari([]);
-      setValue("hari", "");
+      setDataMinggu([]);
+      setValue("minggu", "");
     }
-  }, [tahunValue, fetchTimeData, setValue]);
+  }, [tahunValue, getTimeData, setValue]);
 
   useEffect(() => {
     if (semesterValue) {
-      fetchTimeData("kuartal");
+      getTimeData("kuartal");
     } else {
       setDatakuartal([]);
       setValue("kuartal", "");
       setDataBulan([]);
       setValue("bulan", "");
-      setDataHari([]);
-      setValue("hari", "");
+      setDataMinggu([]);
+      setValue("minggu", "");
     }
-  }, [semesterValue, fetchTimeData, setValue]);
+  }, [semesterValue, getTimeData, setValue]);
 
   useEffect(() => {
     if (kuartalValue) {
-      fetchTimeData("bulan");
+      getTimeData("bulan");
     } else {
       setDataBulan([]);
       setValue("bulan", "");
-      setDataHari([]);
-      setValue("hari", "");
+      setDataMinggu([]);
+      setValue("minggu", "");
     }
-  }, [kuartalValue, fetchTimeData, setValue]);
+  }, [kuartalValue, getTimeData, setValue]);
 
   useEffect(() => {
-
     if (bulanValue) {
-      fetchTimeData("hari");
+      getTimeData("minggu");
     } else {
-      setDataHari([]);
-      setValue("hari", "");
+      setDataMinggu([]);
+      setValue("minggu", "");
     }
-  }, [bulanValue, fetchTimeData, setValue]);
+  }, [bulanValue, getTimeData, setValue]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -300,7 +396,7 @@ export default function ModalTime({
           semester: false,
           kuartal: false,
           bulan: false,
-          hari: false
+          minggu: false,
         });
       }
     };
@@ -311,9 +407,8 @@ export default function ModalTime({
     };
   }, [dropdownRefs]);
 
-
   const toggleDropdown = (type: Time) => {
-    setIsDropdownOpen(prev => {
+    setIsDropdownOpen((prev) => {
       const newState: Record<Time, boolean> = { ...prev };
       for (const key in newState) {
         if (key !== type) {
@@ -327,19 +422,21 @@ export default function ModalTime({
     if (!isDropdownOpen[type]) {
       switch (type) {
         case "tahun":
-          if (dataTahun.length === 0) fetchTimeData("tahun");
+          if (dataTahun.length === 0) getTimeData("tahun");
           break;
         case "semester":
-          if (dataSemester.length === 0 && tahunValue) fetchTimeData("semester");
+          if (dataSemester.length === 0 && tahunValue)
+            getTimeData("semester");
           break;
         case "kuartal":
-          if (datakuartal.length === 0 && semesterValue) fetchTimeData("kuartal");
+          if (datakuartal.length === 0 && semesterValue)
+            getTimeData("kuartal");
           break;
         case "bulan":
-          if (dataBulan.length === 0 && kuartalValue) fetchTimeData("bulan");
+          if (dataBulan.length === 0 && kuartalValue) getTimeData("bulan");
           break;
-        case "hari":
-          if (dataHari.length === 0 && bulanValue) fetchTimeData("hari");
+        case "minggu":
+          if (dataMinggu.length === 0 && bulanValue) getTimeData("minggu");
           break;
       }
     }
@@ -347,7 +444,7 @@ export default function ModalTime({
 
   const selectTimeValue = (type: Time, valueToSet: string) => {
     setValue(type, valueToSet);
-    setIsDropdownOpen(prev => ({ ...prev, [type]: false }));
+    setIsDropdownOpen((prev) => ({ ...prev, [type]: false }));
     if (type === "tahun") {
       setTahunError(null);
     }
@@ -358,16 +455,16 @@ export default function ModalTime({
     setValue("semester", "");
     setValue("kuartal", "");
     setValue("bulan", "");
-    setValue("hari", "");
+    setValue("minggu", "");
     setTahunError(null);
 
     setDataTahun([]);
     setDataSemester([]);
     setDatakuartal([]);
     setDataBulan([]);
-    setDataHari([]);
+    setDataMinggu([]);
 
-    fetchTimeData("tahun");
+    getTimeData("tahun");
   };
 
   const onSubmit = (formData: QueryData) => {
@@ -382,14 +479,14 @@ export default function ModalTime({
       semester: formData.semester || undefined,
       kuartal: formData.kuartal || undefined,
       bulan: formData.bulan || undefined,
-      hari: formData.hari || undefined,
-      point: value
+      minggu: formData.minggu || undefined,
+      point: value,
     };
 
     onSelect({
       data: updatedQuery,
       index,
-      tipe
+      tipe,
     });
     onClose();
   };
@@ -407,19 +504,26 @@ export default function ModalTime({
     return (
       <div className="relative" ref={dropdownRefs[type]}>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          {placeholder.replace('Pilih ', '')}
+          {placeholder.replace("Pilih ", "")}
         </label>
         <div
           className={`w-full p-2 border rounded-md cursor-pointer flex items-center justify-between transition-all duration-200
-            ${showDropdown ? 'border-blue-500 ring-1 ring-blue-300' : 'border-gray-300 bg-gray-100'}
-            ${loading[type] ? 'opacity-70 cursor-not-allowed' : ''}`}
+            ${
+              showDropdown
+                ? "border-blue-500 ring-1 ring-blue-300"
+                : "border-gray-300 bg-gray-100"
+            }
+            ${loading[type] ? "opacity-70 cursor-not-allowed" : ""}`}
           onClick={() => !loading[type] && toggleDropdown(type)}
         >
           <span>{currentValue || placeholder}</span>
           {loading[type] ? (
             <FontAwesomeIcon icon={faSpinner} spin className="text-blue-500" />
           ) : (
-            <FontAwesomeIcon icon={showDropdown ? faChevronUp : faChevronDown} className="text-gray-500" />
+            <FontAwesomeIcon
+              icon={showDropdown ? faChevronUp : faChevronDown}
+              className="text-gray-500"
+            />
           )}
         </div>
         {showDropdown && (
@@ -427,20 +531,25 @@ export default function ModalTime({
             {dataList.length > 0 && (
               <li
                 className="p-2 hover:bg-blue-100 cursor-pointer text-gray-600 font-semibold sticky top-0 bg-white border-b border-gray-200"
-                onClick={() => selectTimeValue(type, "")} // Opsi "Semua"
+                onClick={() => selectTimeValue(type, "")}
               >
-                Semua {placeholder.replace('Pilih ', '')}
+                Semua {placeholder.replace("Pilih ", "")}
               </li>
             )}
             {loading[type] ? (
               <li className="p-2 text-center text-gray-500 flex items-center justify-center">
-                <FontAwesomeIcon icon={faSpinner} spin className="mr-2" /> Memuat...
+                <FontAwesomeIcon icon={faSpinner} spin className="mr-2" />{" "}
+                Loading...
               </li>
             ) : dataList.length > 0 ? (
               dataList.map((item, idx) => (
                 <li
                   key={idx}
-                  className={`p-2 hover:bg-blue-100 cursor-pointer ${currentValue === item.value ? 'bg-blue-50 text-blue-800 font-medium' : ''}`}
+                  className={`p-2 hover:bg-blue-100 cursor-pointer ${
+                    currentValue === item.value
+                      ? "bg-blue-50 text-blue-800 font-medium"
+                      : ""
+                  }`}
                   onClick={() => selectTimeValue(type, item.value)}
                 >
                   {item.label}
@@ -453,13 +562,13 @@ export default function ModalTime({
         )}
         {type === "tahun" && tahunError && (
           <p className="text-red-500 text-xs mt-1 flex items-center">
-            <FontAwesomeIcon icon={faTimesCircle} className="mr-1" /> {tahunError}
+            <FontAwesomeIcon icon={faTimesCircle} className="mr-1" />{" "}
+            {tahunError}
           </p>
         )}
       </div>
     );
   };
-
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000]">
@@ -467,14 +576,51 @@ export default function ModalTime({
         className="bg-white rounded-lg p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto shadow-xl transform transition-all duration-300 scale-100 ease-out"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Filter Waktu Hotspot</h2>
+        <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">
+          Filter Waktu Hotspot
+        </h2>
 
+        {/* FORM WAKTU */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {renderDropdown("tahun", tahunValue, dataTahun, "Pilih Tahun", isDropdownOpen.tahun)}
-          {renderDropdown("semester", semesterValue, dataSemester, "Pilih Semester", isDropdownOpen.semester, !!tahunValue)}
-          {renderDropdown("kuartal", kuartalValue, datakuartal, "Pilih Kuartal", isDropdownOpen.kuartal, !!semesterValue)}
-          {renderDropdown("bulan", bulanValue, dataBulan, "Pilih Bulan", isDropdownOpen.bulan, !!kuartalValue)}
-          {renderDropdown("hari", hariValue, dataHari, "Pilih Hari", isDropdownOpen.hari, !!bulanValue)}
+          {renderDropdown(
+            "tahun",
+            tahunValue,
+            dataTahun,
+            "Pilih Tahun",
+            isDropdownOpen.tahun
+          )}
+          {renderDropdown(
+            "semester",
+            semesterValue,
+            dataSemester,
+            "Pilih Semester",
+            isDropdownOpen.semester,
+            !!tahunValue
+          )}
+          {renderDropdown(
+            "kuartal",
+            kuartalValue,
+            datakuartal,
+            "Pilih Kuartal",
+            isDropdownOpen.kuartal,
+            !!semesterValue
+          )}
+          {renderDropdown(
+            "bulan",
+            bulanValue,
+            dataBulan,
+            "Pilih Bulan",
+            isDropdownOpen.bulan,
+            !!kuartalValue
+          )}
+          {renderDropdown(
+            "minggu",
+            mingguValue,
+            dataMinggu,
+            "Pilih Minggu",
+            isDropdownOpen.minggu,
+            !!bulanValue
+          )}
 
           <div className="flex justify-between items-center pt-4 border-t mt-4">
             <button
@@ -485,19 +631,19 @@ export default function ModalTime({
               Reset Filter
             </button>
             <div className="flex space-x-3">
-                <button
+              <button
                 type="button"
                 onClick={onClose}
                 className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all duration-200"
-                >
+              >
                 Batal
-                </button>
-                <button
+              </button>
+              <button
                 type="submit"
                 className="px-4 py-2 bg-blue-600 rounded-md text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
-                >
+              >
                 Terapkan Filter
-                </button>
+              </button>
             </div>
           </div>
         </form>

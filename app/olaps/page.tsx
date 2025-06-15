@@ -9,7 +9,6 @@ export default function Olaps() {
   const [showPopup, setShowPopup] = useState(true);
   const [today, setToday] = useState('');
 
-  // tanggal sekarang
   useEffect (() => {
     const currentDate = new Date().toLocaleDateString('id-ID', {
       day: 'numeric',
@@ -21,7 +20,6 @@ export default function Olaps() {
 
   return (
     <div className="relative">
-      {/* Popup */}
       {showPopup && (
         <div className="fixed inset-0 z-[1001] flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-xl shadow-xl max-w-md text-center">
