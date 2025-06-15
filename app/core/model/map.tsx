@@ -1,4 +1,4 @@
-import { LatLngBoundsExpression, Layer } from 'leaflet';
+import { LatLngBoundsExpression } from 'leaflet';
 import { DrillDownLevel } from './location';
 import React from 'react';
 

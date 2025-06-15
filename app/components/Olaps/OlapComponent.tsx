@@ -56,7 +56,7 @@ type OlapData = [string, number];
 
 const OlapComponent = () => {
   const hasFetched = useRef(false);
-  const [isLoading, setIsLoading] = useState(true); // Changed to use isLoading state
+  const [isLoading, setIsLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [mapBounds, setMapBounds] = useState<L.LatLngBoundsExpression | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<LocationData>();
@@ -577,6 +577,84 @@ const OlapComponent = () => {
     });
   };
 
+  const getSatelliteData = useCallback((query: QueryData, tipe: DrillDownLevel) => {
+    if (activeMapLayer !== "hotspot-locations") {
+      const q = { ...query, dimension: "satelite" };
+      setIsLoading(true);
+
+      switch (tipe) {
+        case "pulau":
+          q.pulau = "";
+          q.point = query.pulau;
+          break;
+        case "provinsi":
+          q.provinsi = "";
+          q.point = query.provinsi;
+          break;
+        case "kota":
+          q.kota = "";
+          q.point = query.kota;
+          break;
+        case "kecamatan":
+          q.kecamatan = "";
+          q.point = query.kecamatan;
+          break;
+        case "desa":
+          q.point = query.desa;
+          break;
+      }
+      q.satelite = "";
+
+      OlapService.query("satelite", q).then((res) => {
+        setIsLoading(false);
+        setDataSatelite(res as OlapData[]);
+      }).catch(err => {
+        console.error("Error fetching satellite data:", err);
+        setDataSatelite([]);
+        setIsLoading(false);
+      });
+    }
+  },[activeMapLayer]);
+
+  const getConfidenceData = useCallback((query: QueryData, tipe: DrillDownLevel) => {
+    if (activeMapLayer !== "hotspot-locations") {
+      const q = { ...query, dimension: "confidence" };
+      setIsLoading(true);
+
+      switch (tipe) {
+        case "pulau":
+          q.pulau = "";
+          q.point = query.pulau;
+          break;
+        case "provinsi":
+          q.provinsi = "";
+          q.point = query.provinsi;
+          break;
+        case "kota":
+          q.kota = "";
+          q.point = query.kota;
+          break;
+        case "kecamatan":
+          q.kecamatan = "";
+          q.point = query.kecamatan;
+          break;
+        case "desa":
+          q.point = query.desa;
+          break;
+      }
+      q.confidence = "";
+
+      OlapService.query("confidence", q).then((res) => {
+        setIsLoading(false);
+        setDataConfidence(res as OlapData[]);
+      }).catch(err => {
+        console.error("Error fetching confidence data:", err);
+        setDataConfidence([]);
+        setIsLoading(false);
+      });
+    }
+  },[activeMapLayer]);
+
   useEffect(() => {
     if (!hasFetched.current) {
       getDataLocation("location");
@@ -585,7 +663,7 @@ const OlapComponent = () => {
       getSatelliteData({}, "pulau");
       hasFetched.current = true;
     }
-  }, [getDataLocation, fetchOlapData]);
+  }, [getDataLocation, fetchOlapData, getConfidenceData, getSatelliteData]);
 
   useEffect(() => {
     if (hasFetched.current) {
@@ -644,139 +722,60 @@ const OlapComponent = () => {
     closeModalTime();
   };
 
-  const getSatelliteData = (query: QueryData, tipe: DrillDownLevel) => {
-    if (activeMapLayer !== "hotspot-locations") {
-      const q = { ...query, dimension: "satelite" };
-      setIsLoading(true);
-
-      switch (tipe) {
-        case "pulau":
-          q.pulau = "";
-          q.point = query.pulau;
-          break;
-        case "provinsi":
-          q.provinsi = "";
-          q.point = query.provinsi;
-          break;
-        case "kota":
-          q.kota = "";
-          q.point = query.kota;
-          break;
-        case "kecamatan":
-          q.kecamatan = "";
-          q.point = query.kecamatan;
-          break;
-        case "desa":
-          q.point = query.desa;
-          break;
-      }
-      q.satelite = "";
-
-      OlapService.query("satelite", q).then((res) => {
-        setIsLoading(false);
-        setDataSatelite(res as OlapData[]);
-      }).catch(err => {
-        console.error("Error fetching satellite data:", err);
-        setDataSatelite([]);
-        setIsLoading(false);
-      });
-    }
-  };
-
-  const getConfidenceData = (query: QueryData, tipe: DrillDownLevel) => {
-    if (activeMapLayer !== "hotspot-locations") {
-      const q = { ...query, dimension: "confidence" };
-      setIsLoading(true);
-
-      switch (tipe) {
-        case "pulau":
-          q.pulau = "";
-          q.point = query.pulau;
-          break;
-        case "provinsi":
-          q.provinsi = "";
-          q.point = query.provinsi;
-          break;
-        case "kota":
-          q.kota = "";
-          q.point = query.kota;
-          break;
-        case "kecamatan":
-          q.kecamatan = "";
-          q.point = query.kecamatan;
-          break;
-        case "desa":
-          q.point = query.desa;
-          break;
-      }
-      q.confidence = "";
-
-      OlapService.query("confidence", q).then((res) => {
-        setIsLoading(false);
-        setDataConfidence(res as OlapData[]);
-      }).catch(err => {
-        console.error("Error fetching confidence data:", err);
-        setDataConfidence([]);
-        setIsLoading(false);
-      });
-    }
-  };
-
   useEffect(() => {
     getConfidenceData({}, "pulau");
     getSatelliteData({}, "pulau");
-  }, []);
+  }, [getConfidenceData, getSatelliteData]);
 
-  const handleChartClick = (
-    event: ChartEvent,
-    elements: ActiveElement[],
-    chart: Chart
-  ) => {
-    if (activeMapLayer !== "hotspot-locations" && elements.length > 0) {
-      const index = elements[0].index;
-      const label = chart.data.labels?.[index] as string;
+  const handleChartClick = useCallback(
+    (event: ChartEvent, elements: ActiveElement[], chart: Chart) => {
+      if (activeMapLayer !== "hotspot-locations" && elements.length > 0) {
+        const index = elements[0].index;
+        const label = chart.data.labels?.[index] as string;
 
-      let selectedItem = null;
+        let selectedItem = null;
 
-      const findItem = (items: Data[], name: string): Data | null => {
-        for (const item of items) {
-          if (item.data === name) return item;
-          if (item.child && item.child.length > 0) {
-            const found = findItem(item.child, name);
-            if (found) return found;
+        const findItem = (items: Data[], name: string): Data | null => {
+          for (const item of items) {
+            if (item.data === name) return item;
+            if (item.child && item.child.length > 0) {
+              const found = findItem(item.child, name);
+              if (found) return found;
+            }
           }
-        }
-        return null;
-      };
-
-      selectedItem = findItem(data, label);
-
-      if (selectedItem) {
-        const location = {
-          lat: selectedItem.query.lat || -2.5,
-          lng: selectedItem.query.lng || 118,
+          return null;
         };
 
-        setSelectedLocation(location);
+        selectedItem = findItem(data, label);
 
-        if (selectedItem.query.desa) {
-          setDrillDownLevel("desa");
-        } else if (selectedItem.query.kecamatan) {
-          setDrillDownLevel("kecamatan");
-        } else if (selectedItem.query.kota) {
-          setDrillDownLevel("kota");
-        } else if (selectedItem.query.provinsi) {
-          setDrillDownLevel("provinsi");
-        } else {
-          setDrillDownLevel("pulau");
+        if (selectedItem) {
+          const location = {
+            lat: selectedItem.query.lat || -2.5,
+            lng: selectedItem.query.lng || 118,
+          };
+
+          setSelectedLocation(location);
+
+          if (selectedItem.query.desa) {
+            setDrillDownLevel("desa");
+          } else if (selectedItem.query.kecamatan) {
+            setDrillDownLevel("kecamatan");
+          } else if (selectedItem.query.kota) {
+            setDrillDownLevel("kota");
+          } else if (selectedItem.query.provinsi) {
+            setDrillDownLevel("provinsi");
+          } else {
+            setDrillDownLevel("pulau");
+          }
+          setOlapData((prev) => ({
+            ...prev,
+            query: selectedItem?.query || {},
+          }));
         }
-        setOlapData((prev) => ({
-          ...prev,
-          query: selectedItem?.query || {},
-        }));
       }
-    }
-  };
+    },
+    [activeMapLayer, data]
+  );
 
   const barChartOptions: ChartConfiguration["options"] = useMemo(() => ({
     responsive: true,
@@ -804,7 +803,7 @@ const OlapComponent = () => {
       },
     },
     onClick: handleChartClick,
-  }), [handleChartClick, setSelectedHotspot, activeMapLayer]);
+  }), [handleChartClick, setSelectedHotspot]);
 
   const getStatusColor = (confidence: string | null | undefined) => {
     if (confidence === "high") {
@@ -845,9 +844,9 @@ const OlapComponent = () => {
           className={`${
             isSidebarOpen ? "block" : "hidden"
           } md:block w-full md:w-80 bg-white border-r border-gray-200 flex flex-col overflow-y-auto
-            ${
-              activeMapLayer === "hotspot-locations" ? "hidden md:hidden" : ""
-            } /* Hide sidebar completely when in hotspot-locations mode */`}
+           ${
+             activeMapLayer === "hotspot-locations" ? "hidden md:hidden" : ""
+           } /* Hide sidebar completely when in hotspot-locations mode */`}
         >
           {/* FILTERS */}
           <div className="p-3 border-b border-gray-200 bg-gray-50">
