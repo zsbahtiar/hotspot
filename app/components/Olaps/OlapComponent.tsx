@@ -56,6 +56,8 @@ type OlapData = [string, number];
 
 const OlapComponent = () => {
   const hasFetched = useRef(false);
+  const scrollTargetId = useRef<string | null>(null);
+  const [mapKey, setMapKey] = useState(Date.now());
   const [isLoading, setIsLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [mapBounds, setMapBounds] = useState<L.LatLngBoundsExpression | null>(null);
@@ -268,9 +270,18 @@ const OlapComponent = () => {
     getDataLocation("location");
     setDrillDownLevel("pulau");
 
-    const bounds = L.latLngBounds(L.latLng(-11, 94), L.latLng(6, 141));
-    setMapBounds(bounds);
+    setMapBounds(null);
+    setSelectedLocation(undefined);
+    setMapKey(Date.now());
   };
+
+  const memoizedFilters = useMemo(() => ({
+    confidence: globalFilters.confidence?.toLowerCase(),
+    satelite: globalFilters.satelite?.toLowerCase(),
+    time: globalFilters.time,
+    filterMode: globalFilters.filterMode,
+    selectedDate: globalFilters.selectedDate,
+  }), [globalFilters]);
 
   const handleSelection = async (selectedData: {
     wilayah?: string | number;
@@ -448,6 +459,9 @@ const OlapComponent = () => {
     if (window.innerWidth < 768) {
       setIsSidebarOpen(false);
     }
+    
+    const targetId = `location-item-${indexes.join("-")}`;
+    scrollTargetId.current = targetId;
 
     setData((prevData) => {
       const newData = JSON.parse(JSON.stringify(prevData));
@@ -664,6 +678,19 @@ const OlapComponent = () => {
       hasFetched.current = true;
     }
   }, [getDataLocation, fetchOlapData, getConfidenceData, getSatelliteData]);
+  
+  useEffect(() => {
+    if (!isLoading && scrollTargetId.current) {
+      const element = document.getElementById(scrollTargetId.current);
+      if (element) {
+        element.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+        });
+      }
+      scrollTargetId.current = null;
+    }
+  }, [data, isLoading]);
 
   useEffect(() => {
     if (hasFetched.current) {
@@ -725,7 +752,7 @@ const OlapComponent = () => {
   useEffect(() => {
     getConfidenceData({}, "pulau");
     getSatelliteData({}, "pulau");
-  }, [getConfidenceData, getSatelliteData]);
+  }, []);
 
   const handleChartClick = useCallback(
     (event: ChartEvent, elements: ActiveElement[], chart: Chart) => {
@@ -844,21 +871,13 @@ const OlapComponent = () => {
           className={`${
             isSidebarOpen ? "block" : "hidden"
           } md:block w-full md:w-80 bg-white border-r border-gray-200 flex flex-col overflow-y-auto
-           ${
-             activeMapLayer === "hotspot-locations" ? "hidden md:hidden" : ""
-           } /* Hide sidebar completely when in hotspot-locations mode */`}
+          ${
+            activeMapLayer === "hotspot-locations" ? "hidden md:hidden" : ""
+          } /* Hide sidebar completely when in hotspot-locations mode */`}
         >
           {/* FILTERS */}
           <div className="p-3 border-b border-gray-200 bg-gray-50">
-            <h2 className="text-md font-semibold text-black mb-2">
-              Filters
-              {activeMapLayer === "hotspot-locations" && (
-                <span className="ml-2 text-xs text-red-600 font-normal">
-                  (Dinonaktifkan saat mode Lokasi Hotspot)
-                </span>
-              )}
-            </h2>
-
+            <h2 className="text-md font-semibold text-black mb-2">Filters</h2>
             {/* Confidence */}
             <div
               className={`border-b border-gray-200 bg-gray-50 ${
@@ -921,7 +940,6 @@ const OlapComponent = () => {
                       });
                     }
                   }}
-                  onClick={() => getSatelliteData({}, "pulau")}
                   disabled={activeMapLayer === "hotspot-locations"}
                 >
                   <option value="">Semua Satelit</option>
@@ -1041,14 +1059,7 @@ const OlapComponent = () => {
 
           {/* Location List */}
           <div className="p-3 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-            <h2 className="text-md font-semibold text-black">
-              Location
-              {activeMapLayer === "hotspot-locations" && (
-                <span className="ml-2 text-xs text-red-600 font-normal">
-                  (Dinonaktifkan saat mode Lokasi Hotspot)
-                </span>
-              )}
-            </h2>
+            <h2 className="text-md font-semibold text-black">Location</h2>
           </div>
           <div
             className={`flex-1 overflow-y-auto p-2 ${
@@ -1068,7 +1079,7 @@ const OlapComponent = () => {
               </div>
             ) : data && data.length > 0 ? (
               data.map((item, i) => (
-                <div key={i} className="mb-3">
+                <div key={i} id={`location-item-${i}`} className="mb-3">
                   {/* Pulau */}
                   <div className="bg-white rounded-lg shadow-xs p-3 border-l-4 border-blue-500 hover:shadow-sm transition">
                     <div className="flex justify-between items-center">
@@ -1101,7 +1112,7 @@ const OlapComponent = () => {
                   {item.isOpen &&
                     item.child &&
                     item.child.map((provinsi, j) => (
-                      <div key={j} className="mt-2 ml-4">
+                      <div key={j} id={`location-item-${i}-${j}`} className="mt-2 ml-4">
                         <div className="bg-white rounded-lg shadow-xs p-3 border-l-4 border-green-500 hover:shadow-sm transition">
                           <div className="flex justify-between items-center">
                             <span
@@ -1140,7 +1151,7 @@ const OlapComponent = () => {
                         {provinsi.isOpen &&
                           provinsi.child &&
                           provinsi.child.map((kota, k) => (
-                            <div key={k} className="mt-2 ml-4">
+                            <div key={k} id={`location-item-${i}-${j}-${k}`} className="mt-2 ml-4">
                               <div className="bg-white rounded-lg shadow-xs p-3 border-l-4 border-yellow-500 hover:shadow-sm transition">
                                 <div className="flex justify-between items-center">
                                   <span
@@ -1181,7 +1192,7 @@ const OlapComponent = () => {
                               {kota.isOpen &&
                                 kota.child &&
                                 kota.child.map((kecamatan, l) => (
-                                  <div key={l} className="mt-2 ml-4">
+                                  <div key={l} id={`location-item-${i}-${j}-${k}-${l}`} className="mt-2 ml-4">
                                     <div className="bg-white rounded-lg shadow-xs p-3 border-l-4 border-purple-500 hover:shadow-sm transition">
                                       <div className="flex justify-between items-center">
                                         <span
@@ -1228,7 +1239,7 @@ const OlapComponent = () => {
                                     {kecamatan.isOpen &&
                                       kecamatan.child &&
                                       kecamatan.child.map((desa, m) => (
-                                        <div key={m} className="mt-2 ml-4">
+                                        <div key={m} id={`location-item-${i}-${j}-${k}-${l}-${m}`} className="mt-2 ml-4">
                                           <div className="bg-white rounded-lg shadow-xs p-3 border-l-4 border-red-500 hover:shadow-sm transition">
                                             <div className="flex justify-between items-center">
                                               <span
@@ -1295,6 +1306,7 @@ const OlapComponent = () => {
           >
             <div className="absolute inset-0">
               <Map
+                key={mapKey}
                 bounds={mapBounds ?? undefined}
                 selectedLocation={selectedLocation}
                 olapData={olapData}
@@ -1320,13 +1332,7 @@ const OlapComponent = () => {
                   activeMapLayer === "hotspot-locations" ? "h-full w-full" : ""
                 }`}
                 style={{ height: "100%", width: "100%", margin: 0, padding: 0 }}
-                filters={{
-                  confidence: globalFilters.confidence?.toLowerCase(),
-                  satelite: globalFilters.satelite?.toLowerCase(),
-                  time: globalFilters.time,
-                  filterMode: globalFilters.filterMode,
-                  selectedDate: globalFilters.selectedDate,
-                }}
+                filters={memoizedFilters}
               />
             </div>
           </div>

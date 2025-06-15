@@ -2,7 +2,14 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
-import { MapContainer, TileLayer, GeoJSON, Popup, Marker, useMap } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  GeoJSON,
+  Popup,
+  Marker,
+  useMap,
+} from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { scaleThreshold } from "d3-scale";
 import L, { Map, GeoJSON as LeafletGeoJSON, Layer } from "leaflet";
@@ -35,7 +42,11 @@ interface CustomAttributionControlProps {
   className?: string;
 }
 
-const CustomAttributionControl: React.FC<CustomAttributionControlProps> = ({ position, attributionText, className }) => {
+const CustomAttributionControl: React.FC<CustomAttributionControlProps> = ({
+  position,
+  attributionText,
+  className,
+}) => {
   const map = useMap();
   const attributionRef = useRef<L.Control.Attribution | null>(null);
 
@@ -115,6 +126,8 @@ function normalizeRegionName(name: string): string {
     return "DAERAH ISTIMEWA YOGYAKARTA";
   }
   return name
+    .replace(/^DESA\s+/i, "")
+    .replace(/^KELURAHAN\s+/i, "")
     .replace(/^KOTA\s+/i, "")
     .replace(/^KABUPATEN\s+/i, "")
     .trim()
@@ -363,7 +376,10 @@ const MapComponent: React.FC<MapComponentProps> = ({
       const name = normalizeRegionName(getFeatureName(f, drillDownLevel) ?? "");
       const count = calculateHotspotCounts[name] ?? 0;
 
-      if (name.includes("YOGYAKARTA") && getFeatureName(f, drillDownLevel)?.toUpperCase().includes("YOGYAKARTA")) {
+      if (
+        name.includes("YOGYAKARTA") &&
+        getFeatureName(f, drillDownLevel)?.toUpperCase().includes("YOGYAKARTA")
+      ) {
         return true;
       }
       return count > 0;
@@ -371,7 +387,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
     return filtered;
   }, [geoData, drillDownLevel, olapData, calculateHotspotCounts]);
-
 
   // Perhitungan threshold untuk pewarnaan hotspot
   const { minHotspot, threshold1, threshold2 } = useMemo(() => {
@@ -532,20 +547,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
     return counts;
   };
 
-  useEffect(() => {
-    if (geoJsonRef.current && showJumlahHotspot) {
-      const geoJsonLayer = geoJsonRef.current;
-      geoJsonLayer.clearLayers();
-      if (getFilteredGeoFeatures.length > 0) {
-        geoJsonLayer.addData({
-          type: "FeatureCollection",
-          features: getFilteredGeoFeatures,
-        } as GeoJSON.FeatureCollection);
-        geoJsonLayer.setStyle(styleFeature);
-      }
-    }
-  }, [getFilteredGeoFeatures, showJumlahHotspot, styleFeature, filters]);
-
   const filteredHotspots = useMemo(() => {
     return hotspotData.filter((feature) => {
       const coords = feature.geometry?.coordinates;
@@ -558,6 +559,14 @@ const MapComponent: React.FC<MapComponentProps> = ({
       }
     });
   }, [hotspotData, showAllData, selectedDate]);
+
+  const mapStyle = useMemo(
+    () => ({
+      minHeight: "600px",
+      zIndex: 1,
+    }),
+    []
+  );
 
   useEffect(() => {
     if (selectedLocation && mapRef.current) {
@@ -583,6 +592,23 @@ const MapComponent: React.FC<MapComponentProps> = ({
       }
     }
   }, [drillDownLevel, geoData, selectedLocation]);
+
+  useEffect(() => {
+    if (drillDownLevel === "pulau" && mapRef.current) {
+      const indonesiaBounds = L.latLngBounds(
+        L.latLng(-11, 94),
+        L.latLng(6, 141)
+      );
+
+      const timer = setTimeout(() => {
+        if (mapRef.current) {
+          mapRef.current.fitBounds(indonesiaBounds);
+        }
+      }, 100);
+
+      return () => clearTimeout(timer);
+    }
+  }, [drillDownLevel]);
 
   const getCurrentFeatureName = useCallback(() => {
     if (!olapData?.query) return null;
@@ -714,16 +740,11 @@ const MapComponent: React.FC<MapComponentProps> = ({
           center={[-2.5, 118]}
           zoom={5}
           className="h-full w-full rounded-lg"
-          style={{
-            minHeight: "600px",
-            zIndex: 1,
-          }}
+          style={mapStyle}
           ref={mapRef}
           attributionControl={false}
         >
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
-          />
+          <TileLayer url="https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png" />
 
           {showLokasiHotspot && (
             <CustomAttributionControl
@@ -735,15 +756,16 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
           {showJumlahHotspot && getFilteredGeoFeatures.length === 0 ? (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-80 z-10">
-              <p className="text-gray-700 text-lg font-semibold">Tidak ada data</p>
+              <p className="text-gray-700 text-lg font-semibold">
+                Tidak ada data
+              </p>
             </div>
           ) : (
-            showJumlahHotspot && geoData[drillDownLevel] && (
+            showJumlahHotspot &&
+            geoData[drillDownLevel] && (
               <GeoJSON
                 ref={geoJsonRef}
-                key={`geojson-${drillDownLevel}-${JSON.stringify(filters)}-${
-                  filters.filterMode
-                }-${hotspotData.length}`}
+                key={`geojson-${drillDownLevel}`}
                 data={
                   {
                     type: "FeatureCollection",
@@ -785,7 +807,12 @@ const MapComponent: React.FC<MapComponentProps> = ({
                       layer.bringToFront();
                     },
                     mouseout: (e) => {
-                      geoJsonRef.current?.resetStyle(e.target);
+                      if (
+                        geoJsonRef.current &&
+                        geoJsonRef.current.hasLayer(e.target)
+                      ) {
+                        geoJsonRef.current?.resetStyle(e.target);
+                      }
                     },
                   });
                 }}
@@ -795,7 +822,9 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
           {showLokasiHotspot && filteredHotspots.length === 0 ? (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-80 z-10">
-              <p className="text-gray-700 text-lg font-semibold">Tidak ada data</p>
+              <p className="text-gray-700 text-lg font-semibold">
+                Tidak ada data
+              </p>
             </div>
           ) : (
             showLokasiHotspot && (
@@ -825,7 +854,8 @@ const MapComponent: React.FC<MapComponentProps> = ({
               >
                 {filteredHotspots.map((feature, index) => {
                   const [longitude, latitude] = feature.geometry.coordinates;
-                  const confidence = feature.properties?.confidence || "unknown";
+                  const confidence =
+                    feature.properties?.confidence || "unknown";
                   const date =
                     feature.properties?.time?.split("T")[0] || "Unknown";
                   const time = extractTime(
