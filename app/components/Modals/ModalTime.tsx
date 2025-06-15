@@ -518,7 +518,7 @@ export default function ModalTime({
         >
           <span>{currentValue || placeholder}</span>
           {loading[type] ? (
-            <FontAwesomeIcon icon={faSpinner} spin className="text-blue-500" />
+            <FontAwesomeIcon icon={faSpinner} spin className="text-green-600" />
           ) : (
             <FontAwesomeIcon
               icon={showDropdown ? faChevronUp : faChevronDown}

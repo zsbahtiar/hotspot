@@ -1063,9 +1063,8 @@ const OlapComponent = () => {
                   icon={faSpinner}
                   spin
                   size="2x"
-                  className="text-blue-500 mb-2"
+                  className="text-green-600 mb-2"
                 />
-                <p className="text-gray-700 text-sm">Loading data...</p>
               </div>
             ) : data && data.length > 0 ? (
               data.map((item, i) => (
@@ -1361,7 +1360,7 @@ const OlapComponent = () => {
                       icon={faSpinner}
                       spin
                       size="3x"
-                      className="text-blue-500 mb-4"
+                      className="text-green-600 mb-4"
                     />
                     <p className="text-gray-500 text-md">Loading data...</p>
                   </div>

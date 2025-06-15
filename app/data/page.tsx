@@ -269,7 +269,7 @@ export default function HotspotTable() {
           icon={faSpinner}
           spin
           size="3x"
-          className="text-blue-500 mb-4"
+          className="text-green-600 mb-4"
         />
         <p className="text-gray-700 text-lg">
           Loading data hotspot, mohon tunggu...

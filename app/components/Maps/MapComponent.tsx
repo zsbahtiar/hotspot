@@ -705,7 +705,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
             icon={faSpinner}
             spin
             size="3x"
-            className="text-blue-500 mb-4"
+            className="text-green-600 mb-4"
           />
         </div>
       ) : (
