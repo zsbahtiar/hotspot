@@ -161,7 +161,7 @@ const Main = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/map">
+              <Link href="/olaps">
                 <button className="text-white bg-green-600 hover:bg-green-700 px-8 py-4 rounded-full text-lg font-semibold transition-colors duration-300 shadow-lg hover:shadow-green-500/30">
                   Pantau Peta Hotspot
                 </button>

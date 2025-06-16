@@ -4,6 +4,8 @@ import { Plus_Jakarta_Sans } from 'next/font/google';
 import 'react-tooltip/dist/react-tooltip.css';
 import '@fortawesome/fontawesome-svg-core/styles.css';
 import { config } from '@fortawesome/fontawesome-svg-core';
+import OfflineBanner from "./components/OfflineBanner";
+
 config.autoAddCss = false;
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -31,6 +33,7 @@ export default function RootLayout({
       <body
         className={`${plusJakarta.variable} ${plusJakarta.variable} antialiased`}
       >
+        <OfflineBanner />
         {children}
       </body>
     </html>
