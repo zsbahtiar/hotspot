@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useState, useEffect, useMemo } from "react";
 import {
   Chart as ChartJS,
-  Tooltip,
+  Tooltip as ChartTooltip,
   Legend,
   CategoryScale,
   LinearScale,
@@ -16,9 +16,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { HotspotDataGeo } from "../core/model/hotspot";
 import { formatNumber, extractTime, formatDate } from "../core/utilities/formatters";
+import { Tooltip } from "react-tooltip";
 
 ChartJS.register(
-  Tooltip,
+  ChartTooltip,
   Legend,
   CategoryScale,
   LinearScale,
@@ -134,6 +135,10 @@ const Main = () => {
 
   return (
     <div className="bg-white">
+      <Tooltip 
+        id="confidence-tooltip"
+        style={{ backgroundColor: "#2d3748", color: "#fff", maxWidth: '250px', fontSize: '12px', zIndex: 9999 }}
+      />
       <section className="relative w-full h-screen min-h-[600px] pt-24">
         <div className="absolute inset-0">
           <Image
@@ -241,7 +246,7 @@ const Main = () => {
                     </svg>
                   </div>
                   <h3 className="text-xl font-bold ml-3 text-gray-900">
-                    Hotspot Terbaru
+                    5 Data Hotspot Terbaru
                   </h3>
                 </div>
 
@@ -457,8 +462,15 @@ const Main = () => {
                     <div className="text-2xl font-bold text-orange-600">
                       {formatNumber(stats.highConfidence)}
                     </div>
-                    <div className="text-sm text-gray-600">
+                    <div className="text-sm text-gray-600 flex items-center justify-center">
                       Confidence Tinggi
+                      <span 
+                        className="ml-1.5 bg-gray-300 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs font-bold cursor-help"
+                        data-tooltip-id="confidence-tooltip"
+                        data-tooltip-content="Tingkat kepercayaan (Confidence) adalah perkiraan dari satelit seberapa besar kemungkinan sebuah hotspot benar-benar merupakan kebakaran. Confidence tinggi berarti menunjukkan bahwa lokasi tersebut memiliki kemungkinan besar merupakan kebakaran hutan atau lahan yang nyata."
+                      >
+                        ?
+                      </span>
                     </div>
                   </div>
                   <div className="bg-blue-50 p-4 rounded-lg text-center">

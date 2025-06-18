@@ -22,7 +22,7 @@ export default function MapLegend({
           <strong>Persebaran Jumlah Hotspot</strong><br />
           <div>
             <span style={{
-              background: "#B3D1FF",
+              background: "#FFCDD2",
               display: "inline-block",
               width: 18,
               height: 18,
@@ -33,7 +33,7 @@ export default function MapLegend({
           </div>
           <div>
             <span style={{
-              background: "#4F8EF7",
+              background: "#EF5350",
               display: "inline-block",
               width: 18,
               height: 18,
@@ -44,7 +44,7 @@ export default function MapLegend({
           </div>
           <div>
             <span style={{
-              background: "#0047AB",
+              background: "#B71C1C",
               display: "inline-block",
               width: 18,
               height: 18,
@@ -58,9 +58,9 @@ export default function MapLegend({
 
       {showLokasiHotspot && (
         <div className="legend-box absolute bottom-20 left-5 z-[1000] bg-white p-3 rounded-lg shadow-md">
-          <strong>Confidence Hotspot</strong><br />
+          <strong>Level Confidence Hotspot</strong><br />
           <div className="mt-2 text-xs text-gray-800">
-            <i>Klik / zoom in untuk melihat titik hotspot individual</i>
+            <i>Klik dan zoom in marker untuk melihat titik hotspot individual</i>
           </div>
           <div>
             <span style={{

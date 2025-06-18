@@ -7,6 +7,7 @@ import DatePicker, { DateObject } from "react-multi-date-picker";
 import { utils, writeFile } from "xlsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { extractTime } from "../core/utilities/formatters";
 import {
   HotspotFeature,
   HotspotData,
@@ -24,15 +25,15 @@ export default function HotspotTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState<"detail" | "akumulasi">("detail");
   const itemsPerPage = 10;
-  const [sortBy, setSortBy] = useState<string>("");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [sortBy, setSortBy] = useState<string>("properties.hotspot_time");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   const getLatestDate = (hotspots: HotspotFeature[]) => {
     if (!hotspots || hotspots.length === 0) return null;
     const sorted = [...hotspots].sort(
       (a, b) =>
-        new Date(b.properties.time).getTime() -
-        new Date(a.properties.time).getTime()
+        new Date(b.properties.hotspot_time).getTime() -
+        new Date(a.properties.hotspot_time).getTime()
     );
     return sorted[0].properties.time.split("T")[0];
   };
@@ -199,15 +200,15 @@ export default function HotspotTable() {
       viewMode === "detail"
         ? filteredData.map((item) => ({
             Tanggal: item.properties.time,
-            Waktu: item.properties.hotspot_time,
-            Satelit: item.properties.satellite,
-            Confidence: item.properties.confidence,
-            Jumlah: item.properties.hotspot_count,
+            Waktu: extractTime(item.properties.hotspot_time),
             Pulau: item.properties.location.pulau,
             Provinsi: item.properties.location.provinsi,
             Kota: item.properties.location.kab_kota,
             Kecamatan: item.properties.location.kecamatan,
             Desa: item.properties.location.desa,
+            Satelit: item.properties.satellite,
+            Confidence: item.properties.confidence,
+            Jumlah: item.properties.hotspot_count,
             Latitude: item.geometry.coordinates[1],
             Longitude: item.geometry.coordinates[0],
           }))
@@ -299,7 +300,7 @@ export default function HotspotTable() {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-grow container mx-auto px-4 py-8">
+      <main className="flex-grow w-[92vw] mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-6">Data Hotspot</h1>
 
         {/* Filter */}
@@ -488,9 +489,6 @@ export default function HotspotTable() {
                     <>
                       {sortHeader("Tanggal", "properties.time")}
                       {sortHeader("Waktu", "properties.hotspot_time")}
-                      {sortHeader("Satelit", "properties.satellite")}
-                      {sortHeader("Confidence", "properties.confidence")}
-                      {sortHeader("Jumlah", "properties.hotspot_count")}
                       {sortHeader("Pulau", "properties.location.pulau")}
                       {sortHeader("Provinsi", "properties.location.provinsi")}
                       {sortHeader(
@@ -499,6 +497,9 @@ export default function HotspotTable() {
                       )}
                       {sortHeader("Kecamatan", "properties.location.kecamatan")}
                       {sortHeader("Desa", "properties.location.desa")}
+                      {sortHeader("Satelit", "properties.satellite")}
+                      {sortHeader("Confidence", "properties.confidence")}
+                      {sortHeader("Jumlah", "properties.hotspot_count")}
                       {sortHeader("Koordinat", "geometry.coordinates")}
                     </>
                   ) : (
@@ -527,30 +528,9 @@ export default function HotspotTable() {
                             {(item as HotspotFeature).properties.time}
                           </td>
                           <td className="px-4 py-2">
-                            {(item as HotspotFeature).properties.hotspot_time}
+                            {extractTime((item as HotspotFeature).properties.hotspot_time)}
                           </td>
-                          <td className="px-4 py-2">
-                            {(item as HotspotFeature).properties.satellite}
-                          </td>
-                          <td className="px-4 py-2">
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs ${
-                                (item as HotspotFeature).properties
-                                  .confidence === "high"
-                                  ? "bg-red-100 text-black"
-                                  : (item as HotspotFeature).properties
-                                      .confidence === "medium"
-                                  ? "bg-yellow-100 text-black"
-                                  : "bg-green-100 text-black"
-                              }`}
-                            >
-                              {(item as HotspotFeature).properties.confidence}
-                            </span>
-                          </td>
-                          <td className="px-4 py-2">
-                            {(item as HotspotFeature).properties.hotspot_count}
-                          </td>
-                          <td className="px-4 py-2">
+                           <td className="px-4 py-2">
                             {(item as HotspotFeature).properties.location.pulau}
                           </td>
                           <td className="px-4 py-2">
@@ -573,6 +553,27 @@ export default function HotspotTable() {
                           </td>
                           <td className="px-4 py-2">
                             {(item as HotspotFeature).properties.location.desa}
+                          </td>
+                          <td className="px-4 py-2">
+                            {(item as HotspotFeature).properties.satellite}
+                          </td>
+                          <td className="px-4 py-2">
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs ${
+                                (item as HotspotFeature).properties
+                                  .confidence === "high"
+                                  ? "bg-red-100 text-black"
+                                  : (item as HotspotFeature).properties
+                                      .confidence === "medium"
+                                  ? "bg-yellow-100 text-black"
+                                  : "bg-green-100 text-black"
+                              }`}
+                            >
+                              {(item as HotspotFeature).properties.confidence}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2">
+                            {(item as HotspotFeature).properties.hotspot_count}
                           </td>
                           <td className="px-4 py-2">
                             {(item as HotspotFeature).geometry.coordinates[1]},{" "}

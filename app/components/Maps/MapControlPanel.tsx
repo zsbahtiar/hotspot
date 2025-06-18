@@ -85,7 +85,7 @@ export default function MapControlPanel({
                   <span
                     className="ml-1 text-gray-700 cursor-help text-xs font-medium"
                     data-tooltip-id="layer-info"
-                    data-tooltip-content="Menampilkan persebaran hotspot dengan pewarnaan berdasarkan filter periode waktu di panel kiri."
+                    data-tooltip-content="Menampilkan persebaran jumlah hotspot dengan pewarnaan."
                     data-tooltip-place="left"
                   >
                     {" "}ⓘ
@@ -110,7 +110,7 @@ export default function MapControlPanel({
                   <span
                     className="ml-1 text-gray-700 cursor-help text-xs font-medium"
                     data-tooltip-id="layer-info"
-                    data-tooltip-content="Menampilkan titik lokasi hotspot individual. Filter tanggal di bawah hanya berlaku untuk layer ini."
+                    data-tooltip-content="Menampilkan titik lokasi hotspot individual."
                     data-tooltip-place="left"
                   >
                     {" "}ⓘ
@@ -118,14 +118,15 @@ export default function MapControlPanel({
                 </div>
               </div>
             </div>
-
-            <div className={`border-t pt-3 ${!showLokasiHotspot ? 'opacity-60 pointer-events-none' : ''}`}>
+          
+          {showLokasiHotspot && (
+            <div className="border-t pt-3">
               <h3 className="font-medium text-sm mb-2">
                 Pilih Tanggal
                 <span
                   className="ml-1 text-gray-700 cursor-help text-xs font-medium"
                   data-tooltip-id="filter-date-info"
-                  data-tooltip-content="Menampilkan titik lokasi hotspot sesuai tanggal yang dipilih dan hanya berlaku untuk layer Lokasi Hotspot."
+                  data-tooltip-content="Menampilkan titik lokasi hotspot sesuai tanggal yang dipilih."
                   data-tooltip-place="left"
                 >
                   {" "}ⓘ
@@ -151,6 +152,7 @@ export default function MapControlPanel({
                 )}
               </div>
             </div>
+          )}
           </>
         )}
       </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import useSWR from "swr";
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import {
   MapContainer,
@@ -18,6 +19,7 @@ import {
   faExpand,
   faCompress,
   faSpinner,
+  faExclamationTriangle,
 } from "@fortawesome/free-solid-svg-icons";
 import { DrillDownLevel } from "../../core/model/location";
 import { FeatureCollection } from "geojson";
@@ -35,6 +37,25 @@ import { formatNumber, extractTime } from "../../core/utilities/formatters";
 import MapControlPanel from "./MapControlPanel";
 import MapLegend from "./MapLegend";
 import { monthNames } from "@/app/core/model/time";
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
+const geoJsonUrls = [
+  "/maps/batas_pulau.geojson",
+  "/maps/batas_provinsi.geojson",
+  "/maps/batas_kabkota.geojson",
+  "/maps/batas_kecamatan.geojson",
+  "/maps/batas_keldesa.geojson",
+];
+const geoJsonFetcher = async (urls: string[]) => {
+  const responses = await Promise.all(urls.map((url) => fetch(url)));
+  for (const response of responses) {
+    if (!response.ok) {
+      throw new Error(`Failed to fetch ${response.url}: ${response.statusText}`);
+    }
+  }
+  return Promise.all(responses.map((res) => res.json()));
+};
 
 interface CustomAttributionControlProps {
   position: L.ControlPosition;
@@ -181,16 +202,51 @@ const MapComponent: React.FC<MapComponentProps> = ({
   filters = {},
   onLayerChange,
 }) => {
-  const [geoData, setGeoData] = useState<GeoData>({
-    pulau: null,
-    provinsi: null,
-    kota: null,
-    kecamatan: null,
-    desa: null,
-  });
-  const [hotspotData, setHotspotData] = useState<HotspotFeatureGeo[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [dateCounts, setDateCounts] = useState<Record<string, number>>({});
+  const { 
+    data: geoJsonData, 
+    error: geoJsonError, 
+    isLoading: isGeoJsonLoading 
+  } = useSWR('geoJsonData', () => geoJsonFetcher(geoJsonUrls));
+
+  const geoData: GeoData = useMemo(() => ({
+    pulau: geoJsonData?.[0] || null,
+    provinsi: geoJsonData?.[1] || null,
+    kota: geoJsonData?.[2] || null,
+    kecamatan: geoJsonData?.[3] || null,
+    desa: geoJsonData?.[4] || null,
+  }), [geoJsonData]);
+
+  const getHotspotData = useMemo(() => {
+    const params = new URLSearchParams();
+    if (filters?.confidence) params.append("confidence", filters.confidence);
+    if (filters?.satelite) params.append("satelite", filters.satelite);
+    if (filters?.filterMode === "date" && filters?.selectedDate) {
+      params.append("tanggal", filters.selectedDate);
+    } else if (filters?.filterMode === "period" && filters?.time) {
+      if (filters.time.tahun) params.append("tahun", filters.time.tahun);
+      if (filters.time.semester) params.append("semester", filters.time.semester);
+      if (filters.time.kuartal) params.append("quartal", filters.time.kuartal.replace("Q", ""));
+      if (filters.time.bulan) {
+        const monthIndex = monthNames.indexOf(filters.time.bulan) + 1;
+        if (monthIndex > 0) params.append("bulan", monthIndex.toString());
+      }
+      if (filters.time.minggu) params.append("minggu", filters.time.minggu);
+    }
+    return `${process.env.NEXT_PUBLIC_API_URL}/api/hotspot?${params.toString()}`;
+  }, [filters]);
+
+  const { 
+    data: hotspotApiResponse, 
+    error: hotspotError, 
+    isLoading: isHotspotLoading 
+  } = useSWR(getHotspotData, fetcher);
+
+  const hotspotData: HotspotFeatureGeo[] = useMemo(
+    () => hotspotApiResponse?.features || [], 
+    [hotspotApiResponse]
+  );
+
+  // const [dateCounts, setDateCounts] = useState<Record<string, number>>({});
   const [showAllData] = useState<boolean>(false);
   const mapRef = useRef<Map | null>(null);
   const geoJsonRef = useRef<LeafletGeoJSON | null>(null);
@@ -199,7 +255,34 @@ const MapComponent: React.FC<MapComponentProps> = ({
   const [isMobile, setIsMobile] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isControlPanelCollapsed, setIsControlPanelCollapsed] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<string>("");
+  // const [selectedDate, setSelectedDate] = useState<string>("");
+
+  const calculateDateCounts = (data: HotspotFeatureGeo[]) => {
+    const counts: Record<string, number> = {};
+    data.forEach((feature) => {
+      const date = feature.properties?.time?.split("T")[0] || "Unknown";
+      if (date) {
+        counts[date] = (counts[date] || 0) + 1;
+      }
+    });
+    return counts;
+  };
+
+  const { dateCounts, initialSelectedDate } = useMemo(() => {
+    if (!hotspotData || hotspotData.length === 0) {
+      return { dateCounts: {}, initialSelectedDate: "" };
+    }
+    const counts = calculateDateCounts(hotspotData);
+    const dates = Object.keys(counts).sort().reverse();
+    const initialDate = dates.length > 0 ? dates[0] : "";
+    return { dateCounts: counts, initialSelectedDate: initialDate };
+  }, [hotspotData]);
+
+  const [selectedDate, setSelectedDate] = useState(initialSelectedDate);
+
+  useEffect(() => {
+    setSelectedDate(initialSelectedDate);
+  }, [initialSelectedDate]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -414,7 +497,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
   const colorScale = useMemo(() => {
     return scaleThreshold<number, string>()
       .domain([threshold1, threshold2])
-      .range(["#B3D1FF", "#4F8EF7", "#0047AB"]);
+      .range(["#FFCDD2", "#EF5350", "#B71C1C"]);
   }, [threshold1, threshold2]);
 
   const styleFeature = useCallback(
@@ -437,115 +520,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
     },
     [drillDownLevel, calculateHotspotCounts, colorScale]
   );
-
-  useEffect(() => {
-    const fetchGeoJSON = async () => {
-      try {
-        const [pulauRes, provRes, kotRes, kecRes, desaRes] = await Promise.all([
-          fetch("/maps/batas_pulau.geojson"),
-          fetch("/maps/batas_provinsi.geojson"),
-          fetch("/maps/batas_kabkota.geojson"),
-          fetch("/maps/batas_kecamatan.geojson"),
-          fetch("/maps/batas_keldesa.geojson"),
-        ]);
-        const [pulauData, provData, kotData, kecData, desaData] =
-          await Promise.all([
-            pulauRes.json(),
-            provRes.json(),
-            kotRes.json(),
-            kecRes.json(),
-            desaRes.json(),
-          ]);
-        setGeoData({
-          pulau: pulauData,
-          provinsi: provData,
-          kota: kotData,
-          kecamatan: kecData,
-          desa: desaData,
-        });
-      } catch (error) {
-        console.error("Error loading GeoJSON:", error);
-      } finally {
-      }
-    };
-    fetchGeoJSON();
-  }, []);
-
-  useEffect(() => {
-    const getHotspotData = async () => {
-      setLoading(true);
-      try {
-        const params = new URLSearchParams();
-
-        // Filter confidence & satellite
-        if (filters?.confidence)
-          params.append("confidence", filters.confidence);
-        if (filters?.satelite) params.append("satelite", filters.satelite);
-
-        // Filter waktu berdasarkan mode
-        if (filters?.filterMode === "date" && filters?.selectedDate) {
-          params.append("tanggal", filters.selectedDate);
-        } else if (filters?.filterMode === "period" && filters?.time) {
-          if (filters.time.tahun) params.append("tahun", filters.time.tahun);
-
-          if (filters.time.semester)
-            params.append("semester", filters.time.semester);
-          if (filters.time.kuartal)
-            params.append("quartal", filters.time.kuartal.replace("Q", ""));
-
-          if (filters.time.bulan) {
-            const monthIndex = monthNames.indexOf(filters.time.bulan) + 1;
-            if (monthIndex > 0) {
-              params.append("bulan", monthIndex.toString());
-            }
-          }
-
-          if (filters.time.minggu) params.append("minggu", filters.time.minggu);
-        }
-
-        // Fetch data
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/hotspot?${params.toString()}`
-        );
-
-        if (!response.ok)
-          throw new Error(`HTTP error! status: ${response.status}`);
-
-        const data = await response.json();
-        if (!data.features)
-          throw new Error("Invalid data format: missing 'features'");
-
-        setHotspotData(data.features);
-        setDateCounts(calculateDateCounts(data.features));
-
-        const dates = Object.keys(calculateDateCounts(data.features))
-          .sort()
-          .reverse();
-        if (dates.length > 0) setSelectedDate(dates[0]);
-        else setSelectedDate("");
-      } catch (error) {
-        console.error("Error fetching hotspot data:", error);
-        setHotspotData([]);
-        setDateCounts({});
-        setSelectedDate("");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    getHotspotData();
-  }, [filters]);
-
-  const calculateDateCounts = (data: HotspotFeatureGeo[]) => {
-    const counts: Record<string, number> = {};
-    data.forEach((feature) => {
-      const date = feature.properties?.time?.split("T")[0] || "Unknown";
-      if (date) {
-        counts[date] = (counts[date] || 0) + 1;
-      }
-    });
-    return counts;
-  };
 
   const filteredHotspots = useMemo(() => {
     return hotspotData.filter((feature) => {
@@ -679,6 +653,9 @@ const MapComponent: React.FC<MapComponentProps> = ({
     showJumlahHotspot,
   ]);
 
+  const loading = isGeoJsonLoading || isHotspotLoading;
+  const error = geoJsonError || hotspotError;
+
   return (
     <div
       className={`relative ${className} ${
@@ -733,6 +710,20 @@ const MapComponent: React.FC<MapComponentProps> = ({
             size="3x"
             className="text-green-600 mb-4"
           />
+          <p className="text-gray-700">Loading...</p>
+        </div>
+      ) : error ? (
+         <div
+          className="flex flex-col items-center justify-center h-full w-full bg-red-50 rounded-lg"
+          style={{ minHeight: "600px" }}
+        >
+          <FontAwesomeIcon
+            icon={faExclamationTriangle}
+            size="3x"
+            className="text-red-500 mb-4"
+          />
+          <p className="text-red-700 font-semibold">Gagal memuat data</p>
+          <p className="text-red-600 text-sm mt-1">{error.message}</p>
         </div>
       ) : (
         <MapContainer
@@ -765,7 +756,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
             geoData[drillDownLevel] && (
               <GeoJSON
                 ref={geoJsonRef}
-                key={`geojson-${drillDownLevel}`}
+                key={`geojson-${drillDownLevel}-${getHotspotData}`}
                 data={
                   {
                     type: "FeatureCollection",

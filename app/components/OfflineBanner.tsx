@@ -21,8 +21,8 @@ export default function OfflineBanner() {
   if (!isOffline) return null;
 
   return (
-    <div className="bg-yellow-100 text-yellow-800 p-2 text-center z-50">
-      Anda sedang offline. Beberapa data mungkin tidak dapat dimuat.
+    <div className="fixed top-0 left-0 right-0 bg-yellow-100 text-yellow-800 p-2 text-center z-[1000]">
+      Anda sedang offline.
     </div>
   );
 }

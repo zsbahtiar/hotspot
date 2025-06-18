@@ -5,6 +5,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { IChart, QueryData } from "../../core/model/query";
 import { DrillDownLevel } from "../../core/model/location";
 import { OlapService } from "../../core/services/OlapService";
+import useSWR from "swr";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -54,6 +55,18 @@ interface Data {
 
 type OlapData = [string, number];
 
+const fetcher = async (url: string) => {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error('An error occurred while fetching the data.');
+  }
+  return response.json();
+};
+
+const olapFetcher = async ([endpoint, params]: [string, QueryData]) => {
+  return await OlapService.query(endpoint, params);
+};
+
 const OlapComponent = () => {
   const hasFetched = useRef(false);
   const scrollTargetId = useRef<string | null>(null);
@@ -84,139 +97,172 @@ const OlapComponent = () => {
     query: {} as QueryData,
     tipe: "pulau" as DrillDownLevel,
   });
+  const [drillDownQuery, setDrillDownQuery] = useState<QueryData | null>(null)
+  const [drillDownIndexes, setDrillDownIndexes] = useState<number[]>([]);
 
-  const fetchOlapData = useCallback(async () => {
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/hotspot`
-      );
-      const data = await response.json();
-      setOlapData(data);
-    } catch (error) {
-      console.error("Error fetching OLAP data:", error);
+  // Fetch data 
+  const { data: olapApiData } = useSWR(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/hotspot`,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+
+  const { data: locationApiData } = useSWR(
+    `${process.env.NEXT_PUBLIC_API_URL}/api/location`,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+
+  const locationQueryParams = useMemo(() => {
+    return { dimension: "location" };
+  }, []);
+
+  const { data: locationQueryData, isLoading: isLocationLoading } = useSWR(
+    hasFetched.current ? null : ['location', locationQueryParams],
+    olapFetcher,
+    { revalidateOnFocus: false }
+  );
+
+  const confidenceQueryParams = useMemo(() => {
+    return { dimension: "confidence" };
+  }, []);
+
+  const { data: confidenceQueryData } = useSWR(
+    ['confidence', confidenceQueryParams],
+    olapFetcher,
+    { revalidateOnFocus: false }
+  );
+
+  const satelliteQueryParams = useMemo(() => {
+    return { dimension: "satelite" };
+  }, []);
+
+  const { data: satelliteQueryData } = useSWR(
+    ['satelite', satelliteQueryParams],
+    olapFetcher,
+    { revalidateOnFocus: false }
+  );
+
+  const filteredQueryParams = useMemo(() => {
+    let timeParams = {};
+    
+    if (globalFilters.filterMode === "period") {
+      timeParams = {
+        ...(globalFilters.time.tahun && { tahun: globalFilters.time.tahun }),
+        ...(globalFilters.time.semester && { semester: globalFilters.time.semester }),
+        ...(globalFilters.time.kuartal && { kuartal: globalFilters.time.kuartal }),
+        ...(globalFilters.time.bulan && { bulan: globalFilters.time.bulan }),
+        ...(globalFilters.time.minggu && { minggu: globalFilters.time.minggu }),
+      };
+    } else if (globalFilters.filterMode === "date" && globalFilters.selectedDate) {
+      timeParams = getTimeParamsFromDate(globalFilters.selectedDate);
     }
-  }, []);
-
-  useEffect(() => {
-    const fetchAllLocations = async () => {
-      try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/location`);
-        const data: LocationData[] = await response.json();
-        setAllLocationData(data);
-      } catch (error) {
-        console.error("Error fetching all location data:", error);
-      }
+    return {
+      dimension: "location",
+      ...(globalFilters.confidence && { confidence: globalFilters.confidence }),
+      ...(globalFilters.satelite && { satelite: globalFilters.satelite }),
+      ...timeParams,
     };
-    fetchAllLocations();
-  }, []);
+  }, [
+    globalFilters.confidence,
+    globalFilters.satelite,
+    globalFilters.time,
+    globalFilters.filterMode,
+    globalFilters.selectedDate,
+  ]);
+
+  // SWR hook
+  const { data: filteredData, isLoading: isFilteredLoading } = useSWR(
+    hasFetched.current ? ['location', filteredQueryParams] : null,
+    olapFetcher,
+    { revalidateOnFocus: false }
+  );
+
+  const { data: drillDownData, isLoading: isDrillDownLoading } = useSWR(
+    drillDownQuery ? ['location', drillDownQuery] : null,
+    olapFetcher,
+    { revalidateOnFocus: false }
+  );
 
   const setChart = useCallback((data: IChart) => {
     const chartData: ChartData<"bar"> = {
       labels: data.labels,
       datasets: [
-        { data: data.values, label: "Titik Panas", backgroundColor: "#898989" },
+        {
+          data: data.values,
+          label: "Titik Panas",
+          backgroundColor: "#898989",
+        },
       ],
     };
     setBarChartData(chartData);
   }, []);
 
-  const getDataLocation = useCallback(
-    async (target: string) => {
-      try {
-        const queryParams: QueryData = {
-          dimension: target,
-        };
+  // Update data
+  useEffect(() => {
+    if (olapApiData) {
+      setOlapData(olapApiData);
+    }
+  }, [olapApiData]);
 
-        const res = (await OlapService.query("location", queryParams)) as [string, number][];
+  useEffect(() => {
+    if (locationApiData) {
+      setAllLocationData(locationApiData);
+    }
+  }, [locationApiData]);
 
-        const chart: IChart = {
-          labels: [],
-          values: [],
-        };
-
-        if (Array.isArray(res) && res.length > 0) {
-          const newData: Data[] = [];
-          res.forEach((d: [string, number]) => {
-            chart.labels.push(d[0]);
-            chart.values.push(d[1]);
-
-            newData.push({
-              data: d[0],
-              total: d[1],
-              modal: false,
-              query: { pulau: d[0] as string },
-              child: [],
-              isOpen: false,
-            });
-          });
-          setData(newData);
-          setChart(chart);
-        } else {
-          setData([]);
-          setBarChartData(null);
-          console.warn("No data returned for location query.");
-        }
-      } catch (err) {
-        console.error("Error fetching data:", err);
-        setData([]);
-        setBarChartData(null);
-        setIsLoading(false);
-      }
-    },
-    [setChart, setIsLoading, setData]
-  );
-
-  const applyGlobalFilters = useCallback(async () => {
-    try {
-      let timeParams = {};
-
-      if (globalFilters.filterMode === "period") {
-        timeParams = {
-          ...(globalFilters.time.tahun && { tahun: globalFilters.time.tahun }),
-          ...(globalFilters.time.semester && {
-            semester: globalFilters.time.semester,
-          }),
-          ...(globalFilters.time.kuartal && {
-            kuartal: globalFilters.time.kuartal,
-          }),
-          ...(globalFilters.time.bulan && { bulan: globalFilters.time.bulan }),
-          ...(globalFilters.time.minggu && {
-            minggu: globalFilters.time.minggu,
-          }),
-        };
-      } else if (
-        globalFilters.filterMode === "date" &&
-        globalFilters.selectedDate
-      ) {
-        timeParams = getTimeParamsFromDate(globalFilters.selectedDate);
-      }
-      const params = {
-        dimension: "location",
-        ...(globalFilters.confidence && {
-          confidence: globalFilters.confidence,
-        }),
-        ...(globalFilters.satelite && { satelite: globalFilters.satelite }),
-        ...timeParams,
-      };
-
-      setData([]);
-      setBarChartData(null);
-      setIsLoading(true);
-
-      const res = (await OlapService.query("location", params)) as OlapData[];
-
-      if (!Array.isArray(res)) {
-        throw new Error("Invalid response format: expected array");
-      }
-
+  useEffect(() => {
+    if (locationQueryData && Array.isArray(locationQueryData) && !hasFetched.current) {
       const chart: IChart = {
         labels: [],
         values: [],
       };
 
       const newData: Data[] = [];
-      if (res.length > 0) {
-        res.forEach((d: [string, number]) => {
+      (locationQueryData as [string, number][]).forEach((d) => {
+        chart.labels.push(d[0]);
+        chart.values.push(d[1]);
+
+        newData.push({
+          data: d[0],
+          total: d[1],
+          modal: false,
+          query: { pulau: d[0] as string },
+          child: [],
+          isOpen: false,
+        });
+      });
+      
+      setData(newData);
+      setChart(chart);
+      hasFetched.current = true;
+    }
+  }, [locationQueryData, setChart]);
+
+  useEffect(() => {
+    if (confidenceQueryData) {
+      setDataConfidence(confidenceQueryData as OlapData[]);
+    }
+  }, [confidenceQueryData]);
+
+  useEffect(() => {
+    if (satelliteQueryData) {
+      setDataSatelite(satelliteQueryData as OlapData[]);
+    }
+  }, [satelliteQueryData]);
+
+  useEffect(() => {
+    if (filteredData && hasFetched.current) {
+      setDrillDownQuery(null);
+      setDrillDownIndexes([]);
+      const chart: IChart = {
+        labels: [],
+        values: [],
+      };
+
+      const newData: Data[] = [];
+      if (Array.isArray(filteredData) && filteredData.length > 0) {
+        (filteredData as [string, number][]).forEach((d) => {
           if (!Array.isArray(d) || d.length < 2) {
             console.warn("Skipping invalid data item:", d);
             return;
@@ -231,57 +277,107 @@ const OlapComponent = () => {
             modal: false,
             query: {
               pulau: d[0],
-              ...params,
+              ...filteredQueryParams,
             },
             child: [],
             isOpen: false,
           });
         });
       }
-
+      
       setData(newData);
       setChart(chart);
-    } catch (err) {
-      console.error("Error applying global filters:", err);
-      setData([]);
-      setBarChartData(null);
-    } finally {
-      setIsLoading(false);
     }
-  }, [
-    globalFilters.confidence,
-    globalFilters.satelite,
-    globalFilters.time,
-    globalFilters.filterMode,
-    globalFilters.selectedDate,
-    setIsLoading,
-    setData,
-    setChart,
-  ]);
+  }, [filteredData, filteredQueryParams, setChart]);
 
-  const resetAllFilters = () => {
-    setGlobalFilters({
-      confidence: undefined,
-      satelite: undefined,
-      time: {},
-      filterMode: undefined,
-      selectedDate: undefined,
-    });
-    getDataLocation("location");
-    setDrillDownLevel("pulau");
+  useEffect(() => {
+    if (drillDownData && drillDownIndexes.length > 0 && drillDownQuery) {
+      const chart: IChart = {
+        labels: [],
+        values: [],
+      };
 
-    setMapBounds(null);
-    setSelectedLocation(undefined);
-    setMapKey(Date.now());
-  };
+      const hasil: Data[] = [];
+      if (Array.isArray(drillDownData) && drillDownData.length > 0) {
+        (drillDownData as [string, number][]).forEach((d) => {
+          if (!Array.isArray(d) || d.length < 2) {
+            console.warn("Invalid drilldown data item:", d);
+            return;
+          }
+          const name = d[0];
+          const total = d[1];
+        
+          chart.labels.push(name);
+          chart.values.push(total);
 
-  const memoizedFilters = useMemo(() => ({
-    confidence: globalFilters.confidence?.toLowerCase(),
-    satelite: globalFilters.satelite?.toLowerCase(),
-    time: globalFilters.time,
-    filterMode: globalFilters.filterMode,
-    selectedDate: globalFilters.selectedDate,
-  }), [globalFilters]);
+          const drillDownTipe = (drillDownQuery as QueryData & { tipe?: DrillDownLevel })?.tipe;
+          const locationDetail = allLocationData.find(loc => {
+            if (drillDownTipe === 'provinsi') return loc.provinsi === name;
+            if (drillDownTipe === 'kota') return loc.kab_kota === name;
+            if (drillDownTipe === 'kecamatan') return loc.kecamatan === name;
+            if (drillDownTipe === 'desa') return loc.desa === name;
+            return false;
+          });
+
+          const param = {
+            ...drillDownQuery,
+            [(drillDownQuery as QueryData & { tipe?: DrillDownLevel })?.tipe as string]: name,
+            lat: locationDetail?.lat,
+            lng: locationDetail?.lng,
+          };
+
+          hasil.push({
+            data: d[0],
+            total: d[1],
+            modal: false,
+            query: param,
+            child: [],
+            isOpen: false,
+          });
+        });
+      }
+
+      setData((prevData) => {
+        const newData = JSON.parse(JSON.stringify(prevData));
+        let currentLevel: Data[] = newData;
+
+        drillDownIndexes.forEach((index, i) => {
+          if (!currentLevel[index]) {
+            console.error(
+              `Index ${index} not found at level ${i} during setData update.`
+            );
+            return prevData;
+          }
+          if (i === drillDownIndexes.length - 1) {
+            currentLevel[index].child = hasil;
+            currentLevel[index].isOpen = true;
+          } else {
+            currentLevel = currentLevel[index].child;
+          }
+        });
+        return newData;
+      });
+      
+      setChart(chart);
+    }
+  }, [drillDownData, allLocationData, drillDownIndexes, drillDownQuery, setChart]);
+
+  useEffect(() => {
+    setIsLoading(isLocationLoading || isFilteredLoading || isDrillDownLoading);
+  }, [isLocationLoading, isFilteredLoading, isDrillDownLoading]);
+
+  useEffect(() => {
+    if (!isLoading && scrollTargetId.current) {
+      const element = document.getElementById(scrollTargetId.current);
+      if (element) {
+        element.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+        });
+      }
+      scrollTargetId.current = null;
+    }
+  }, [data, isLoading]);
 
   const handleSelection = async (selectedData: {
     wilayah?: string | number;
@@ -304,7 +400,14 @@ const OlapComponent = () => {
     );
 
     if (matchingLocations.length === 0) {
-      console.warn("Wilayah tidak ditemukan");
+      if (selectedData.lat && selectedData.lng) {
+        setSelectedLocation({
+          lat: selectedData.lat,
+          lng: selectedData.lng,
+        });
+      } else {
+        console.warn("Wilayah tidak ditemukan dan tidak ada koordinat:", wilayahDicari);
+      }
       return;
     }
 
@@ -341,114 +444,40 @@ const OlapComponent = () => {
       kecamatan: "kecamatan",
       desa: "desa",
     };
-    if (
-      tipe === "provinsi" ||
-      tipe === "kota" ||
-      tipe === "kecamatan" ||
-      tipe === "desa"
-    ) {
+    
+    if (tipe === "provinsi" || tipe === "kota" || tipe === "kecamatan" || tipe === "desa") {
       setDrillDownLevel(levelMap[tipe]);
     } else {
-      console.warn(
-        `Unexpected 'tipe' value: ${tipe}. Cannot set drillDownLevel.`
-      );
+      console.warn(`Unexpected 'tipe' value: ${tipe}. Cannot set drillDownLevel.`);
     }
-    setIsLoading(true);
+    
     setBarChartData(null);
 
     let timeParams = {};
-
     if (globalFilters.filterMode === "period") {
       timeParams = {
         ...(globalFilters.time.tahun && { tahun: globalFilters.time.tahun }),
-        ...(globalFilters.time.semester && {
-          semester: globalFilters.time.semester,
-        }),
-        ...(globalFilters.time.kuartal && {
-          kuartal: globalFilters.time.kuartal,
-        }),
+        ...(globalFilters.time.semester && { semester: globalFilters.time.semester }),
+        ...(globalFilters.time.kuartal && { kuartal: globalFilters.time.kuartal }),
         ...(globalFilters.time.bulan && { bulan: globalFilters.time.bulan }),
         ...(globalFilters.time.minggu && { minggu: globalFilters.time.minggu }),
         ...(globalFilters.time.hari && { hari: globalFilters.time.hari }),
       };
-    } else if (
-      globalFilters.filterMode === "date" &&
-      globalFilters.selectedDate
-    ) {
+    } else if (globalFilters.filterMode === "date" && globalFilters.selectedDate) {
       timeParams = getTimeParamsFromDate(globalFilters.selectedDate);
     }
+    
     const filteredQuery = {
       ...query,
       ...(globalFilters.confidence && { confidence: globalFilters.confidence }),
       ...(globalFilters.satelite && { satelite: globalFilters.satelite }),
       ...timeParams,
       dimension: "location",
+      tipe: tipe,
     };
 
-    OlapService.query("location", filteredQuery)
-      .then((res: unknown) => {
-        const typedRes = res as [string, number][];
-        const chart: IChart = {
-          labels: [],
-          values: [],
-        };
-
-        const hasil: Data[] = [];
-        if (Array.isArray(typedRes) && typedRes.length > 0) {
-          typedRes.forEach((d: [string, number]) => {
-            if (!Array.isArray(d) || d.length < 2) {
-              console.warn("Invalid drilldown data item:", d);
-              return;
-            }
-            const param = {
-              ...filteredQuery,
-              [tipe]: d[0],
-            };
-
-            chart.labels.push(d[0]);
-            chart.values.push(d[1]);
-
-            hasil.push({
-              data: d[0],
-              total: d[1],
-              modal: false,
-              query: param,
-              child: [],
-              isOpen: false,
-            });
-          });
-        }
-
-        setData((prevData) => {
-          const newData = JSON.parse(JSON.stringify(prevData));
-          let currentLevel: Data[] = newData;
-
-          indexes.forEach((index, i) => {
-            if (!currentLevel[index]) {
-              console.error(
-                `Index ${index} not found at level ${i} during setData update.`
-              );
-              return prevData;
-            }
-            if (i === indexes.length - 1) {
-              currentLevel[index].child = hasil;
-              currentLevel[index].isOpen = true;
-            } else {
-              currentLevel = currentLevel[index].child;
-            }
-          });
-          return newData;
-        });
-        setChart(chart);
-      })
-      .catch((err) => {
-        console.error(err);
-        setData([]);
-        setBarChartData(null);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
+    setDrillDownQuery(filteredQuery);
+    setDrillDownIndexes(indexes);
   };
 
   const handleSelect = (
@@ -459,7 +488,7 @@ const OlapComponent = () => {
     if (window.innerWidth < 768) {
       setIsSidebarOpen(false);
     }
-    
+
     const targetId = `location-item-${indexes.join("-")}`;
     scrollTargetId.current = targetId;
 
@@ -591,122 +620,34 @@ const OlapComponent = () => {
     });
   };
 
-  const getSatelliteData = useCallback((query: QueryData, tipe: DrillDownLevel) => {
-    if (activeMapLayer !== "hotspot-locations") {
-      const q = { ...query, dimension: "satelite" };
-      setIsLoading(true);
+  const resetAllFilters = () => {
+    setGlobalFilters({
+      confidence: undefined,
+      satelite: undefined,
+      time: {},
+      filterMode: undefined,
+      selectedDate: undefined,
+    });
+    setDrillDownLevel("pulau");
+    setMapBounds(null);
+    setSelectedLocation(undefined);
+    setMapKey(Date.now());
+    hasFetched.current = false;
+  };
 
-      switch (tipe) {
-        case "pulau":
-          q.pulau = "";
-          q.point = query.pulau;
-          break;
-        case "provinsi":
-          q.provinsi = "";
-          q.point = query.provinsi;
-          break;
-        case "kota":
-          q.kota = "";
-          q.point = query.kota;
-          break;
-        case "kecamatan":
-          q.kecamatan = "";
-          q.point = query.kecamatan;
-          break;
-        case "desa":
-          q.point = query.desa;
-          break;
-      }
-      q.satelite = "";
+  const memoizedFilters = useMemo(() => ({
+    confidence: globalFilters.confidence?.toLowerCase(),
+    satelite: globalFilters.satelite?.toLowerCase(),
+    time: globalFilters.time,
+    filterMode: globalFilters.filterMode,
+    selectedDate: globalFilters.selectedDate,
+  }), [globalFilters]);
 
-      OlapService.query("satelite", q).then((res) => {
-        setIsLoading(false);
-        setDataSatelite(res as OlapData[]);
-      }).catch(err => {
-        console.error("Error fetching satellite data:", err);
-        setDataSatelite([]);
-        setIsLoading(false);
-      });
-    }
-  },[activeMapLayer]);
-
-  const getConfidenceData = useCallback((query: QueryData, tipe: DrillDownLevel) => {
-    if (activeMapLayer !== "hotspot-locations") {
-      const q = { ...query, dimension: "confidence" };
-      setIsLoading(true);
-
-      switch (tipe) {
-        case "pulau":
-          q.pulau = "";
-          q.point = query.pulau;
-          break;
-        case "provinsi":
-          q.provinsi = "";
-          q.point = query.provinsi;
-          break;
-        case "kota":
-          q.kota = "";
-          q.point = query.kota;
-          break;
-        case "kecamatan":
-          q.kecamatan = "";
-          q.point = query.kecamatan;
-          break;
-        case "desa":
-          q.point = query.desa;
-          break;
-      }
-      q.confidence = "";
-
-      OlapService.query("confidence", q).then((res) => {
-        setIsLoading(false);
-        setDataConfidence(res as OlapData[]);
-      }).catch(err => {
-        console.error("Error fetching confidence data:", err);
-        setDataConfidence([]);
-        setIsLoading(false);
-      });
-    }
-  },[activeMapLayer]);
-
-  useEffect(() => {
-    if (!hasFetched.current) {
-      getDataLocation("location");
-      fetchOlapData();
-      getConfidenceData({}, "pulau");
-      getSatelliteData({}, "pulau");
-      hasFetched.current = true;
-    }
-  }, [getDataLocation, fetchOlapData, getConfidenceData, getSatelliteData]);
-  
-  useEffect(() => {
-    if (!isLoading && scrollTargetId.current) {
-      const element = document.getElementById(scrollTargetId.current);
-      if (element) {
-        element.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-        });
-      }
-      scrollTargetId.current = null;
-    }
-  }, [data, isLoading]);
-
-  useEffect(() => {
-    if (hasFetched.current) {
-      applyGlobalFilters();
-    }
-  }, [
-    globalFilters.confidence,
-    globalFilters.satelite,
-    globalFilters.time,
-    globalFilters.filterMode,
-    globalFilters.selectedDate,
-    applyGlobalFilters,
-    hasFetched,
-  ]);
-
-  const openModalTime = (index: number[], query: QueryData, tipe: DrillDownLevel) => {
+  const openModalTime = (
+    index: number[],
+    query: QueryData,
+    tipe: DrillDownLevel
+  ) => {
     if (activeMapLayer !== "hotspot-locations") {
       setModalTime({
         isOpen: true,
@@ -748,11 +689,6 @@ const OlapComponent = () => {
     }));
     closeModalTime();
   };
-
-  useEffect(() => {
-    getConfidenceData({}, "pulau");
-    getSatelliteData({}, "pulau");
-  }, [getConfidenceData, getSatelliteData]);
 
   const handleChartClick = useCallback(
     (event: ChartEvent, elements: ActiveElement[], chart: Chart) => {
@@ -804,45 +740,34 @@ const OlapComponent = () => {
     [activeMapLayer, data]
   );
 
-  const barChartOptions: ChartConfiguration["options"] = useMemo(() => ({
-    responsive: true,
-    indexAxis: "x",
-    scales: {
-      x: {},
-      y: {
-        min: 0,
+  const barChartOptions: ChartConfiguration["options"] = useMemo(
+    () => ({
+      responsive: true,
+      indexAxis: "x",
+      scales: {
+        x: {},
+        y: {
+          min: 0,
+        },
       },
-    },
-    plugins: {
-      legend: {
-        display: true,
-      },
-      tooltip: {
-        enabled: true,
-        mode: "index",
-        intersect: false,
-        callbacks: {
-          label: function (tooltipItem) {
-            setSelectedHotspot(tooltipItem.raw as number);
-            return `Jumlah Hotspot: ${formatNumber(tooltipItem.raw as number)}`;
+      plugins: {
+        legend: {
+          display: true,
+        },
+        tooltip: {
+          enabled: true,
+          mode: "index",
+          intersect: false,
+          callbacks: {
+            label: function (tooltipItem) {
+              setSelectedHotspot(tooltipItem.raw as number);
+              return `Jumlah Hotspot: ${formatNumber(tooltipItem.raw as number)}`;
+            },
           },
         },
       },
-    },
-    onClick: handleChartClick,
-  }), [handleChartClick, setSelectedHotspot]);
-
-  const getStatusColor = (confidence: string | null | undefined) => {
-    if (confidence === "high") {
-      return "bg-red-500";
-    } else if (confidence === "medium") {
-      return "bg-yellow-500";
-    } else if (confidence === "low") {
-      return "bg-green-500";
-    } else {
-      return "bg-gray-300";
-    }
-  };
+      onClick: handleChartClick,
+    }), [handleChartClick, setSelectedHotspot]);
 
   return (
     <div className="h-screen w-screen flex flex-col bg-gray-50 overflow-hidden">
@@ -854,6 +779,11 @@ const OlapComponent = () => {
         id="date-filter-info"
         className="!z-[1001] !max-w-[250px] !break-words !whitespace-pre-line"
       />
+      <ReactTooltip
+        id="location-info"
+        className="!z-[1001] !max-w-[250px] !break-words !whitespace-pre-line"
+      />
+      
       <div className="flex flex-1 flex-col md:flex-row overflow-hidden mt-16">
         <button
           className="md:hidden p-2 bg-blue-100 text-blue-800 font-medium flex items-center justify-center"
@@ -959,7 +889,7 @@ const OlapComponent = () => {
                   <span
                     className="ml-1 text-gray-700 cursor-help text-xs font-medium"
                     data-tooltip-id="time-filter-info"
-                    data-tooltip-content="Filter ini memungkinkan Anda memilih periode waktu (tahun, semester, kuartal, bulan, dan minggu) untuk melihat distribusi hotspot pada peta sesuai rentang waktu yang diinginkan."
+                    data-tooltip-content="Pilih periode waktu (tahun, semester, kuartal, bulan, dan minggu) untuk melihat distribusi hotspot pada peta sesuai rentang waktu yang diinginkan."
                     data-tooltip-place="top"
                   >
                     {" "}
@@ -989,9 +919,6 @@ const OlapComponent = () => {
                         {globalFilters.time.minggu && (
                           <span>Minggu {globalFilters.time.minggu}</span>
                         )}
-                        {globalFilters.time.hari && (
-                          <span>Hari {globalFilters.time.hari}</span>
-                        )}
                       </div>
                     </div>
                   ) : (
@@ -1007,7 +934,7 @@ const OlapComponent = () => {
                   <span
                     className="ml-1 text-gray-700 cursor-help text-xs font-medium"
                     data-tooltip-id="date-filter-info"
-                    data-tooltip-content="Filter ini memungkinkan Anda memilih tanggal spesifik untuk melihat data hotspot pada hari tersebut."
+                    data-tooltip-content="Pilih tanggal spesifik untuk melihat distribusi data hotspot pada hari tersebut."
                     data-tooltip-place="top"
                   >
                     {" "}
@@ -1058,9 +985,20 @@ const OlapComponent = () => {
           </div>
 
           {/* Location List */}
-          <div className="p-3 border-b border-gray-200 flex justify-between items-center bg-gray-50">
-            <h2 className="text-md font-semibold text-black">Location</h2>
-          </div>
+        <div className="p-3 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+          <label className="text-md font-semibold text-black">
+            Location
+            <span
+              className="ml-1 text-gray-700 cursor-help text-xs font-medium"
+              data-tooltip-id="location-info"
+              data-tooltip-content="Klik nama lokasi untuk melihat detail (drill down) dan klik nama lokasi level sebelumnya untuk kembali ke level sebelumnya (roll up)."
+              data-tooltip-place="top"
+            >
+              {" "}
+              ⓘ
+            </span>
+          </label>
+        </div>
           <div
             className={`flex-1 overflow-y-auto p-2 ${
               activeMapLayer === "hotspot-locations"
@@ -1093,13 +1031,6 @@ const OlapComponent = () => {
                           className="ml-1 text-xs"
                         />
                       </span>
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-white text-xs ${getStatusColor(
-                          item.query.confidence
-                        )}`}
-                      >
-                        {item.query.confidence ?? "Confidence"}
-                      </span>
                     </div>
                     <div className="mt-2 flex items-center justify-end">
                       <span className="text-gray-700 text-xs font-medium bg-gray-100 px-2 py-0.5 rounded">
@@ -1112,7 +1043,11 @@ const OlapComponent = () => {
                   {item.isOpen &&
                     item.child &&
                     item.child.map((provinsi, j) => (
-                      <div key={j} id={`location-item-${i}-${j}`} className="mt-2 ml-4">
+                      <div
+                        key={j}
+                        id={`location-item-${i}-${j}`}
+                        className="mt-2 ml-4"
+                      >
                         <div className="bg-white rounded-lg shadow-xs p-3 border-l-4 border-green-500 hover:shadow-sm transition">
                           <div className="flex justify-between items-center">
                             <span
@@ -1129,13 +1064,6 @@ const OlapComponent = () => {
                                 className="ml-1 text-xs"
                               />
                             </span>
-                            <span
-                              className={`px-2 py-0.5 rounded-full text-white text-xs ${getStatusColor(
-                                provinsi.query.confidence
-                              )}`}
-                            >
-                              {provinsi.query.confidence ?? "Confidence"}
-                            </span>
                           </div>
                           <div className="mt-1 text-xs text-gray-500 truncate">
                             Pulau: {item.data}
@@ -1151,7 +1079,11 @@ const OlapComponent = () => {
                         {provinsi.isOpen &&
                           provinsi.child &&
                           provinsi.child.map((kota, k) => (
-                            <div key={k} id={`location-item-${i}-${j}-${k}`} className="mt-2 ml-4">
+                            <div
+                              key={k}
+                              id={`location-item-${i}-${j}-${k}`}
+                              className="mt-2 ml-4"
+                            >
                               <div className="bg-white rounded-lg shadow-xs p-3 border-l-4 border-yellow-500 hover:shadow-sm transition">
                                 <div className="flex justify-between items-center">
                                   <span
@@ -1170,16 +1102,10 @@ const OlapComponent = () => {
                                       className="ml-1 text-xs"
                                     />
                                   </span>
-                                  <span
-                                    className={`px-2 py-0.5 rounded-full text-white text-xs ${getStatusColor(
-                                      kota.query.confidence
-                                    )}`}
-                                  >
-                                    {kota.query.confidence ?? "Confidence"}
-                                  </span>
                                 </div>
                                 <div className="mt-1 text-xs text-gray-500 truncate">
-                                  Pulau: {item.data} | Provinsi: {provinsi.data}
+                                  Pulau: {item.data} | Provinsi:{" "}
+                                  {provinsi.data}
                                 </div>
                                 <div className="mt-2 flex items-center justify-end">
                                   <span className="text-gray-700 text-xs font-medium bg-gray-100 px-2 py-0.5 rounded">
@@ -1192,7 +1118,11 @@ const OlapComponent = () => {
                               {kota.isOpen &&
                                 kota.child &&
                                 kota.child.map((kecamatan, l) => (
-                                  <div key={l} id={`location-item-${i}-${j}-${k}-${l}`} className="mt-2 ml-4">
+                                  <div
+                                    key={l}
+                                    id={`location-item-${i}-${j}-${k}-${l}`}
+                                    className="mt-2 ml-4"
+                                  >
                                     <div className="bg-white rounded-lg shadow-xs p-3 border-l-4 border-purple-500 hover:shadow-sm transition">
                                       <div className="flex justify-between items-center">
                                         <span
@@ -1215,14 +1145,6 @@ const OlapComponent = () => {
                                             className="ml-1 text-xs"
                                           />
                                         </span>
-                                        <span
-                                          className={`px-2 py-0.5 rounded-full text-white text-xs ${getStatusColor(
-                                            kecamatan.query.confidence
-                                          )}`}
-                                        >
-                                          {kecamatan.query.confidence ??
-                                            "Confidence"}
-                                        </span>
                                       </div>
                                       <div className="mt-1 text-xs text-gray-500 truncate">
                                         Pulau: {item.data} | Provinsi:{" "}
@@ -1230,7 +1152,8 @@ const OlapComponent = () => {
                                       </div>
                                       <div className="mt-2 flex items-center justify-end">
                                         <span className="text-gray-700 text-xs font-medium bg-gray-100 px-2 py-0.5 rounded">
-                                          Total: {formatNumber(kecamatan.total)}
+                                          Total:{" "}
+                                          {formatNumber(kecamatan.total)}
                                         </span>
                                       </div>
                                     </div>
@@ -1239,28 +1162,34 @@ const OlapComponent = () => {
                                     {kecamatan.isOpen &&
                                       kecamatan.child &&
                                       kecamatan.child.map((desa, m) => (
-                                        <div key={m} id={`location-item-${i}-${j}-${k}-${l}-${m}`} className="mt-2 ml-4">
+                                        <div
+                                          key={m}
+                                          id={`location-item-${i}-${j}-${k}-${l}-${m}`}
+                                          className="mt-2 ml-4"
+                                        >
                                           <div className="bg-white rounded-lg shadow-xs p-3 border-l-4 border-red-500 hover:shadow-sm transition">
                                             <div className="flex justify-between items-center">
                                               <span
                                                 className="font-semibold text-black text-sm cursor-pointer hover:text-blue-600 transition"
-                                                onClick={() =>
-                                                  handleSelect(
-                                                    desa,
-                                                    [i, j, k, l, m],
-                                                    "desa"
-                                                  )
-                                                }
+                                                onClick={() => {
+                                                  if (window.innerWidth < 768) {
+                                                    setIsSidebarOpen(false);
+                                                  }
+
+                                                  handleSelection({
+                                                    wilayah: desa.data,
+                                                    lat: desa.query.lat,
+                                                    lng: desa.query.lng,
+                                                  });
+                                                  setChart({
+                                                    labels: [desa.data.toString()],
+                                                    values: [desa.total],
+                                                  });
+                                                  setOlapData({ query: desa.query });
+                                                  setDrillDownLevel("desa");
+                                                }}
                                               >
                                                 {desa.data}{" "}
-                                              </span>
-                                              <span
-                                                className={`px-2 py-0.5 rounded-full text-white text-xs ${getStatusColor(
-                                                  desa.query.confidence
-                                                )}`}
-                                              >
-                                                {desa.query.confidence ??
-                                                  "Confidence"}
                                               </span>
                                             </div>
                                             <div className="mt-1 text-xs text-gray-500 truncate">
@@ -1331,7 +1260,12 @@ const OlapComponent = () => {
                 className={`${
                   activeMapLayer === "hotspot-locations" ? "h-full w-full" : ""
                 }`}
-                style={{ height: "100%", width: "100%", margin: 0, padding: 0 }}
+                style={{
+                  height: "100%",
+                  width: "100%",
+                  margin: 0,
+                  padding: 0,
+                }}
                 filters={memoizedFilters}
               />
             </div>
@@ -1374,9 +1308,7 @@ const OlapComponent = () => {
                   !barChartData.labels ||
                   barChartData.labels.length === 0 ? (
                   <div className="min-h-full flex flex-col justify-center items-center bg-gray-50">
-                    <p className="text-gray-500 text-md">
-                      Tidak ada data
-                    </p>
+                    <p className="text-gray-500 text-md">Tidak ada data</p>
                   </div>
                 ) : (
                   <div className="relative h-full">
@@ -1405,7 +1337,8 @@ const OlapComponent = () => {
                             },
                           },
                           tooltip: {
-                            enabled: activeMapLayer !== "hotspot-locations",
+                            enabled:
+                              activeMapLayer !== "hotspot-locations",
                             bodyFont: {
                               size: 11,
                             },
