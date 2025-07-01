@@ -22,6 +22,7 @@ import {
   TooltipItem,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faChevronDown,
@@ -29,11 +30,12 @@ import {
   faAngleLeft,
   faAngleRight,
   faSpinner,
+  faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { Tooltip as ReactTooltip } from "react-tooltip";
 import { formatNumber } from "../../core/utilities/formatters";
 import { LocationData } from "../../core/model/location";
-import { TimeFilters, getTimeParamsFromDate } from "../../core/model/time";
+import { TimeFilters } from "../../core/model/time";
 
 ChartJS.register(
   CategoryScale,
@@ -41,7 +43,8 @@ ChartJS.register(
   BarElement,
   Title,
   Legend,
-  ChartTooltip
+  ChartTooltip,
+  ChartDataLabels
 );
 
 interface Data {
@@ -81,7 +84,7 @@ const OlapComponent = () => {
   const [dataConfidence, setDataConfidence] = useState<OlapData[]>([]);
   const [dataSatelite, setDataSatelite] = useState<OlapData[]>([]);
   const [barChartData, setBarChartData] = useState<ChartData<"bar"> | null>(null);
-  const [olapData, setOlapData] = useState({});
+  const [olapData, setOlapData] = useState<{query?: any}>({});
   const [, setSelectedHotspot] = useState<number | null>(null);
   const [allLocationData, setAllLocationData] = useState<LocationData[]>([]);
   const [globalFilters, setGlobalFilters] = useState({
@@ -155,8 +158,9 @@ const OlapComponent = () => {
         ...(globalFilters.time.minggu && { minggu: globalFilters.time.minggu }),
       };
     } else if (globalFilters.filterMode === "date" && globalFilters.selectedDate) {
-      timeParams = getTimeParamsFromDate(globalFilters.selectedDate);
+      timeParams = { selectedDate: globalFilters.selectedDate };
     }
+    
     return {
       dimension: "location",
       ...(globalFilters.confidence && { confidence: globalFilters.confidence }),
@@ -173,7 +177,9 @@ const OlapComponent = () => {
 
   // SWR hook
   const { data: filteredData, isLoading: isFilteredLoading } = useSWR(
-    hasFetched.current ? ['location', filteredQueryParams] : null,
+    (hasFetched.current || Object.keys(olapData.query || {}).length > 0) 
+      ? ['location', filteredQueryParams] 
+      : null,
     olapFetcher,
     { revalidateOnFocus: false }
   );
@@ -367,16 +373,35 @@ const OlapComponent = () => {
   }, [isLocationLoading, isFilteredLoading, isDrillDownLoading]);
 
   useEffect(() => {
-    if (!isLoading && scrollTargetId.current) {
-      const element = document.getElementById(scrollTargetId.current);
-      if (element) {
-        element.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-        });
+      if (isLoading || !scrollTargetId.current) {
+        return;
       }
+      const element = document.getElementById(scrollTargetId.current);
+      if (!element) {
+        return;
+      }
+      const indexes = scrollTargetId.current.replace('location-item-', '').split('-').map(s => parseInt(s, 10));
+      let currentItem = null;
+      let items = data;
+      for (const index of indexes) {
+        if (items && items[index]) {
+          currentItem = items[index];
+          items = currentItem.child;
+        } else {
+          currentItem = null;
+          break;
+        }
+      }
+
+      if (currentItem && currentItem.isOpen && currentItem.child.length === 0) {
+        return;
+      }
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
       scrollTargetId.current = null;
-    }
+
   }, [data, isLoading]);
 
   const handleSelection = async (selectedData: {
@@ -464,7 +489,7 @@ const OlapComponent = () => {
         ...(globalFilters.time.hari && { hari: globalFilters.time.hari }),
       };
     } else if (globalFilters.filterMode === "date" && globalFilters.selectedDate) {
-      timeParams = getTimeParamsFromDate(globalFilters.selectedDate);
+      timeParams = { selectedDate: globalFilters.selectedDate };
     }
     
     const filteredQuery = {
@@ -488,132 +513,98 @@ const OlapComponent = () => {
     if (window.innerWidth < 768) {
       setIsSidebarOpen(false);
     }
-
+    // Auto scroll
     const targetId = `location-item-${indexes.join("-")}`;
     scrollTargetId.current = targetId;
 
     setData((prevData) => {
       const newData = JSON.parse(JSON.stringify(prevData));
-      let currentLevel: Data[] = newData;
+
       let targetItem: Data | undefined;
+      let parentItem: Data | undefined;
+      let currentLevelItems: Data[] = newData;
 
-      for (let i = 0; i < indexes.length; i++) {
-        const index = indexes[i];
-        if (!currentLevel[index]) {
-          console.error(`Index ${index} not found at level ${i} during setData update.`);
-          return prevData;
+      indexes.forEach((index, i) => {
+        if (i < indexes.length - 1) {
+          parentItem = currentLevelItems[index];
+          currentLevelItems = parentItem.child;
+        } else {
+          targetItem = currentLevelItems[index];
         }
-        if (i === indexes.length - 1) {
-          targetItem = currentLevel[index];
-          targetItem.isOpen = !targetItem.isOpen;
-        }
-        currentLevel = currentLevel[index].child;
-      }
+      });
+      
+      if (!targetItem) return prevData;
 
-      // DRILLDOWN
-      if (targetItem && targetItem.isOpen && targetItem.child.length === 0) {
+      currentLevelItems.forEach(item => {
+        if (item.data !== targetItem!.data) {
+          item.isOpen = false;
+        }
+      });
+      
+      targetItem.isOpen = !targetItem.isOpen;
+
+      // DRILL DOWN
+      if (targetItem.isOpen) {
         const queryForDrill = { ...itemClicked.query };
         switch (nextDrillType) {
-          case "provinsi":
-            queryForDrill.pulau = itemClicked.data.toString();
-            break;
-          case "kota":
-            queryForDrill.provinsi = itemClicked.data.toString();
-            break;
-          case "kecamatan":
-            queryForDrill.kota = itemClicked.data.toString();
-            break;
-          case "desa":
-            queryForDrill.kecamatan = itemClicked.data.toString();
-            break;
-          default:
-            break;
+          case "provinsi": queryForDrill.pulau = itemClicked.data.toString(); break;
+          case "kota": queryForDrill.provinsi = itemClicked.data.toString(); break;
+          case "kecamatan": queryForDrill.kota = itemClicked.data.toString(); break;
+          case "desa": queryForDrill.kecamatan = itemClicked.data.toString(); break;
         }
         getDrilldownData(indexes, queryForDrill, nextDrillType);
-        setDrillDownLevel(nextDrillType as DrillDownLevel);
+
         setOlapData({ query: queryForDrill });
+        setDrillDownLevel(nextDrillType);
+        setMapBounds(null); // Reset bounds
         setSelectedLocation({
           lat: itemClicked.query.lat ?? -2.5,
           lng: itemClicked.query.lng ?? 118,
           ...queryForDrill,
         });
-        handleSelection({
-          wilayah: itemClicked.data,
-          lat: itemClicked.query.lat,
-          lng: itemClicked.query.lng,
-        });
-      }
+        handleSelection({ wilayah: itemClicked.data, lat: itemClicked.query.lat, lng: itemClicked.query.lng });
 
-      // ROLLUP
-      if (targetItem && !targetItem.isOpen) {
-        if (indexes.length === 1) {
-          const bounds = L.latLngBounds(L.latLng(-11, 94), L.latLng(6, 141));
-          setMapBounds(bounds);
+      } 
+      // ROLL UP
+      else {
+        // Tidak ada parent roll up ke level pulau
+        if (!parentItem) {
           setDrillDownLevel("pulau");
           setOlapData({ query: {} });
           setSelectedLocation(undefined);
+          setMapBounds(L.latLngBounds(L.latLng(-11, 94), L.latLng(6, 141)));
+          
+          setDrillDownQuery(null); 
+          setDrillDownIndexes([]);
+
           setChart({
             labels: newData.map((item: Data) => item.data),
             values: newData.map((item: Data) => item.total),
           });
-        } else {
-          const levelMapping: DrillDownLevel[] = [
-            "pulau",
-            "provinsi",
-            "kota",
-            "kecamatan",
-            "desa",
-          ];
+        } 
+        // Ada parent, roll up ke level sebelumnya
+        else {
+          const parentIndexes = indexes.slice(0, -1);
+          const parentDrillDownType = nextDrillType === 'provinsi' ? 'pulau' :
+                                    nextDrillType === 'kota' ? 'provinsi' :
+                                    nextDrillType === 'kecamatan' ? 'kota' : 'kecamatan';
 
-          const currentLevelIndex = indexes.length - 1;
-          const currentLevel = levelMapping[currentLevelIndex];
-
-          const currentQuery = { ...targetItem.query };
-
-          if (!currentQuery[currentLevel]) {
-            currentQuery[currentLevel] = targetItem.data.toString();
-          }
-
-          let lat = targetItem.query.lat;
-          let lng = targetItem.query.lng;
-          if (lat === undefined || lng === undefined) {
-            lat = -2.5;
-            lng = 118;
-          }
-          setOlapData({ query: currentQuery });
-          setDrillDownLevel(currentLevel);
+          setDrillDownLevel(parentDrillDownType);
+          setOlapData({ query: parentItem.query });
           setSelectedLocation({
-            lat: lat,
-            lng: lng,
-            ...currentQuery,
+            lat: parentItem.query.lat ?? -2.5,
+            lng: parentItem.query.lng ?? 118,
+            ...parentItem.query,
           });
+          handleSelection({ wilayah: parentItem.data, lat: parentItem.query.lat, lng: parentItem.query.lng });
 
-          handleSelection({
-            wilayah: targetItem.data,
-            lat,
-            lng,
-          });
-
-          let parentItem: Data | undefined;
-          let parentLevel: Data[] = newData;
-
-          if (indexes.length > 1) {
-            const parentPath = indexes.slice(0, -1);
-            for (let i = 0; i < parentPath.length; i++) {
-              if (i === parentPath.length - 1) {
-                parentItem = parentLevel[parentPath[i]];
-              } else {
-                parentLevel = parentLevel[parentPath[i]].child;
-              }
-            }
-
-            if (parentItem) {
-              setChart({
-                labels: parentItem.child.map((item: Data) => item.data),
-                values: parentItem.child.map((item: Data) => item.total),
-              });
-            }
+          if (parentItem.child && parentItem.child.length > 0) {
+            setChart({
+              labels: parentItem.child.map((item: Data) => item.data),
+              values: parentItem.child.map((item: Data) => item.total),
+            });
           }
+          getDrilldownData(parentIndexes, parentItem.query, parentDrillDownType);
         }
       }
       return newData;
@@ -765,6 +756,19 @@ const OlapComponent = () => {
             },
           },
         },
+          datalabels: {
+          display: true,
+          color: 'black',
+          anchor: 'end',
+          align: 'end',
+          offset: 4,
+          formatter: (value) => formatNumber(value),
+          font: {
+            weight: 'bold',
+            size: 9,
+          },
+          clamp: true,
+        }
       },
       onClick: handleChartClick,
     }), [handleChartClick, setSelectedHotspot]);
@@ -785,17 +789,6 @@ const OlapComponent = () => {
       />
       
       <div className="flex flex-1 flex-col md:flex-row overflow-hidden mt-16">
-        <button
-          className="md:hidden p-2 bg-blue-100 text-blue-800 font-medium flex items-center justify-center"
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        >
-          {isSidebarOpen ? "Hide Sidebar" : "Show Sidebar"}
-          <FontAwesomeIcon
-            icon={isSidebarOpen ? faAngleLeft : faAngleRight}
-            className="ml-2"
-          />
-        </button>
-
         {/* Sidebar */}
         <div
           className={`${
@@ -806,8 +799,18 @@ const OlapComponent = () => {
           } /* Hide sidebar completely when in hotspot-locations mode */`}
         >
           {/* FILTERS */}
-          <div className="p-3 border-b border-gray-200 bg-gray-50">
-            <h2 className="text-md font-semibold text-black mb-2">Filters</h2>
+          
+        <div className="p-3 border-b border-gray-200 bg-gray-50">
+          <div className="flex justify-between items-center">
+            <h2 className="text-md font-semibold text-black">Filters</h2>
+            <button 
+              className="md:hidden p-1 rounded-full hover:bg-gray-200 transition"
+              onClick={() => setIsSidebarOpen(false)}
+              aria-label="Tutup Panel"
+            >
+              <FontAwesomeIcon icon={faXmark} className="text-gray-600" />
+            </button>
+            </div>
             {/* Confidence */}
             <div
               className={`border-b border-gray-200 bg-gray-50 ${
@@ -934,7 +937,7 @@ const OlapComponent = () => {
                   <span
                     className="ml-1 text-gray-700 cursor-help text-xs font-medium"
                     data-tooltip-id="date-filter-info"
-                    data-tooltip-content="Pilih tanggal spesifik untuk melihat distribusi data hotspot pada hari tersebut."
+                    data-tooltip-content="Pilih tanggal spesifik untuk melihat persebaran jumlah data hotspot pada hari tersebut."
                     data-tooltip-place="top"
                   >
                     {" "}
@@ -1239,6 +1242,13 @@ const OlapComponent = () => {
                 bounds={mapBounds ?? undefined}
                 selectedLocation={selectedLocation}
                 olapData={olapData}
+                locationData={
+                  (drillDownData && drillDownIndexes.length > 0) 
+                    ? (drillDownData as [string, number][])
+                    : (filteredData && hasFetched.current)
+                    ? (filteredData as [string, number][])
+                    : (locationQueryData as [string, number][])
+                }
                 drillDownLevel={drillDownLevel}
                 onDrillDownChange={handleDrillDownChange}
                 onLayerChange={(layer) => {
@@ -1268,6 +1278,16 @@ const OlapComponent = () => {
                 }}
                 filters={memoizedFilters}
               />
+              <button
+                className="md:hidden bg-blue-600 text-white flex items-center justify-center shadow-md absolute bottom-3 right-3 z-[500] rounded-full w-10 h-10"
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                aria-label={isSidebarOpen ? "Sembunyikan Panel" : "Tampilkan Panel"}
+              >
+                <FontAwesomeIcon 
+                  icon={isSidebarOpen ? faAngleLeft : faAngleRight} 
+                  className="text-sm"
+                />
+              </button>
             </div>
           </div>
 
@@ -1302,7 +1322,6 @@ const OlapComponent = () => {
                       size="3x"
                       className="text-green-600 mb-4"
                     />
-                    <p className="text-gray-500 text-md">Loading data...</p>
                   </div>
                 ) : !barChartData ||
                   !barChartData.labels ||
@@ -1356,6 +1375,20 @@ const OlapComponent = () => {
                               },
                             },
                           },
+                          
+                          datalabels: {
+                            display: true,
+                            color: 'black',
+                            anchor: 'end',
+                            align: 'end',
+                            offset: 1,
+                            formatter: (value) => formatNumber(value),
+                            font: {
+                              weight: 'bold',
+                              size: 10,
+                            },
+                            clamp: true,
+                          },
                         },
                         scales: {
                           x: {
@@ -1382,6 +1415,9 @@ const OlapComponent = () => {
                                 activeMapLayer === "hotspot-locations"
                                   ? "#999999"
                                   : undefined,
+                              callback: function(value) {
+                                return value.toLocaleString('id-ID')
+                              }
                             },
                           },
                         },

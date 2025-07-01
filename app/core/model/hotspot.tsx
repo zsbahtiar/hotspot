@@ -47,10 +47,10 @@ export type HotspotData = {
 };
 
 export type AccumulatedData = {
-  date: string;
-  satellite: string;
+  tanggal: string;
+  satelit: string;
   confidence: ConfidenceLevel;
   provinsi: string;
-  kab_kota: string;
-  total: number;
+  kota: string;
+  jumlah: number;
 };

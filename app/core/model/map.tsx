@@ -17,6 +17,7 @@ export interface MapComponentProps {
     };
   };
   onDrillDownChange?: (newLevel: DrillDownLevel) => void;
+  onDateChange?: (date: string) => void;
   className?: string;
   style?: React.CSSProperties;
   filters?: {
@@ -33,6 +34,7 @@ export interface MapComponentProps {
     filterMode?: 'period' | 'date';
   };
   onLayerChange?: (layer: 'hotspot-count' | 'hotspot-locations') => void;
+  locationData?: [string, number][];
 }
 
 export interface MarkerClusterType {

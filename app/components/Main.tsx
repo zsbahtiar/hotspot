@@ -12,6 +12,7 @@ import {
   BarElement,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { HotspotDataGeo } from "../core/model/hotspot";
@@ -23,7 +24,8 @@ ChartJS.register(
   Legend,
   CategoryScale,
   LinearScale,
-  BarElement
+  BarElement,
+  ChartDataLabels
 );
 
 const Main = () => {
@@ -258,7 +260,7 @@ const Main = () => {
                       size="3x"
                       className="text-green-600 mb-4"
                     />
-                    <p className="text-gray-700 text-lg">Loading...</p>
+                    <p className="text-gray-700 text-lg">Memuat data...</p>
                   </div>
                 ) : latestHotspots.length > 0 ? (
                   <div className="space-y-4">
@@ -375,12 +377,36 @@ const Main = () => {
                         options={{
                           responsive: true,
                           maintainAspectRatio: false,
+                          layout: {
+                            padding: {
+                              top: 35,
+                              bottom: 15,
+                            }
+                          },
+                          scales: {
+                            x: {
+                              ticks: {
+                                maxRotation: 45,
+                                minRotation: 0,
+                                font: {
+                                  size: 10
+                                }
+                              }
+                            },
+                            y: {
+                              ticks: {
+                                callback: function(value) {
+                                  return value.toLocaleString('id-ID');
+                                }
+                              }
+                            }
+                          },
                           plugins: {
                             legend: {
                               position: "bottom",
                               labels: {
                                 boxWidth: 12,
-                                padding: 20,
+                                padding: 10,
                               },
                             },
                             tooltip: {
@@ -391,6 +417,19 @@ const Main = () => {
                                   )} hotspot`;
                                 },
                               },
+                            },
+                            datalabels: {
+                              display: true,
+                              color: 'black',
+                              anchor: 'end',
+                              align: 'end',
+                              offset: 0,
+                              formatter: (value) => formatNumber(value),
+                              font: {
+                                weight: 'bold',
+                                size: 10,
+                              },
+                              clamp: true,
                             },
                           },
                         }}
@@ -406,7 +445,7 @@ const Main = () => {
                             size="3x"
                             className="text-green-600 mb-4"
                           />
-                          <p className="text-gray-700">Loading...</p>
+                          <p className="text-gray-700">Memuat data...</p>
                         </>
                       ) : (
                         <p className="text-gray-500">

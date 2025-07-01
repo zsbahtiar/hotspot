@@ -18,43 +18,44 @@ export default function MapLegend({
   return (
     <>
       {showJumlahHotspot && (
-        <div className="legend-box absolute bottom-40 left-5 z-[1000] bg-white p-3 rounded-lg shadow-md">
-          <strong>Persebaran Jumlah Hotspot</strong><br />
-          <div>
-            <span style={{
-              background: "#FFCDD2",
-              display: "inline-block",
-              width: 18,
-              height: 18,
-              marginRight: 8,
-              borderRadius: 4
-            }}></span>
-            Rendah ({formatNumber(Math.round(minHotspot))}-{formatNumber(Math.round(threshold1))})
-          </div>
-          <div>
-            <span style={{
-              background: "#EF5350",
-              display: "inline-block",
-              width: 18,
-              height: 18,
-              marginRight: 8,
-              borderRadius: 4
-            }}></span>
-            Sedang ({formatNumber(Math.round(threshold1) + 1)}-{formatNumber(Math.round(threshold2))})
-          </div>
-          <div>
-            <span style={{
-              background: "#B71C1C",
-              display: "inline-block",
-              width: 18,
-              height: 18,
-              marginRight: 8,
-              borderRadius: 4
-            }}></span>
-            Tinggi ({formatNumber(Math.round(threshold2) + 1)}+)
-          </div>
+      <div className="legend-box absolute bottom-80 left-2 z-[1200] bg-white p-2 rounded-lg shadow-md max-w-[200px] text-xs
+        md:bottom-40 md:left-5 md:z-[1000] md:p-3 md:max-w-none md:text-xs">
+        <strong>Persebaran Jumlah Hotspot</strong><br />
+        <div>
+          <span style={{
+            background: "#FFCDD2",
+            display: "inline-block",
+            width: 18,
+            height: 18,
+            marginRight: 8,
+            borderRadius: 4
+          }}></span>
+          Rendah (&lt; {formatNumber(Math.round(threshold1))})
         </div>
-      )}
+        <div>
+          <span style={{
+            background: "#EF5350",
+            display: "inline-block",
+            width: 18,
+            height: 18,
+            marginRight: 8,
+            borderRadius: 4
+          }}></span>
+          Sedang ({formatNumber(Math.round(threshold1))} - {formatNumber(Math.round(threshold2))})
+        </div>
+        <div>
+          <span style={{
+            background: "#B71C1C",
+            display: "inline-block",
+            width: 18,
+            height: 18,
+            marginRight: 8,
+            borderRadius: 4
+          }}></span>
+          Tinggi (&gt; {formatNumber(Math.round(threshold2))})
+        </div>
+      </div>
+    )}
 
       {showLokasiHotspot && (
         <div className="legend-box absolute bottom-20 left-5 z-[1000] bg-white p-3 rounded-lg shadow-md">

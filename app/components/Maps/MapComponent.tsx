@@ -16,8 +16,6 @@ import { scaleThreshold } from "d3-scale";
 import L, { Map, GeoJSON as LeafletGeoJSON, Layer } from "leaflet";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faExpand,
-  faCompress,
   faSpinner,
   faExclamationTriangle,
 } from "@fortawesome/free-solid-svg-icons";
@@ -149,7 +147,6 @@ function normalizeRegionName(name: string): string {
   return name
     .replace(/^DESA\s+/i, "")
     .replace(/^KELURAHAN\s+/i, "")
-    .replace(/^KOTA\s+/i, "")
     .replace(/^KABUPATEN\s+/i, "")
     .trim()
     .toUpperCase();
@@ -186,10 +183,12 @@ function filterGeoJsonFeatures(
   }
   const { field, value } = parent;
   const parentVal = value.toUpperCase().trim();
-  return features.filter((f) => {
-    const geoVal = f.properties[field]?.toUpperCase().trim() ?? "";
-    return geoVal === parentVal;
-  });
+  const filtered = features.filter((f) => {
+      const geoVal = f.properties[field]?.toUpperCase().trim() ?? "";
+      const matches = geoVal === parentVal;
+      return matches;
+    });
+  return filtered;
 }
 
 const MapComponent: React.FC<MapComponentProps> = ({
@@ -201,6 +200,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
   style = {},
   filters = {},
   onLayerChange,
+  locationData,
 }) => {
   const { 
     data: geoJsonData, 
@@ -216,37 +216,55 @@ const MapComponent: React.FC<MapComponentProps> = ({
     desa: geoJsonData?.[4] || null,
   }), [geoJsonData]);
 
-  const getHotspotData = useMemo(() => {
-    const params = new URLSearchParams();
-    if (filters?.confidence) params.append("confidence", filters.confidence);
-    if (filters?.satelite) params.append("satelite", filters.satelite);
-    if (filters?.filterMode === "date" && filters?.selectedDate) {
-      params.append("tanggal", filters.selectedDate);
-    } else if (filters?.filterMode === "period" && filters?.time) {
-      if (filters.time.tahun) params.append("tahun", filters.time.tahun);
-      if (filters.time.semester) params.append("semester", filters.time.semester);
-      if (filters.time.kuartal) params.append("quartal", filters.time.kuartal.replace("Q", ""));
-      if (filters.time.bulan) {
-        const monthIndex = monthNames.indexOf(filters.time.bulan) + 1;
-        if (monthIndex > 0) params.append("bulan", monthIndex.toString());
-      }
-      if (filters.time.minggu) params.append("minggu", filters.time.minggu);
-    }
-    return `${process.env.NEXT_PUBLIC_API_URL}/api/hotspot?${params.toString()}`;
-  }, [filters]);
+   const getHotspotData = useMemo(() => {
+    const baseUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/hotspot`;
+    const queryParams = new URLSearchParams();
 
-  const { 
+    // Filter dari props
+    if (filters?.confidence) {
+      queryParams.append('confidence', filters.confidence);
+    }
+    if (filters?.satelite) {
+      queryParams.append('satelite', filters.satelite);
+    }
+
+    // Filter waktu
+    if (filters?.filterMode === "date" && filters?.selectedDate) {
+      queryParams.append('selectedDate', filters.selectedDate);
+    } else if (filters?.filterMode === "period" && filters?.time) {
+      Object.entries(filters.time).forEach(([key, value]) => {
+        if (value) {
+          queryParams.append(key, value.toString());
+        }
+      });
+    }
+
+    // Filter berdasarkan drill down level (dari olapData)
+    if (olapData?.query) {
+      Object.entries(olapData.query).forEach(([key, value]) => {
+        if (value && key !== 'lat' && key !== 'lng' && key !== 'dimension' && key !== 'tipe') {
+          queryParams.append(key, value.toString());
+        }
+      });
+    }
+
+    return queryParams.toString() ? `${baseUrl}?${queryParams.toString()}` : baseUrl;
+  }, [filters, olapData]);
+
+   const { 
     data: hotspotApiResponse, 
     error: hotspotError, 
     isLoading: isHotspotLoading 
-  } = useSWR(getHotspotData, fetcher);
-
-  const hotspotData: HotspotFeatureGeo[] = useMemo(
-    () => hotspotApiResponse?.features || [], 
-    [hotspotApiResponse]
+  } = useSWR(
+    getHotspotData,
+    fetcher,
+    { revalidateOnFocus: false }
   );
 
-  // const [dateCounts, setDateCounts] = useState<Record<string, number>>({});
+  const hotspotData: HotspotFeatureGeo[] = useMemo(() => {
+    return hotspotApiResponse?.features || [];
+  }, [hotspotApiResponse]);
+
   const [showAllData] = useState<boolean>(false);
   const mapRef = useRef<Map | null>(null);
   const geoJsonRef = useRef<LeafletGeoJSON | null>(null);
@@ -255,7 +273,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
   const [isMobile, setIsMobile] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isControlPanelCollapsed, setIsControlPanelCollapsed] = useState(false);
-  // const [selectedDate, setSelectedDate] = useState<string>("");
 
   const calculateDateCounts = (data: HotspotFeatureGeo[]) => {
     const counts: Record<string, number> = {};
@@ -277,12 +294,14 @@ const MapComponent: React.FC<MapComponentProps> = ({
     const initialDate = dates.length > 0 ? dates[0] : "";
     return { dateCounts: counts, initialSelectedDate: initialDate };
   }, [hotspotData]);
-
-  const [selectedDate, setSelectedDate] = useState(initialSelectedDate);
+  
+  const [selectedDate, setSelectedDate] = useState("");
 
   useEffect(() => {
-    setSelectedDate(initialSelectedDate);
-  }, [initialSelectedDate]);
+  if (initialSelectedDate && (!selectedDate || !dateCounts[selectedDate])) {
+      setSelectedDate(initialSelectedDate);
+    }
+  }, [initialSelectedDate, dateCounts, selectedDate]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -301,127 +320,136 @@ const MapComponent: React.FC<MapComponentProps> = ({
     }
   }, [showLokasiHotspot]);
 
-  // Menghitung jumlah hotspot berdasarkan level drill down dan filter
   const calculateHotspotCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
+  const counts: Record<string, number> = {};
 
-    hotspotData.forEach((hotspot) => {
-      // Filter confidence
-      if (
-        filters?.confidence &&
-        hotspot.properties?.confidence?.toLowerCase() !==
-          filters.confidence?.toLowerCase()
-      ) {
-        return;
-      }
-
-      // Filter satellite
-      if (
-        filters?.satelite &&
-        hotspot.properties?.satellite?.toLowerCase() !==
-          filters.satelite?.toLowerCase()
-      ) {
-        return;
-      }
-
-      // Pilih filter waktu berdasarkan mode
-      if (filters?.filterMode === "date" && filters.selectedDate) {
-        // Filter berdasarkan tanggal spesifik
-        const hotspotDate = new Date(hotspot.properties?.time || "");
-        const filterDate = new Date(filters.selectedDate);
-
-        if (
-          hotspotDate.getFullYear() !== filterDate.getFullYear() ||
-          hotspotDate.getMonth() !== filterDate.getMonth() ||
-          hotspotDate.getDate() !== filterDate.getDate()
-        ) {
-          return;
-        }
-      } else if (filters?.filterMode === "period" && filters?.time) {
-        const hotspotDate = new Date(hotspot.properties?.time || "");
-        if (
-          filters.time.tahun &&
-          hotspotDate.getFullYear().toString() !== filters.time.tahun
-        ) {
-          return;
-        }
-        if (filters.time.semester) {
-          const semester = Math.ceil((hotspotDate.getMonth() + 1) / 6);
-          if (semester.toString() !== filters.time.semester) {
-            return;
-          }
-        }
-        if (filters.time.kuartal) {
-          const quarter = Math.ceil((hotspotDate.getMonth() + 1) / 3);
-          if (`Q${quarter}` !== filters.time.kuartal) {
-            return;
-          }
-        }
-        if (filters.time.bulan) {
-          const monthIndex = monthNames.indexOf(filters.time.bulan);
-          if (monthIndex !== -1 && hotspotDate.getMonth() !== monthIndex) {
-            return;
-          }
-        }
-        if (
-          filters.time.minggu &&
-          hotspot.properties?.minggu !== filters.time.minggu
-        ) {
-          return;
-        }
-      }
-      const location = hotspot.properties?.location;
-      if (!location) return;
-
-      let key: string | undefined;
-      switch (drillDownLevel) {
-        case "pulau":
-          key = (location.pulau ?? "").toUpperCase().trim();
-          break;
-        case "provinsi":
-          if (
-            olapData?.query?.pulau &&
-            location.pulau !== olapData.query.pulau
-          ) {
-            return;
-          }
-          key = (location.provinsi ?? "").toUpperCase().trim();
-          break;
-        case "kota":
-          if (
-            olapData?.query?.provinsi &&
-            location.provinsi !== olapData.query.provinsi
-          ) {
-            return;
-          }
-          key = normalizeRegionName(location.kab_kota ?? "");
-          break;
-        case "kecamatan":
-          if (
-            olapData?.query?.kota &&
-            location.kab_kota !== olapData.query.kota
-          ) {
-            return;
-          }
-          key = normalizeRegionName(location.kecamatan ?? "");
-          break;
-        case "desa":
-          if (
-            olapData?.query?.kecamatan &&
-            location.kecamatan !== olapData.query.kecamatan
-          ) {
-            return;
-          }
-          key = normalizeRegionName(location.desa ?? "");
-          break;
-      }
-      if (key) {
-        counts[key] =
-          (counts[key] || 0) + (hotspot.properties?.hotspot_count || 0);
-      }
+  // Jika ada locationData dari backend, gunakan itu
+  if (locationData && locationData.length > 0) {
+    locationData.forEach(([location, total]) => {
+      const normalizedLocation = normalizeRegionName(location);
+      counts[normalizedLocation] = total;
     });
     return counts;
-  }, [hotspotData, drillDownLevel, filters, olapData]);
+  }
+
+  // Fallback ke kalkulasi lokal jika tidak ada locationData
+  hotspotData.forEach((hotspot) => {
+    // Filter confidence
+    if (
+      filters?.confidence &&
+      hotspot.properties?.confidence?.toLowerCase() !==
+        filters.confidence?.toLowerCase()
+    ) {
+      return;
+    }
+
+    // Filter satellite
+    if (
+      filters?.satelite &&
+      hotspot.properties?.satellite?.toLowerCase() !==
+        filters.satelite?.toLowerCase()
+    ) {
+      return;
+    }
+
+    // Pilih filter waktu berdasarkan mode
+    if (filters?.filterMode === "date" && filters.selectedDate) {
+      // Filter berdasarkan tanggal spesifik
+      const hotspotDate = new Date(hotspot.properties?.time || "");
+      const filterDate = new Date(filters.selectedDate);
+
+      if (
+        hotspotDate.getFullYear() !== filterDate.getFullYear() ||
+        hotspotDate.getMonth() !== filterDate.getMonth() ||
+        hotspotDate.getDate() !== filterDate.getDate()
+      ) {
+        return;
+      }
+    } else if (filters?.filterMode === "period" && filters?.time) {
+      const hotspotDate = new Date(hotspot.properties?.time || "");
+      if (
+        filters.time.tahun &&
+        hotspotDate.getFullYear().toString() !== filters.time.tahun
+      ) {
+        return;
+      }
+      if (filters.time.semester) {
+        const semester = Math.ceil((hotspotDate.getMonth() + 1) / 6);
+        if (semester.toString() !== filters.time.semester) {
+          return;
+        }
+      }
+      if (filters.time.kuartal) {
+        const quarter = Math.ceil((hotspotDate.getMonth() + 1) / 3);
+        if (`Q${quarter}` !== filters.time.kuartal) {
+          return;
+        }
+      }
+      if (filters.time.bulan) {
+        const monthIndex = monthNames.indexOf(filters.time.bulan);
+        if (monthIndex !== -1 && hotspotDate.getMonth() !== monthIndex) {
+          return;
+        }
+      }
+      if (
+        filters.time.minggu &&
+        hotspot.properties?.minggu !== filters.time.minggu
+      ) {
+        return;
+      }
+    }
+    const location = hotspot.properties?.location;
+    if (!location) return;
+
+    let key: string | undefined;
+    switch (drillDownLevel) {
+      case "pulau":
+        key = (location.pulau ?? "").toUpperCase().trim();
+        break;
+      case "provinsi":
+        if (
+          olapData?.query?.pulau &&
+          location.pulau !== olapData.query.pulau
+        ) {
+          return;
+        }
+        key = (location.provinsi ?? "").toUpperCase().trim();
+        break;
+      case "kota":
+        if (
+          olapData?.query?.provinsi &&
+          location.provinsi !== olapData.query.provinsi
+        ) {
+          return;
+        }
+        key = normalizeRegionName(location.kab_kota ?? "");
+        break;
+      case "kecamatan":
+        if (
+          olapData?.query?.kota &&
+          location.kab_kota !== olapData.query.kota
+        ) {
+          return;
+        }
+        key = normalizeRegionName(location.kecamatan ?? "");
+        break;
+      case "desa":
+        if (
+          olapData?.query?.kecamatan &&
+          location.kecamatan !== olapData.query.kecamatan
+        ) {
+          return;
+        }
+        key = normalizeRegionName(location.desa ?? "");
+        break;
+    }
+    if (key) {
+      counts[key] =
+        (counts[key] || 0) + (hotspot.properties?.hotspot_count || 0);
+    }
+  });
+  return counts;
+}, [locationData, hotspotData, drillDownLevel, filters, olapData]); 
 
   const getFilteredGeoFeatures = useMemo(() => {
     if (!geoData[drillDownLevel]) return [];
@@ -543,46 +571,50 @@ const MapComponent: React.FC<MapComponentProps> = ({
   );
 
   useEffect(() => {
-    if (selectedLocation && mapRef.current) {
-      mapRef.current.flyTo(selectedLocation, 7);
-    }
-  }, [selectedLocation]);
-
-  useEffect(() => {
-    if (mapRef.current && geoData[drillDownLevel]) {
-      const zoomLevel =
-        {
-          pulau: 5,
-          provinsi: 6,
-          kota: 7,
-          kecamatan: 8,
-          desa: 9,
-        }[drillDownLevel] || 6;
-
-      mapRef.current.setZoom(zoomLevel);
-
-      if (selectedLocation) {
-        mapRef.current.flyTo(selectedLocation, zoomLevel);
+    const performZoom = () => {
+      if (!mapRef.current || !geoData[drillDownLevel]) {
+        return;
       }
-    }
+      const zoomLevel = {
+        pulau: 5,
+        provinsi: 6,
+        kota: 7,
+        kecamatan: 8,
+        desa: 9,
+      }[drillDownLevel] || 6;
+
+      if (drillDownLevel === "pulau") {
+        const indonesiaBounds = L.latLngBounds(
+          L.latLng(-11, 94),
+          L.latLng(6, 141)
+        );
+        mapRef.current.fitBounds(indonesiaBounds, {
+          maxZoom: 6,
+          animate: true,
+          duration: 0.8
+        });
+      }
+      else if (selectedLocation) {
+        mapRef.current.flyTo(selectedLocation, zoomLevel, {
+          animate: true,
+          duration: 1.0,
+        });
+      }
+      else {
+        mapRef.current.setZoom(zoomLevel);
+      }
+    };
+
+    const timers = [
+      setTimeout(performZoom, 100),
+      setTimeout(performZoom, 300),
+      setTimeout(performZoom, 500)
+    ];
+
+    return () => {
+      timers.forEach(timer => clearTimeout(timer));
+    };
   }, [drillDownLevel, geoData, selectedLocation]);
-
-  useEffect(() => {
-    if (drillDownLevel === "pulau" && mapRef.current) {
-      const indonesiaBounds = L.latLngBounds(
-        L.latLng(-11, 94),
-        L.latLng(6, 141)
-      );
-
-      const timer = setTimeout(() => {
-        if (mapRef.current) {
-          mapRef.current.fitBounds(indonesiaBounds);
-        }
-      }, 100);
-
-      return () => clearTimeout(timer);
-    }
-  }, [drillDownLevel]);
 
   const getCurrentFeatureName = useCallback(() => {
     if (!olapData?.query) return null;
@@ -627,9 +659,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
                 fillOpacity: 0.9,
               });
               geoJSONLayer.bringToFront();
-
-              const bounds = geoJSONLayer.getBounds();
-              mapRef.current?.fitBounds(bounds);
             }
           });
         }
@@ -678,27 +707,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
         onLayerChange={onLayerChange}
       />
 
-      {isMobile && (
-        <button
-          className={`
-            absolute z-[1000] p-2 rounded-full shadow-lg
-            ${
-              isFullscreen
-                ? "top-4 right-4 bg-white text-gray-700"
-                : "bottom-4 right-4 bg-blue-500 text-white"
-            }
-          `}
-          onClick={() => setIsFullscreen(!isFullscreen)}
-          aria-label={isFullscreen ? "Keluar dari fullscreen" : "Fullscreen"}
-        >
-          {isFullscreen ? (
-            <FontAwesomeIcon icon={faCompress} className="text-sm" />
-          ) : (
-            <FontAwesomeIcon icon={faExpand} className="text-sm" />
-          )}
-        </button>
-      )}
-
       {loading ? (
         <div
           className="flex flex-col items-center justify-center h-full w-full bg-gray-100 rounded-lg"
@@ -710,7 +718,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
             size="3x"
             className="text-green-600 mb-4"
           />
-          <p className="text-gray-700">Loading...</p>
+          <p className="text-gray-700">Memuat peta...</p>
         </div>
       ) : error ? (
          <div
@@ -722,7 +730,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
             size="3x"
             className="text-red-500 mb-4"
           />
-          <p className="text-red-700 font-semibold">Gagal memuat data</p>
+          <p className="text-red-700 font-semibold">Gagal memuat peta</p>
           <p className="text-red-600 text-sm mt-1">{error.message}</p>
         </div>
       ) : (
@@ -756,7 +764,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
             geoData[drillDownLevel] && (
               <GeoJSON
                 ref={geoJsonRef}
-                key={`geojson-${drillDownLevel}-${getHotspotData}`}
+                key={`geojson-${drillDownLevel}-${JSON.stringify(olapData?.query || {})}-${getHotspotData}`}
                 data={
                   {
                     type: "FeatureCollection",

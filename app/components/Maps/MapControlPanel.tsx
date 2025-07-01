@@ -40,14 +40,20 @@ export default function MapControlPanel({
       <Tooltip id="filter-date-info" className="!z-[1001] !max-w-[250px] !break-words !whitespace-pre-line" />
       <div
         className={`
-          absolute z-[1000] bg-white p-3 rounded-lg shadow-lg transition-all duration-300
-          ${isMobile ? (isFullscreen ? "top-4 right-4 w-auto" : "top-2 right-2 w-[calc(100%-20px)]") : "top-4 right-4 w-auto"}
-          ${isFullscreen ? "bg-white/90" : ""}
-          ${isControlPanelCollapsed ? "w-[40px] h-[40px] overflow-hidden" : "max-w-[300px]"}
+          absolute z-[1000] bg-white rounded-lg shadow-lg transition-all duration-300
+          ${isMobile 
+            ? isControlPanelCollapsed 
+              ? "top-4 right-2 w-10 h-10 p-0 flex items-center justify-center" 
+              : "top-4 right-2 max-w-[calc(100%-20px)] w-[260px] p-3"
+            : "top-4 right-4 w-auto p-3"
+          }
+          ${isFullscreen ? "bg-white/90" : "bg-white"}
+          ${isControlPanelCollapsed ? "overflow-hidden" : ""}
         `}
       >
         <button
-          className="absolute top-2 right-2 cursor-pointer text-gray-500 hover:text-gray-700"
+          className={`${isControlPanelCollapsed ? "w-full h-full" : "absolute top-2 right-2"} 
+          cursor-pointer text-gray-500 hover:text-gray-700`}
           onClick={() => setIsControlPanelCollapsed(!isControlPanelCollapsed)}
           aria-label={isControlPanelCollapsed ? "Expand panel" : "Collapse panel"}
         >
@@ -76,7 +82,6 @@ export default function MapControlPanel({
                       onLayerChange?.('hotspot-count');
                       setShowJumlahHotspot(true);
                       setShowLokasiHotspot(false);
-                      setSelectedDate("");
                     }}
                   />
                   <label htmlFor="hotspot-count" className="text-sm whitespace-nowrap">

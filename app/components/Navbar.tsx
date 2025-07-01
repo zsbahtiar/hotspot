@@ -36,14 +36,11 @@ const Navbar = () => {
             <Link href="/data" className={linkClass('/data')}>Data</Link>
             <Link href="/about" className={linkClass('/about')}>Tentang</Link>
           </div>
+          {/* Mobile menu */}
+          <button onClick={toggleMenu} className="md:hidden text-white focus:outline-none">
+            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
         </div>
-      </div>
-
-      {/* Mobile menu */}
-      <div className="md:hidden">
-        <button onClick={toggleMenu} className="text-white focus:outline-none">
-          {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
       </div>
 
       {isOpen && (

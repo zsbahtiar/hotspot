@@ -539,7 +539,7 @@ export default function ModalTime({
             {loading[type] ? (
               <li className="p-2 text-center text-gray-500 flex items-center justify-center">
                 <FontAwesomeIcon icon={faSpinner} spin className="mr-2" />{" "}
-                Loading...
+                Memuat data...
               </li>
             ) : dataList.length > 0 ? (
               dataList.map((item, idx) => (

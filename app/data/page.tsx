@@ -111,31 +111,31 @@ export default function HotspotTable() {
   const accumulatedData = useMemo(() => {
     return filteredData.reduce<AccumulatedData[]>(
     (acc, item) => {
-      const date = item.properties.time;
-      const satellite = item.properties.satellite;
+      const tanggal = item.properties.time;
+      const satelit = item.properties.satellite;
       const confidence = item.properties.confidence;
       const provinsi = item.properties.location.provinsi;
-      const kab_kota = item.properties.location.kab_kota;
+      const kota = item.properties.location.kab_kota;
 
       const existing = acc.find(
         (x) =>
-          x.date === date &&
-          x.satellite === satellite &&
+          x.tanggal === tanggal &&
+          x.satelit === satelit &&
           x.confidence === confidence &&
           x.provinsi === provinsi &&
-          x.kab_kota === kab_kota
+          x.kota === kota
       );
 
       if (existing) {
-        existing.total += item.properties.hotspot_count;
+        existing.jumlah += item.properties.hotspot_count;
       } else {
         acc.push({
-          date: date,
-          satellite: satellite,
+          tanggal: tanggal,
+          satelit: satelit,
           confidence: confidence,
           provinsi: provinsi,
-          kab_kota: kab_kota,
-          total: item.properties.hotspot_count,
+          kota: kota,
+          jumlah: item.properties.hotspot_count,
         });
       }
       return acc;
@@ -213,12 +213,12 @@ export default function HotspotTable() {
             Longitude: item.geometry.coordinates[0],
           }))
         : accumulatedData.map((item) => ({
-            Tanggal: item.date,
-            Satelit: item.satellite,
+            Tanggal: item.tanggal,
+            Satelit: item.satelit,
             Confidence: item.confidence,
             Provinsi: item.provinsi,
-            Kota: item.kab_kota,
-            Jumlah: item.total,
+            Kota: item.kota,
+            Jumlah: item.jumlah,
           }));
 
     let dateStr;
@@ -273,29 +273,42 @@ export default function HotspotTable() {
           className="text-green-600 mb-4"
         />
         <p className="text-gray-700 text-lg">
-          Loading data hotspot, mohon tunggu...
+          Memuat data hotspot, mohon tunggu...
         </p>
       </div>
     );
   }
 
-  function sortHeader(label: string, col: string) {
-    return (
-      <th
-        className="px-4 py-2 text-left cursor-pointer select-none"
-        onClick={() => {
-          if (sortBy === col)
-            setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-          else {
-            setSortBy(col);
-            setSortOrder("asc");
-          }
-        }}
-      >
-        {label} {sortBy === col ? (sortOrder === "asc" ? "▲" : "▼") : ""}
-      </th>
-    );
-  }
+function sortHeader(label: string, col: string) {
+  return (
+    <th
+      className="px-4 py-2 text-left cursor-pointer select-none"
+      onClick={() => {
+        if (sortBy === col)
+          setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+        else {
+          setSortBy(col);
+          setSortOrder("asc");
+        }
+      }}
+    >
+      <div className="flex items-center">
+        <span>{label}</span>
+        <span className="inline-block ml-1 text-xs">
+          {sortBy === col ? (
+            sortOrder === "asc" ? (
+              <span className="text-blue-600">▲</span>
+            ) : (
+              <span className="text-blue-600">▼</span>
+            )
+          ) : (
+            <span className="text-gray-300 text-[15px]">⬍</span>
+          )}
+        </span>
+      </div>
+    </th>
+  );
+}
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -436,14 +449,18 @@ export default function HotspotTable() {
                     className={`px-3 py-1 text-xs rounded-full ${
                       selectedConfidence.includes(conf)
                         ? conf === "high"
-                          ? "bg-red-100 text-black"
+                          ? "bg-red-100 text-black font-medium"
                           : conf === "medium"
-                          ? "bg-yellow-100 text-black"
-                          : "bg-green-100 text-black"
-                        : "bg-gray-200"
+                          ? "bg-yellow-100 text-black font-medium"
+                          : "bg-green-100 text-black font-medium"
+                        : conf === "high"
+                          ? "bg-red-50 text-gray-700"
+                          : conf === "medium"
+                          ? "bg-yellow-50 text-gray-700"
+                          : "bg-green-50 text-gray-700"
                     }`}
                   >
-                    {conf.charAt(0).toUpperCase() + conf.slice(1)}
+                    {conf.charAt(0).toLowerCase() + conf.slice(1)}
                   </button>
                 ))}
               </div>
@@ -466,8 +483,8 @@ export default function HotspotTable() {
                     }}
                     className={`px-3 py-1 text-xs rounded-full ${
                       selectedSatellites.includes(sat)
-                        ? "bg-blue-200 text-black"
-                        : "bg-gray-200"
+                        ? "bg-blue-200 text-black font-medium"
+                        : "bg-blue-100 text-gray-700"
                     }`}
                   >
                     {sat}
@@ -481,7 +498,7 @@ export default function HotspotTable() {
         {/* Data Table */}
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full">
+            <table className="min-w-full text-sm">
               <thead className="bg-gray-100">
                 <tr>
                   <th className="px-4 py-2 text-left">No</th>
@@ -583,10 +600,10 @@ export default function HotspotTable() {
                       ) : (
                         <>
                           <td className="px-4 py-2">
-                            {(item as AccumulatedData).date}
+                            {(item as AccumulatedData).tanggal}
                           </td>
                           <td className="px-4 py-2">
-                            {(item as AccumulatedData).satellite}
+                            {(item as AccumulatedData).satelit}
                           </td>
                           <td className="px-4 py-2">
                             <span
@@ -606,10 +623,10 @@ export default function HotspotTable() {
                             {(item as AccumulatedData).provinsi}
                           </td>
                           <td className="px-4 py-2">
-                            {(item as AccumulatedData).kab_kota}
+                            {(item as AccumulatedData).kota}
                           </td>
                           <td className="px-4 py-2">
-                            {(item as AccumulatedData).total}
+                            {(item as AccumulatedData).jumlah}
                           </td>
                         </>
                       )}
