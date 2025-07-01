@@ -84,7 +84,7 @@ const OlapComponent = () => {
   const [dataConfidence, setDataConfidence] = useState<OlapData[]>([]);
   const [dataSatelite, setDataSatelite] = useState<OlapData[]>([]);
   const [barChartData, setBarChartData] = useState<ChartData<"bar"> | null>(null);
-  const [olapData, setOlapData] = useState<{query?: any}>({});
+  const [olapData, setOlapData] = useState<{query?: QueryData}>({});
   const [, setSelectedHotspot] = useState<number | null>(null);
   const [allLocationData, setAllLocationData] = useState<LocationData[]>([]);
   const [globalFilters, setGlobalFilters] = useState({

@@ -11,7 +11,6 @@ interface MapLegendProps {
 export default function MapLegend({
   showJumlahHotspot,
   showLokasiHotspot,
-  minHotspot,
   threshold1,
   threshold2,
 }: MapLegendProps) {
