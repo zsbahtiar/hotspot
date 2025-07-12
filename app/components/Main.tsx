@@ -10,14 +10,17 @@ import {
   CategoryScale,
   LinearScale,
   BarElement,
+  LineElement,
+  PointElement,
 } from "chart.js";
-import { Bar } from "react-chartjs-2";
+import { Line } from "react-chartjs-2";
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { HotspotDataGeo } from "../core/model/hotspot";
 import { formatNumber, extractTime, formatDate } from "../core/utilities/formatters";
 import { Tooltip } from "react-tooltip";
+import { monthNames } from "../core/model/time";
 
 ChartJS.register(
   ChartTooltip,
@@ -25,7 +28,9 @@ ChartJS.register(
   CategoryScale,
   LinearScale,
   BarElement,
-  ChartDataLabels
+  LineElement,
+  PointElement,
+  ChartDataLabels,
 );
 
 const Main = () => {
@@ -66,29 +71,74 @@ const Main = () => {
     }) || [],
   [hotspotData.features]);
 
-  const islandDistribution = useMemo(() => {
-    const islandCounts = hotspotData.features?.reduce(
-      (acc, feature) => {
-        const island = feature.properties.location?.pulau || "Unknown";
-        acc[island] = (acc[island] || 0) + 1;
-        return acc;
-      },
-      {} as Record<string, number>
-    );
-    return islandCounts ? Object.entries(islandCounts) : [];
+  const monthlyHotspotTrends = useMemo(() => {
+    interface MonthCount {
+      total: number;
+      highConfidence: number;
+    }
+    
+    const monthCounts: Record<string, MonthCount> = {};
+  
+    hotspotData.features?.forEach(feature => {
+      if (feature.properties.time) {
+        const date = new Date(feature.properties.time);
+        const monthYear = date.toLocaleString('id-ID', { month: 'long', year: 'numeric' });
+        
+      if (!monthCounts[monthYear]) {
+          monthCounts[monthYear] = {
+            total: 0,
+            highConfidence: 0
+          };
+        }
+        monthCounts[monthYear].total += 1;
+        
+        if (feature.properties.confidence === 'high') {
+          monthCounts[monthYear].highConfidence += 1;
+        }
+      }
+    });
+    return Object.entries(monthCounts).sort((a, b) => {
+      const [monthA, yearA] = a[0].split(' ');
+      const [monthB, yearB] = b[0].split(' ');
+      
+      if (yearA !== yearB) {
+        return parseInt(yearA) - parseInt(yearB);
+      }
+      return monthNames.indexOf(monthA) - monthNames.indexOf(monthB);
+    });
   }, [hotspotData.features]);
 
   const chartData = useMemo(() => ({
-    labels: islandDistribution.map(([island]) => island),
+    labels: monthlyHotspotTrends.map(([month]) => month),
     datasets: [
       {
-        label: "Jumlah Hotspot",
-        data: islandDistribution.map(([, count]) => count),
-        backgroundColor: "#898989",
-        borderWidth: 1,
+        label: "Jumlah Hotspot per Bulan",
+        data: monthlyHotspotTrends.map(([, counts]) => counts.total),
+        borderColor: "#22c55e",
+        backgroundColor: "rgba(34, 197, 94, 0.1)",
+        borderWidth: 2,
+        pointBackgroundColor: "#22c55e",
+        pointBorderColor: "#ffffff",
+        pointBorderWidth: 1,
+        pointRadius: 4,
+        tension: 0.2,
+        fill: true,
       },
+      {
+        label: "Confidence Tinggi",
+        data: monthlyHotspotTrends.map(([, counts]) => counts.highConfidence),
+        borderColor: "#ef4444",
+        backgroundColor: "rgba(239, 68, 68, 0.1)",
+        borderWidth: 2,
+        pointBackgroundColor: "#ef4444",
+        pointBorderColor: "#ffffff",
+        pointBorderWidth: 1,
+        pointRadius: 4,
+        tension: 0.2,
+        fill: true,
+      }
     ],
-  }), [islandDistribution]);
+  }), [monthlyHotspotTrends]);
 
   const stats = useMemo(() => ({
     totalHotspots: hotspotData.features?.length || 0,
@@ -372,7 +422,7 @@ const Main = () => {
                     </div>
                   ) : hotspotData.features?.length > 0 ? (
                     <div className="w-full h-full p-4">
-                      <Bar
+                      <Line
                         data={chartData}
                         options={{
                           responsive: true,
@@ -394,6 +444,7 @@ const Main = () => {
                               }
                             },
                             y: {
+                              beginAtZero: true,
                               ticks: {
                                 callback: function(value) {
                                   return value.toLocaleString('id-ID');
@@ -422,8 +473,8 @@ const Main = () => {
                               display: true,
                               color: 'black',
                               anchor: 'end',
-                              align: 'end',
-                              offset: 0,
+                              align: 'top',
+                              offset: 5,
                               formatter: (value) => formatNumber(value),
                               font: {
                                 weight: 'bold',

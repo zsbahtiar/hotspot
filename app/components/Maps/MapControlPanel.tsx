@@ -143,8 +143,8 @@ export default function MapControlPanel({
                   <input
                     id="date-filter"
                     type="date"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
+                    value={selectedDate || ""}
+                    onChange={(e) => setSelectedDate(e.target.value || "")}
                     className="border rounded p-1 text-xs w-full"
                     max={new Date().toISOString().split("T")[0]}
                     disabled={!showLokasiHotspot}

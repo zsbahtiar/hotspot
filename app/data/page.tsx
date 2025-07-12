@@ -23,7 +23,7 @@ export default function HotspotTable() {
   const [selectedSatellites, setSelectedSatellites] = useState<string[]>([]);
   const [exportFormat, setExportFormat] = useState<"xlsx" | "csv">("xlsx");
   const [currentPage, setCurrentPage] = useState(1);
-  const [viewMode, setViewMode] = useState<"detail" | "akumulasi">("detail");
+  const [viewMode, setViewMode] = useState<"detail" | "akumulasi">("akumulasi");
   const itemsPerPage = 10;
   const [sortBy, setSortBy] = useState<string>("properties.hotspot_time");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
@@ -325,19 +325,6 @@ function sortHeader(label: string, col: string) {
               <div className="flex gap-2">
                 <button
                   onClick={() => {
-                    setViewMode("detail");
-                    setCurrentPage(1);
-                  }}
-                  className={`px-4 py-2 rounded ${
-                    viewMode === "detail"
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-200"
-                  }`}
-                >
-                  Detail
-                </button>
-                <button
-                  onClick={() => {
                     setViewMode("akumulasi");
                     setCurrentPage(1);
                   }}
@@ -348,6 +335,19 @@ function sortHeader(label: string, col: string) {
                   }`}
                 >
                   Akumulasi
+                </button>
+                <button
+                  onClick={() => {
+                    setViewMode("detail");
+                    setCurrentPage(1);
+                  }}
+                  className={`px-4 py-2 rounded ${
+                    viewMode === "detail"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-200"
+                  }`}
+                >
+                  Detail
                 </button>
               </div>
             </div>

@@ -35,6 +35,7 @@ export interface MapComponentProps {
   };
   onLayerChange?: (layer: 'hotspot-count' | 'hotspot-locations') => void;
   locationData?: [string, number][];
+  defaultZoom?: number;
 }
 
 export interface MarkerClusterType {

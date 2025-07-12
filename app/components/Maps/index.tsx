@@ -1,8 +1,8 @@
 import dynamic from "next/dynamic";
 
 const MapComponent = dynamic(() => import("./MapComponent"), { 
-  ssr: false, 
-  loading: () => <p>Memuat data...</p>
+  ssr: false,
+  loading: () => null
 });
 
 export default MapComponent;

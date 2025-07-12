@@ -18,6 +18,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faSpinner,
   faExclamationTriangle,
+  faMapMarkerAlt,
 } from "@fortawesome/free-solid-svg-icons";
 import { DrillDownLevel } from "../../core/model/location";
 import { FeatureCollection } from "geojson";
@@ -202,6 +203,15 @@ const MapComponent: React.FC<MapComponentProps> = ({
   onLayerChange,
   locationData,
 }) => {
+  const mapRef = useRef<Map | null>(null);
+  const geoJsonRef = useRef<LeafletGeoJSON | null>(null);
+  const [showJumlahHotspot, setShowJumlahHotspot] = useState(true);
+  const [showLokasiHotspot, setShowLokasiHotspot] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isControlPanelCollapsed, setIsControlPanelCollapsed] = useState(false);
+  const [selectedDate, setSelectedDate] = useState("");
+
   const { 
     data: geoJsonData, 
     error: geoJsonError, 
@@ -220,36 +230,61 @@ const MapComponent: React.FC<MapComponentProps> = ({
     const baseUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/hotspot`;
     const queryParams = new URLSearchParams();
 
-    // Filter dari props
-    if (filters?.confidence) {
-      queryParams.append('confidence', filters.confidence);
-    }
-    if (filters?.satelite) {
-      queryParams.append('satelite', filters.satelite);
+    // Untuk layer lokasi hotspot
+    if (showLokasiHotspot) {
+      // Jika user sudah pilih tanggal, gunakan itu
+      if (selectedDate) {
+        queryParams.append('selectedDate', selectedDate);
+      } 
+      // Jika belum pilih tanggal, gunakan hari ini
+      else {
+        const today = new Date().toISOString().split("T")[0];
+        queryParams.append('selectedDate', today);
+      }
+      
+      // Filter berdasarkan drill down level
+      if (olapData?.query) {
+        Object.entries(olapData.query).forEach(([key, value]) => {
+          if (value && key !== 'lat' && key !== 'lng' && key !== 'dimension' && key !== 'tipe') {
+            queryParams.append(key, value.toString());
+          }
+        });
+      }
+      return queryParams.toString() ? `${baseUrl}?${queryParams.toString()}` : baseUrl;
     }
 
-    // Filter waktu
-    if (filters?.filterMode === "date" && filters?.selectedDate) {
-      queryParams.append('selectedDate', filters.selectedDate);
-    } else if (filters?.filterMode === "period" && filters?.time) {
-      Object.entries(filters.time).forEach(([key, value]) => {
-        if (value) {
-          queryParams.append(key, value.toString());
+      // Untuk layer jumlah hotspot - gunakan filters dari props
+      if (showJumlahHotspot) {
+        if (filters?.confidence) {
+          queryParams.append('confidence', filters.confidence);
         }
-      });
-    }
-
-    // Filter berdasarkan drill down level (dari olapData)
-    if (olapData?.query) {
-      Object.entries(olapData.query).forEach(([key, value]) => {
-        if (value && key !== 'lat' && key !== 'lng' && key !== 'dimension' && key !== 'tipe') {
-          queryParams.append(key, value.toString());
+        if (filters?.satelite) {
+          queryParams.append('satelite', filters.satelite);
         }
-      });
-    }
 
-    return queryParams.toString() ? `${baseUrl}?${queryParams.toString()}` : baseUrl;
-  }, [filters, olapData]);
+        // Filter waktu
+        if (filters?.filterMode === "date" && filters?.selectedDate) {
+          queryParams.append('selectedDate', filters.selectedDate);
+        } else if (filters?.filterMode === "period" && filters?.time) {
+          Object.entries(filters.time).forEach(([key, value]) => {
+            if (value) {
+              queryParams.append(key, value.toString());
+            }
+          });
+        }
+
+        // Filter berdasarkan drill down level
+        if (olapData?.query) {
+          Object.entries(olapData.query).forEach(([key, value]) => {
+            if (value && key !== 'lat' && key !== 'lng' && key !== 'dimension' && key !== 'tipe') {
+              queryParams.append(key, value.toString());
+            }
+          });
+        }
+      }
+
+      return queryParams.toString() ? `${baseUrl}?${queryParams.toString()}` : baseUrl;
+  }, [filters, olapData, showJumlahHotspot, showLokasiHotspot, selectedDate]);
 
    const { 
     data: hotspotApiResponse, 
@@ -264,15 +299,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
   const hotspotData: HotspotFeatureGeo[] = useMemo(() => {
     return hotspotApiResponse?.features || [];
   }, [hotspotApiResponse]);
-
-  const [showAllData] = useState<boolean>(false);
-  const mapRef = useRef<Map | null>(null);
-  const geoJsonRef = useRef<LeafletGeoJSON | null>(null);
-  const [showJumlahHotspot, setShowJumlahHotspot] = useState(true);
-  const [showLokasiHotspot, setShowLokasiHotspot] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isControlPanelCollapsed, setIsControlPanelCollapsed] = useState(false);
 
   const calculateDateCounts = (data: HotspotFeatureGeo[]) => {
     const counts: Record<string, number> = {};
@@ -294,14 +320,23 @@ const MapComponent: React.FC<MapComponentProps> = ({
     const initialDate = dates.length > 0 ? dates[0] : "";
     return { dateCounts: counts, initialSelectedDate: initialDate };
   }, [hotspotData]);
-  
-  const [selectedDate, setSelectedDate] = useState("");
 
   useEffect(() => {
-  if (initialSelectedDate && (!selectedDate || !dateCounts[selectedDate])) {
-      setSelectedDate(initialSelectedDate);
-    }
+    if (initialSelectedDate && (!selectedDate || !dateCounts[selectedDate])) {
+        setSelectedDate(initialSelectedDate);
+      }
   }, [initialSelectedDate, dateCounts, selectedDate]);
+
+  useEffect(() => {
+    if (showLokasiHotspot && !selectedDate) {
+      const today = new Date().toISOString().split("T")[0];
+      if (dateCounts[today] && dateCounts[today] > 0) {
+        setSelectedDate(today);
+      } else if (initialSelectedDate) {
+        setSelectedDate(initialSelectedDate);
+      }
+    }
+  }, [showLokasiHotspot, selectedDate, dateCounts, initialSelectedDate]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -550,17 +585,21 @@ const MapComponent: React.FC<MapComponentProps> = ({
   );
 
   const filteredHotspots = useMemo(() => {
+    if (!showLokasiHotspot) return [];
+
     return hotspotData.filter((feature) => {
       const coords = feature.geometry?.coordinates;
       const date = feature.properties?.time?.split("T")[0];
 
-      if (showAllData) {
-        return coords && coords.length === 2;
-      } else {
-        return coords && coords.length === 2 && date === selectedDate;
-      }
-    });
-  }, [hotspotData, showAllData, selectedDate]);
+      if (selectedDate) {
+            return coords && coords.length === 2 && date === selectedDate;
+          } 
+          else {
+            const today = new Date().toISOString().split("T")[0];
+            return coords && coords.length === 2 && date === today;
+          }
+        });
+  }, [hotspotData, showLokasiHotspot, selectedDate]);
 
   const mapStyle = useMemo(
     () => ({
@@ -869,40 +908,93 @@ const MapComponent: React.FC<MapComponentProps> = ({
                       position={[latitude, longitude]}
                       icon={customMarker(confidence)}
                     >
-                      <Popup className="text-sm">
-                        <strong>Confidence:</strong> {confidence}
-                        <br />
-                        <strong>Satelit:</strong>{" "}
-                        {feature.properties?.satellite || "N/A"}
-                        <br />
-                        <strong>Tanggal:</strong> {date}
-                        <br />
-                        <strong>Waktu:</strong> {time}
-                        <br />
-                        <ul className="mt-1 space-y-1">
-                          <li>
-                            <strong>Pulau:</strong>{" "}
-                            {feature.properties?.location?.pulau || "N/A"}
-                          </li>
-                          <li>
-                            <strong>Provinsi:</strong>{" "}
-                            {feature.properties?.location?.provinsi || "N/A"}
-                          </li>
-                          <li>
-                            <strong>Kab/kota:</strong>{" "}
-                            {feature.properties?.location?.kab_kota || "N/A"}
-                          </li>
-                          <li>
-                            <strong>Kecamatan:</strong>{" "}
-                            {feature.properties?.location?.kecamatan || "N/A"}
-                          </li>
-                          <li>
-                            <strong>Desa:</strong>{" "}
-                            {feature.properties?.location?.desa || "N/A"}
-                          </li>
-                        </ul>
-                        <strong className="mt-1 block">Koordinat:</strong>{" "}
-                        {latitude.toFixed(4)}, {longitude.toFixed(4)}
+                      <Popup>
+                        <div className="hotspot-popup" style={{ maxWidth: 320, minWidth: 280 }}>
+                          <div className="p-2">
+                            <div className="flex items-center gap-2 mb-3 pb-2 border-b">
+                              <div className="w-3 h-3 bg-black rounded-full"></div>
+                              <h4 className="font-semibold text-sm text-gray-800">Detail Hotspot</h4>
+                              <div className="ml-auto">
+                                <span className="text-xs text-gray-500 mr-1">Confidence:</span>
+                                <span className={`px-2 py-1 text-xs font-semibold rounded ${
+                                  confidence.toLowerCase() === 'high' ? 'bg-red-300 text-black' :
+                                  confidence.toLowerCase() === 'medium' ? 'bg-yellow-200 text-black' :
+                                  'bg-green-300 text-black'
+                                }`}>
+                                  {confidence}
+                                </span>
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-2 text-sm">
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <span className="text-gray-500 block">Satelit</span>
+                                  <span className="font-medium">{feature.properties?.satellite || "-"}</span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-600 block">Tanggal</span>
+                                  <span className="font-medium">
+                                    {new Date(date).toLocaleDateString('id-ID', {
+                                      weekday: 'long',
+                                      day: 'numeric', 
+                                      month: 'long',
+                                      year: 'numeric'
+                                    })}
+                                  </span>
+                                </div>
+                              </div>
+                              
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <span className="text-gray-500 block">Waktu</span>
+                                  <span className="font-medium">{time}</span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-500 block">Koordinat</span>
+                                  <a 
+                                    href={`https://www.google.com/maps?q=${latitude},${longitude}`} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="font-medium text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                                  >
+                                    {latitude.toFixed(4)}, {longitude.toFixed(4)}
+                                  </a>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Detail Lokasi */}
+                            <div className="mt-3 pt-3 border-t border-gray-200">
+                              <h4 className="font-bold text-gray-700 mb-2 flex items-center">
+                                <FontAwesomeIcon icon={faMapMarkerAlt} className="text-black mr-2" />
+                                Lokasi
+                              </h4>
+                              <ul className="space-y-1.5 text-sm">
+                                <li className="flex justify-between">
+                                  <span className="text-gray-500">Desa/Kel:</span> 
+                                  <strong className="text-gray-800 text-right font-medium">{feature.properties?.location?.desa || "N/A"}</strong>
+                                </li>
+                                <li className="flex justify-between">
+                                  <span className="text-gray-500">Kecamatan:</span> 
+                                  <strong className="text-gray-800 text-right font-medium">{feature.properties?.location?.kecamatan || "N/A"}</strong>
+                                </li>
+                                <li className="flex justify-between">
+                                  <span className="text-gray-500">Kab/Kota:</span> 
+                                  <strong className="text-gray-800 text-right font-medium">{feature.properties?.location?.kab_kota || "N/A"}</strong>
+                                </li>
+                                <li className="flex justify-between">
+                                  <span className="text-gray-500">Provinsi:</span> 
+                                  <strong className="text-gray-800 text-right font-medium">{feature.properties?.location?.provinsi || "N/A"}</strong>
+                                </li>
+                                <li className="flex justify-between">
+                                  <span className="text-gray-500">Pulau:</span> 
+                                  <strong className="text-gray-800 text-right font-medium">{feature.properties?.location?.pulau || "N/A"}</strong>
+                                </li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
                       </Popup>
                     </Marker>
                   );

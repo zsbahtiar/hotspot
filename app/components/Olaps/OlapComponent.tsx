@@ -102,6 +102,8 @@ const OlapComponent = () => {
   });
   const [drillDownQuery, setDrillDownQuery] = useState<QueryData | null>(null)
   const [drillDownIndexes, setDrillDownIndexes] = useState<number[]>([]);
+  const [, setHotspotCountQuery] = useState({});
+  const [hotspotLocationsQuery, setHotspotLocationsQuery] = useState({});
 
   // Fetch data 
   const { data: olapApiData } = useSWR(
@@ -555,6 +557,7 @@ const OlapComponent = () => {
         getDrilldownData(indexes, queryForDrill, nextDrillType);
 
         setOlapData({ query: queryForDrill });
+        setHotspotCountQuery(queryForDrill);
         setDrillDownLevel(nextDrillType);
         setMapBounds(null); // Reset bounds
         setSelectedLocation({
@@ -624,15 +627,37 @@ const OlapComponent = () => {
     setSelectedLocation(undefined);
     setMapKey(Date.now());
     hasFetched.current = false;
+
+    setHotspotCountQuery({});
+    setHotspotLocationsQuery({}); 
+
+    setActiveMapLayer("hotspot-count");
   };
 
-  const memoizedFilters = useMemo(() => ({
-    confidence: globalFilters.confidence?.toLowerCase(),
-    satelite: globalFilters.satelite?.toLowerCase(),
-    time: globalFilters.time,
-    filterMode: globalFilters.filterMode,
-    selectedDate: globalFilters.selectedDate,
-  }), [globalFilters]);
+const memoizedFilters = useMemo(() => {
+  if (activeMapLayer === "hotspot-locations") {
+    return {
+      selectedDate: undefined,
+      filterMode: undefined,
+      pulau: undefined,
+      provinsi: undefined,
+      kota: undefined,
+      kecamatan: undefined,
+      desa: undefined,
+      confidence: undefined,
+      satelite: undefined,
+      time: {},
+    };
+  } else {
+    return {
+      confidence: globalFilters.confidence?.toLowerCase(),
+      satelite: globalFilters.satelite?.toLowerCase(),
+      time: globalFilters.time,
+      filterMode: globalFilters.filterMode,
+      selectedDate: globalFilters.selectedDate,
+    };
+  }
+}, [globalFilters, activeMapLayer]);
 
   const openModalTime = (
     index: number[],
@@ -678,6 +703,14 @@ const OlapComponent = () => {
       filterMode: "period",
       selectedDate: undefined,
     }));
+
+    if (activeMapLayer === "hotspot-count") {
+      setHotspotCountQuery(prev => ({
+        ...prev,
+        ...timeFilters,
+        filterMode: "period"
+      }));
+    }
     closeModalTime();
   };
 
@@ -772,6 +805,12 @@ const OlapComponent = () => {
       },
       onClick: handleChartClick,
     }), [handleChartClick, setSelectedHotspot]);
+
+    useEffect(() => {
+      if (activeMapLayer === "hotspot-count" && 
+          (globalFilters.selectedDate || Object.keys(globalFilters.time).length > 0)) {
+      }
+    }, [activeMapLayer, globalFilters.selectedDate, globalFilters.time]);
 
   return (
     <div className="h-screen w-screen flex flex-col bg-gray-50 overflow-hidden">
@@ -957,6 +996,11 @@ const OlapComponent = () => {
                         filterMode: date ? "date" : undefined,
                         time: date ? {} : globalFilters.time,
                       });
+                      setHotspotCountQuery((prev) => ({
+                        ...prev,
+                        selectedDate: date || undefined,
+                        filterMode: date ? "date" : undefined,
+                      }));
                     }}
                     max={new Date().toISOString().split("T")[0]}
                     disabled={activeMapLayer === "hotspot-locations"}
@@ -1241,7 +1285,11 @@ const OlapComponent = () => {
                 key={mapKey}
                 bounds={mapBounds ?? undefined}
                 selectedLocation={selectedLocation}
-                olapData={olapData}
+                olapData={
+                  activeMapLayer === "hotspot-locations"
+                    ? { query: hotspotLocationsQuery }
+                    : { query: olapData.query }
+                }
                 locationData={
                   (drillDownData && drillDownIndexes.length > 0) 
                     ? (drillDownData as [string, number][])
@@ -1254,17 +1302,13 @@ const OlapComponent = () => {
                 onLayerChange={(layer) => {
                   setActiveMapLayer(layer);
                   if (layer === "hotspot-locations") {
-                    setGlobalFilters((prev) => ({
-                      ...prev,
-                      time: {},
-                      filterMode: undefined,
-                      selectedDate: undefined,
-                    }));
                     setIsSidebarOpen(false);
+                    setHotspotLocationsQuery({});
                   } else {
                     if (window.innerWidth < 768) {
                       setIsSidebarOpen(true);
                     }
+                    setHotspotCountQuery(olapData.query || {});
                   }
                 }}
                 className={`${
@@ -1277,6 +1321,7 @@ const OlapComponent = () => {
                   padding: 0,
                 }}
                 filters={memoizedFilters}
+                defaultZoom={activeMapLayer === "hotspot-locations" ? 5 : 4}
               />
               <button
                 className="md:hidden bg-blue-600 text-white flex items-center justify-center shadow-md absolute bottom-3 right-3 z-[500] rounded-full w-10 h-10"
