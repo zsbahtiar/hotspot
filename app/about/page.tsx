@@ -234,7 +234,7 @@ export default function About() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow text-center">
-                    <div className="text-xl font-semibold text-blue-600">Lee Roy Akbar</div>
+                    <div className="text-xl font-semibold text-blue-600">Lee Roy Akbar, S.Kom.</div>
                     <div className="text-gray-600 mt-3">Pengembang <em>Back-end</em></div>
                   </div>
 
