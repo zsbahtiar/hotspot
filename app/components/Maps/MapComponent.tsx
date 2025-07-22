@@ -232,11 +232,11 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
     // Untuk layer lokasi hotspot
     if (showLokasiHotspot) {
-      // Jika user sudah pilih tanggal, gunakan itu
+      // Jika user sudah pilih tanggal
       if (selectedDate) {
         queryParams.append('selectedDate', selectedDate);
       } 
-      // Jika belum pilih tanggal, gunakan hari ini
+      // Jika belum pilih tanggal
       else {
         const today = new Date().toISOString().split("T")[0];
         queryParams.append('selectedDate', today);
@@ -253,7 +253,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
       return queryParams.toString() ? `${baseUrl}?${queryParams.toString()}` : baseUrl;
     }
 
-      // Untuk layer jumlah hotspot - gunakan filters dari props
+      // Untuk layer jumlah hotspot gunakan filters dari props
       if (showJumlahHotspot) {
         if (filters?.confidence) {
           queryParams.append('confidence', filters.confidence);
@@ -358,7 +358,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
   const calculateHotspotCounts = useMemo(() => {
   const counts: Record<string, number> = {};
 
-  // Jika ada locationData dari backend, gunakan itu
   if (locationData && locationData.length > 0) {
     locationData.forEach(([location, total]) => {
       const normalizedLocation = normalizeRegionName(location);
@@ -367,7 +366,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
     return counts;
   }
 
-  // Fallback ke kalkulasi lokal jika tidak ada locationData
   hotspotData.forEach((hotspot) => {
     // Filter confidence
     if (

@@ -37,6 +37,62 @@ export default function About() {
           </section>
 
           <section className="mb-8">
+            <h2 className="text-2xl font-semibold text-blue-700 mb-4">Fitur Website</h2>
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="border-l-4 border-blue-500 pl-4 py-2">
+                  <h3 className="font-semibold text-blue-700 text-lg">Dashboard Interaktif</h3>
+                  <p className="text-gray-700">
+                    Visualisasi data <em>hotspot</em> dengan operasi OLAP (<em>drill-down</em>, <em>roll-up</em>, <em>slice</em>, <em>dice</em>) untuk analisis mendalam.
+                  </p>
+                </div>
+                
+                <div className="border-l-4 border-green-500 pl-4 py-2">
+                  <h3 className="font-semibold text-green-700 text-lg">Visualisasi Geografis</h3>
+                  <p className="text-gray-700">
+                    Pemetaan <em>hotspot</em> dengan Leaflet.js yang menampilkan distribusi titik panas berdasarkan lokasi dengan kemampuan <em>clustering</em> dan <em>zoom</em>.
+                  </p>
+                </div>
+                
+                <div className="border-l-4 border-red-500 pl-4 py-2">
+                  <h3 className="font-semibold text-red-700 text-lg">Multi-Filter Dinamis</h3>
+                  <p className="text-gray-700">
+                    Pemfilteran data berdasarkan dimensi lokasi, waktu, <em>confidence</em>, dan satelit untuk analisis yang fleksibel.
+                  </p>
+                </div>
+                
+                <div className="border-l-4 border-purple-500 pl-4 py-2">
+                  <h3 className="font-semibold text-purple-700 text-lg">Ekspor Data</h3>
+                  <p className="text-gray-700">
+                    Unduh data <em>hotspot</em> dalam format Excel (.xlsx) dan CSV dengan tampilan detail atau akumulasi.
+                  </p>
+                </div>
+                
+                <div className="border-l-4 border-amber-500 pl-4 py-2">
+                  <h3 className="font-semibold text-amber-700 text-lg">Tampilan Tabel Data</h3>
+                  <p className="text-gray-700">
+                    Lihat data dalam format tabel dengan dua mode: detail (setiap titik <em>hotspot</em>) dan akumulasi (data teragregasi) dengan kemampuan <em>sorting</em> dan berbagai <em>filter</em>  multidimensi.
+                  </p>
+                </div>
+                
+                <div className="border-l-4 border-teal-500 pl-4 py-2">
+                  <h3 className="font-semibold text-teal-700 text-lg">Visualisasi Grafik</h3>
+                  <p className="text-gray-700">
+                    Representasi data dalam grafik untuk memahami tren dan pola sebaran <em>hotspot</em>.
+                  </p>
+                </div>
+                
+                <div className="border-l-4 border-indigo-500 pl-4 py-2">
+                  <h3 className="font-semibold text-indigo-700 text-lg">Update Data Berkala</h3>
+                  <p className="text-gray-700">
+                    Data <em>hotspot</em> diperbarui secara otomatis setiap 3 jam dari sumber data Sipongi+ untuk analisis yang selalu terkini.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="mb-8">
             <h2 className="text-2xl font-semibold text-blue-700 mb-4">Operasi OLAP</h2>
             <div className="bg-white p-6 rounded-lg shadow-md">
               <div className="grid md:grid-cols-3 gap-4">
@@ -111,10 +167,10 @@ export default function About() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-blue-700 mb-4">Model Data Warehouse</h2>
+            <h2 className="text-2xl font-semibold text-blue-700 mb-4">Struktur Data</h2>
             <div className="bg-white p-6 rounded-lg shadow-md">
               <p className="mb-4">
-                Model data <em>warehouse</em> ini menggunakan pendekatan skema bintang dengan tabel fakta utama dan beberapa tabel dimensi:
+                Struktur data ini menggunakan pendekatan skema bintang dengan tabel fakta utama dan beberapa tabel dimensi:
               </p>
               
               <div className="space-y-4">
@@ -167,20 +223,25 @@ export default function About() {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-blue-700 mb-4">Tim Pengembang</h2>
             <div className="bg-white p-6 rounded-lg shadow-md">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="border border-gray-200 rounded-lg p-4 text-center">
-                  <div className="text-lg font-semibold text-blue-600">Tio Ramadhan</div>
-                  <div className="text-gray-600 mt-2">Modul <em>database hotspot</em></div>
+              <div className="grid grid-cols-1 gap-6">
+                <div className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow text-center">
+                  <div className="text-xl font-semibold text-blue-600">Prof. Dr. Imas Sukaesih Sitanggang, S.Si., M.Kom.</div>
                 </div>
-                
-                <div className="border border-gray-200 rounded-lg p-4 text-center">
-                  <div className="text-lg font-semibold text-blue-600">Lee Roy Akbar</div>
-                  <div className="text-gray-600 mt-2"><em>Back-end</em></div>
+
+                <div className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow text-center">
+                  <div className="text-xl font-semibold text-blue-600">Dr. Hendra Rahmawan, S.Kom., M.T.</div>
                 </div>
-                
-                <div className="border border-gray-200 rounded-lg p-4 text-center">
-                  <div className="text-lg font-semibold text-blue-600">Nechita Samantha</div>
-                  <div className="text-gray-600 mt-2"><em>Front-end</em></div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow text-center">
+                    <div className="text-xl font-semibold text-blue-600">Lee Roy Akbar</div>
+                    <div className="text-gray-600 mt-3">Pengembang <em>Back-end</em></div>
+                  </div>
+
+                  <div className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow text-center">
+                    <div className="text-xl font-semibold text-blue-600">Nechita Samantha</div>
+                    <div className="text-gray-600 mt-3">Pengembang <em>Front-end</em></div>
+                  </div>
                 </div>
               </div>
             </div>
