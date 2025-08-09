@@ -36,6 +36,7 @@ import { Tooltip as ReactTooltip } from "react-tooltip";
 import { formatNumber } from "../../core/utilities/formatters";
 import { LocationData } from "../../core/model/location";
 import { TimeFilters } from "../../core/model/time";
+import { scaleThreshold } from "d3-scale";
 
 ChartJS.register(
   CategoryScale,
@@ -192,6 +193,34 @@ const OlapComponent = () => {
     { revalidateOnFocus: false }
   );
 
+  const calculateThresholds = useCallback((values: number[]) => {
+    const filteredValues = values.filter(val => val > 0);
+    const min = filteredValues.length > 0 ? Math.min(...filteredValues) : 0;
+    const max = filteredValues.length > 0 ? Math.max(...filteredValues) : 1;
+
+    let threshold1, threshold2;
+    if (max - min < 3) {
+      const step = Math.ceil((max - min) / 3) || 1;
+      threshold1 = min + step;
+      threshold2 = min + step * 2;
+    } else {
+      const range = max - min;
+      threshold1 = min + range / 3;
+      threshold2 = min + (range * 2) / 3;
+    }
+
+    return { min, threshold1, threshold2, max };
+  }, []);
+
+  const getBarColors = useCallback((values: number[]) => {
+    const { threshold1, threshold2 } = calculateThresholds(values);
+    const colorScale = scaleThreshold<number, string>()
+      .domain([threshold1, threshold2])
+      .range(["#FFCDD2", "#EF5350", "#B71C1C"]);
+    
+    return values.map(value => colorScale(value));
+  }, [calculateThresholds]);
+
   const setChart = useCallback((data: IChart) => {
     const chartData: ChartData<"bar"> = {
       labels: data.labels,
@@ -199,7 +228,7 @@ const OlapComponent = () => {
         {
           data: data.values,
           label: "Titik Panas",
-          backgroundColor: "#898989",
+          backgroundColor: getBarColors(data.values),
         },
       ],
     };
@@ -445,14 +474,10 @@ const OlapComponent = () => {
 
     const avgLat =
       matchingLocations.reduce(
-        (sum: number, loc: LocationData) => sum + loc.lat,
-        0
-      ) / matchingLocations.length;
+        (sum: number, loc: LocationData) => sum + loc.lat, 0) / matchingLocations.length;
     const avgLng =
       matchingLocations.reduce(
-        (sum: number, loc: LocationData) => sum + loc.lng,
-        0
-      ) / matchingLocations.length;
+        (sum: number, loc: LocationData) => sum + loc.lng, 0) / matchingLocations.length;
     setSelectedLocation({ lat: avgLat, lng: avgLng });
   };
 
@@ -776,7 +801,7 @@ const memoizedFilters = useMemo(() => {
       },
       plugins: {
         legend: {
-          display: true,
+          display: false,
         },
         tooltip: {
           enabled: true,
@@ -804,7 +829,7 @@ const memoizedFilters = useMemo(() => {
         }
       },
       onClick: handleChartClick,
-    }), [handleChartClick, setSelectedHotspot]);
+    }), [handleChartClick, setSelectedHotspot, calculateThresholds]);
 
     useEffect(() => {
       if (activeMapLayer === "hotspot-count" && 

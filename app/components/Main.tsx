@@ -576,7 +576,7 @@ const Main = () => {
                       {stats.affectedProvinces}
                     </div>
                     <div className="text-sm text-gray-600">
-                      Provinsi Terdampak
+                      Provinsi Lokasi Hotspot
                     </div>
                   </div>
                 </div>
@@ -600,7 +600,7 @@ const Main = () => {
               <div className="text-4xl font-bold mb-2">
                 {isLoading ? "..." : stats.todayAffectedProvinces}
               </div>
-              <div className="text-lg">Provinsi Terdampak Hari ini</div>
+              <div className="text-lg">Provinsi Lokasi Hotspot Hari ini</div>
             </div>
             <div className="p-6">
               <div className="text-4xl font-bold mb-2">
