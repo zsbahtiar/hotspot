@@ -233,7 +233,7 @@ const OlapComponent = () => {
       ],
     };
     setBarChartData(chartData);
-  }, []);
+  }, [getBarColors]);
 
   // Update data
   useEffect(() => {
@@ -829,7 +829,7 @@ const memoizedFilters = useMemo(() => {
         }
       },
       onClick: handleChartClick,
-    }), [handleChartClick, setSelectedHotspot, calculateThresholds]);
+    }), [handleChartClick, setSelectedHotspot]);
 
     useEffect(() => {
       if (activeMapLayer === "hotspot-count" && 
