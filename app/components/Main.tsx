@@ -241,7 +241,15 @@ const Main = () => {
               Informasi <span className="text-green-600">Hotspot</span> Terkini
             </h2>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              Data real-time hotspot kebakaran hutan dan lahan di Indonesia
+              Data real-time hotspot kebakaran hutan dan lahan di Indonesia bersumber dari website&nbsp;
+              <a
+                href="https://sipongi.menlhk.go.id/sebaran-titik-panas"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-800 hover:underline"
+              >
+                SIPONGI KEMENHUT
+              </a>
             </p>
           </div>
 
