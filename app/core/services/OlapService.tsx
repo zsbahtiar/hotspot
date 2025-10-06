@@ -33,12 +33,10 @@ export const OlapService = {
       }
 
       const response = await fetch(url.toString(), {
-        method: 'POST',
+        method: 'GET',
         headers: {
           'Accept': 'application/json',
-          'Content-Type': 'application/json'
         },
-        body: JSON.stringify(query || {}),
         cache: 'no-store'
       });
 
@@ -48,10 +46,12 @@ export const OlapService = {
       }
 
       const data = await response.json();
+
       if (!Array.isArray(data)) {
         console.warn("API response is not an array:", data);
         return [];
       }
+
       return data;
     } catch (error: unknown) {
       console.error(`Error in OlapService.query (${dimension}):`, {
