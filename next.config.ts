@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/hotspot/:path*',
-        destination: 'https://backend.olaphotspot.web.id/api/hotspot:path*', 
+        destination: 'https://backend.olaphotspot.web.id/api/hotspot/:path*', 
       },
       {
         source: '/api/query/:path*',
