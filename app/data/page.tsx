@@ -656,9 +656,22 @@ function sortHeader(label: string, col: string) {
               >
                 Sebelumnya
               </button>
-              <span>
-                Halaman {currentPage} dari {totalPages}
-              </span>
+
+              <div className="flex gap-1 flex-wrap">
+                {[...Array(totalPages)].map((_, idx) => (
+                  <button
+                    key={idx + 1}
+                    onClick={() => setCurrentPage(idx + 1)}
+                    className={`px-3 py-1 rounded ${currentPage === idx + 1
+                      ? "bg-blue-600 text-white font-bold"
+                      : "bg-gray-200 text-gray-700"
+                    }`}
+                  >
+                    {idx + 1}
+                  </button>
+                ))}
+              </div>
+
               <button
                 onClick={() =>
                   setCurrentPage((prev) => Math.min(prev + 1, totalPages))
