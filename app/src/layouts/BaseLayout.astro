@@ -1,0 +1,150 @@
+---
+import '../styles/global.css';
+import 'react-tooltip/dist/react-tooltip.css';
+import 'leaflet/dist/leaflet.css';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
+import '@fortawesome/fontawesome-svg-core/styles.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title = "OLAP Hotspot", description = "" } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <meta name="keywords" content="hotspot, karhutla, kebakaran hutan, OLAP, SIPONGI, titik panas, Indonesia" />
+    <meta name="author" content="IPB University" />
+    <meta name="robots" content="index, follow" />
+    <link rel="icon" type="image/svg+xml" href="/fire.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={Astro.url} />
+    <meta property="og:image" content={`${Astro.url}/assets/kebakaran2.webp`} />
+    <meta property="og:locale" content="id_ID" />
+    <meta property="og:site_name" content="OLAP Hotspot" />
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={`${Astro.url}/assets/kebakaran2.webp`} />
+
+    <title>{title}</title>
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "OLAP Hotspot - Sistem Pemantauan Titik Panas Karhutla",
+      "description": "Sistem Pemantauan Hotspot Karhutla bersumber dari SIPONGI+ menggunakan teknologi Spatial Online Analytical Processing untuk menganalisis titik panas karhutla di Indonesia.",
+      "url": "https://olap-hotspot.web.id",
+      "applicationCategory": "GeoApplication",
+      "operatingSystem": "Web Browser",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "IDR"
+      },
+      "provider": {
+        "@type": "Organization",
+        "name": "IPB University",
+        "url": "https://ipb.ac.id"
+      },
+      "audience": {
+        "@type": "Audience",
+        "audienceType": "General Public"
+      }
+    }
+    </script>
+
+    <script is:inline hoist>
+      window.global = window.globalThis = window;
+      window.process = window.process || { env: {} };
+    </script>
+  </head>
+  <body>
+    <slot />
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              // SW registered successfully
+            })
+            .catch((registrationError) => {
+              // SW registration failed
+            });
+        });
+      }
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  .leaflet-container {
+    height: 100%;
+    width: 100%;
+    border-radius: 0.5rem;
+  }
+
+  .marker-cluster-small {
+    background-color: rgba(110, 204, 57, 0.6);
+  }
+  .marker-cluster-small div {
+    background-color: rgba(110, 204, 57, 0.8);
+  }
+
+  .marker-cluster-medium {
+    background-color: rgba(240, 194, 12, 0.6);
+  }
+  .marker-cluster-medium div {
+    background-color: rgba(240, 194, 12, 0.8);
+  }
+
+  .marker-cluster-large {
+    background-color: rgba(241, 128, 23, 0.6);
+  }
+  .marker-cluster-large div {
+    background-color: rgba(241, 128, 23, 0.8);
+  }
+
+  .marker-cluster {
+    color: white;
+    font-weight: bold;
+  }
+
+  .hotspot-popup {
+    font-family: inherit;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+</style>

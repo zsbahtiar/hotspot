@@ -1,0 +1,101 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
+import OfflineBanner from '../components/OfflineBanner';
+---
+
+<BaseLayout
+  title="Data Hotspot - Tabel Data Karhutla Indonesia"
+  description="Akses data hotspot kebakaran hutan dan lahan Indonesia dalam format tabel dengan filter, sorting, dan export Excel/CSV. Data bersumber dari SIPONGI+ Kementerian LHK."
+>
+  <link rel="dns-prefetch" href="//sipongi.menlhk.go.id" />
+
+  <OfflineBanner client:idle />
+  <Navbar client:load />
+  <main>
+    <div id="data-header" class="bg-white shadow-sm border-b">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="text-center">
+          <h1 class="text-3xl font-bold text-gray-900 mb-2">Data Hotspot</h1>
+          <p class="text-lg text-gray-600">Tabel data hotspot kebakaran hutan dan lahan Indonesia</p>
+          <div class="mt-4">
+            <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-green-600 mb-2"></div>
+            <p class="text-sm text-gray-500">Memuat tabel data...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="hotspot-table-container" class="min-h-[400px] bg-gray-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+          <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+              <div class="h-6 bg-gray-200 rounded w-32 animate-pulse"></div>
+              <div class="flex space-x-2">
+                <div class="h-8 bg-gray-200 rounded w-24 animate-pulse"></div>
+                <div class="h-8 bg-gray-200 rounded w-24 animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="divide-y divide-gray-200">
+            {[...Array(5)].map((_, i) => (
+              <div class="px-6 py-4" key={`skeleton-${i}`}>
+                <div class="flex space-x-4">
+                  <div class="h-4 bg-gray-200 rounded w-16 animate-pulse"></div>
+                  <div class="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
+                  <div class="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+                  <div class="h-4 bg-gray-200 rounded w-16 animate-pulse"></div>
+                  <div class="h-4 bg-gray-200 rounded w-28 animate-pulse"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <footer>
+    <Footer client:idle />
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        import('../components/HotspotTable.tsx').then(module => {
+          const HotspotTable = module.default;
+          const container = document.getElementById('hotspot-table-container');
+          const header = document.getElementById('data-header');
+
+          if (container && header) {
+            header.innerHTML = `
+              <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+              </div>
+            `;
+
+            import('react').then(React => {
+              import('react-dom/client').then(ReactDOM => {
+                const root = ReactDOM.createRoot(container);
+                root.render(React.createElement(HotspotTable));
+              });
+            });
+          }
+        }).catch(err => {
+          const container = document.getElementById('hotspot-table-container');
+          if (container) {
+            container.innerHTML = `
+              <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div class="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+                  <p class="text-red-600 font-medium">⚠️ Gagal memuat tabel data</p>
+                  <p class="text-sm text-gray-600 mt-2">Silakan refresh halaman atau coba koneksi yang lebih stabil</p>
+                </div>
+              </div>
+            `;
+          }
+        });
+      }, 500);
+    });
+  </script>
+</BaseLayout>

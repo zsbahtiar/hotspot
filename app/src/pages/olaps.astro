@@ -1,0 +1,54 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
+import OfflineBanner from '../components/OfflineBanner';
+---
+
+<BaseLayout
+  title="Peta Hotspot Karhutla - Visualisasi Geografis Real-time"
+  description="Peta interaktif hotspot kebakaran hutan dan lahan Indonesia dengan operasi OLAP (drill-down, roll-up) untuk analisis mendalam berdasarkan lokasi, waktu, confidence, dan satelit."
+>
+  <link rel="preload" href="/src/styles/global.css" as="style" />
+  <link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" as="style" />
+  <link rel="dns-prefetch" href="//unpkg.com" />
+  <link rel="dns-prefetch" href="//sipongi.menlhk.go.id" />
+
+  <Navbar client:load />
+  <main>
+    <div id="olaps-container" class="min-h-screen flex items-center justify-center bg-gray-100">
+      <div class="text-center">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mb-4"></div>
+        <p class="text-gray-600 text-lg">Memuat peta hotspot...</p>
+        <p class="text-gray-500 text-sm mt-2">Mungkin perlu beberapa saat di jaringan 3G</p>
+      </div>
+    </div>
+  </main>
+  <footer>
+    <Footer client:idle />
+  </footer>
+
+  <script>
+    import('../components/Olaps.tsx').then(module => {
+      const OlapsComponent = module.default;
+      const container = document.getElementById('olaps-container');
+      if (container) {
+        import('react').then(React => {
+          import('react-dom/client').then(ReactDOM => {
+            const root = ReactDOM.createRoot(container);
+            root.render(React.createElement(OlapsComponent));
+          });
+        });
+      }
+    }).catch(err => {
+      const container = document.getElementById('olaps-container');
+      if (container) {
+        container.innerHTML = `
+          <div class="text-center p-8">
+            <p class="text-red-600">Gagal memuat peta. Silakan refresh halaman.</p>
+          </div>
+        `;
+      }
+    });
+  </script>
+</BaseLayout>
