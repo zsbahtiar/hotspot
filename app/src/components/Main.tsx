@@ -169,8 +169,8 @@ const Main = () => {
         id="confidence-tooltip"
         style={{ backgroundColor: "#2d3748", color: "#fff", maxWidth: '250px', fontSize: '12px', zIndex: 9999 }}
       />
-      <section className="relative w-full h-screen min-h-[600px] pt-24">
-        <div className="absolute inset-0">
+      <section className="relative w-full h-screen min-h-[600px] pt-16">
+        <div className="absolute inset-0 z-0">
           <img
             src="/assets/kebakaran2.webp"
             alt="Kebakaran Hutan"
