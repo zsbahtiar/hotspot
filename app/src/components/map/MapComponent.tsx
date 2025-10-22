@@ -26,6 +26,7 @@ import type {
 } from "@/core/models/location";
 import type { HotspotFeatureGeo } from "@/core/models/hotspot";
 import { formatNumber, extractTime, decompressGzip } from "@/core/utils/formatters";
+import { useGeoJsonCache } from "@/hooks/useGeoJsonCache";
 import MapControlPanel from "@/components/map/MapControls";
 import MapLegend from "@/components/map/MapLegend";
 import MapZoomControls from "@/components/map/ZoomControls";
@@ -253,21 +254,28 @@ const MapComponent: React.FC<MapComponentProps> = ({
   };
 
   const {
-    data: geoJsonData,
-    error: geoJsonError,
-    isLoading: isGeoJsonLoading,
-  } = useSWR("geoJsonData", () => geoJsonFetcher(geoJsonUrls), swrRetryConfig);
+    isPreloading,
+    cachedData,
+    getGeoJsonData,
+  } = useGeoJsonCache();
+
+  useEffect(() => {
+    getGeoJsonData();
+  }, [getGeoJsonData]);
 
   const geoData: GeoData = useMemo(
     () => ({
-      pulau: geoJsonData?.[0] || null,
-      provinsi: geoJsonData?.[1] || null,
-      kota: geoJsonData?.[2] || null,
-      kecamatan: geoJsonData?.[3] || null,
-      desa: geoJsonData?.[4] || null,
+      pulau: cachedData?.pulau || null,
+      provinsi: cachedData?.provinsi || null,
+      kota: cachedData?.kota || null,
+      kecamatan: cachedData?.kecamatan || null,
+      desa: cachedData?.desa || null,
     }),
-    [geoJsonData],
+    [cachedData],
   );
+
+  const isGeoJsonLoading = isPreloading;
+  const geoJsonError = null;
 
   const getHotspotData = useMemo(() => {
     if (USE_MOCK_DATA) {
