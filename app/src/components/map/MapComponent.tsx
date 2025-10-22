@@ -56,11 +56,11 @@ const fetcher = async (url: string) => {
 };
 
 const geoJsonUrls = [
-  "/maps/batas_pulau.geojson",
-  "/maps/batas_provinsi.geojson",
-  "/maps/batas_kabkota.geojson",
-  "/maps/batas_kecamatan.geojson",
-  "/maps/batas_keldesa.geojson",
+  "/maps/batas_pulau.geojson.gz",
+  "/maps/batas_provinsi.geojson.gz",
+  "/maps/batas_kabkota.geojson.gz",
+  "/maps/batas_kecamatan.geojson.gz",
+  "/maps/batas_keldesa.geojson.gz",
 ];
 const geoJsonFetcher = async (urls: string[]) => {
   const responses = await Promise.all(urls.map((url) => fetch(url)));
@@ -71,6 +71,7 @@ const geoJsonFetcher = async (urls: string[]) => {
       );
     }
   }
+  // Browser will automatically handle gzip decompression
   return Promise.all(responses.map((res) => res.json()));
 };
 
