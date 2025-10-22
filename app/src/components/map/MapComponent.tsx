@@ -25,7 +25,7 @@ import type {
   GeoData,
 } from "@/core/models/location";
 import type { HotspotFeatureGeo } from "@/core/models/hotspot";
-import { formatNumber, extractTime } from "@/core/utils/formatters";
+import { formatNumber, extractTime, decompressGzip } from "@/core/utils/formatters";
 import MapControlPanel from "@/components/map/MapControls";
 import MapLegend from "@/components/map/MapLegend";
 import MapZoomControls from "@/components/map/ZoomControls";
@@ -71,8 +71,9 @@ const geoJsonFetcher = async (urls: string[]) => {
       );
     }
   }
-  // Browser will automatically handle gzip decompression
-  return Promise.all(responses.map((res) => res.json()));
+
+  // Decompress gzip files and parse as JSON
+  return Promise.all(responses.map((res) => decompressGzip(res)));
 };
 
 interface CustomAttributionControlProps {

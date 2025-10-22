@@ -52,3 +52,40 @@ export const extractTime = (dateTimeString: string): string => {
 export const formatNumber = (num: number): string => {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };
+
+  // Utility function to decompress gzip data
+  export const decompressGzip = async (response: Response): Promise<any> => {
+    try {
+      const arrayBuffer = await response.arrayBuffer();
+
+      // Use DecompressionStream API (modern browsers)
+      const decompressionStream = new DecompressionStream('gzip');
+      const writer = decompressionStream.writable.getWriter();
+      const reader = decompressionStream.readable.getReader();
+
+      writer.write(new Uint8Array(arrayBuffer));
+      writer.close();
+
+      const chunks: Uint8Array[] = [];
+      let done = false;
+
+      while (!done) {
+        const { value, done: readerDone } = await reader.read();
+        done = readerDone;
+        if (value) chunks.push(value);
+      }
+
+      const decompressedData = new Uint8Array(chunks.reduce((acc, chunk) => acc + chunk.length, 0));
+      let offset = 0;
+      for (const chunk of chunks) {
+        decompressedData.set(chunk, offset);
+        offset += chunk.length;
+      }
+
+      const text = new TextDecoder().decode(decompressedData);
+      return JSON.parse(text);
+    } catch (error) {
+      console.error('Decompression error:', error);
+      throw new Error('Failed to decompress gzip data');
+    }
+  };
