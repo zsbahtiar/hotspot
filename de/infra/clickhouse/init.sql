@@ -181,3 +181,47 @@ ENGINE = MergeTree
 PARTITION BY toYYYYMM(acquired_at)
 ORDER BY (period_id, location_id, weather_condition_id)
 SETTINGS index_granularity = 8192;
+
+CREATE TABLE hotspot.backfill_state
+(
+    `month` String,
+    `status` String,
+    `last_processed` DateTime64(3, 'UTC'),
+    `record_count` Int64 DEFAULT 0,
+    `error_message` String DEFAULT '',
+    `retry_count` Int8 DEFAULT 0,
+    `max_retries` Int8 DEFAULT 3,
+    `next_retry_at` DateTime64(3, 'UTC'),
+    `created_at` DateTime64(3, 'UTC') DEFAULT now64(),
+    `updated_at` DateTime64(3, 'UTC') DEFAULT now64()
+)
+ENGINE = ReplacingMergeTree(updated_at)
+ORDER BY month
+SETTINGS index_granularity = 8192;
+
+CREATE TABLE hotspot.backfill_hotspot
+(
+    `batch_id` String,
+    `ingested_at` DateTime64(3, 'UTC') DEFAULT now64(3, 'UTC'),
+    `latitude` String,
+    `longitude` String,
+    `acq_date` Date,
+    `acq_time` String,
+    `satellite` String,
+    `instrument` String,
+    `confidence` String,
+    `version` String,
+    `frp` Float32 DEFAULT 0,
+    `daynight` FixedString(1),
+    `brightness` Float32 DEFAULT 0,
+    `bright_t31` Float32 DEFAULT 0,
+    `scan` Float32 DEFAULT 0,
+    `track` Float32 DEFAULT 0,
+    `bright_ti4` Float32 DEFAULT 0,
+    `bright_ti5` Float32 DEFAULT 0,
+    `hotspot_id` String MATERIALIZED concat(toString(latitude), ':', toString(longitude), ':', toString(acq_date), ':', acq_time, ':', satellite, ':', instrument, ':', version)
+)
+ENGINE = ReplacingMergeTree(ingested_at)
+PARTITION BY toYYYYMM(acq_date)
+ORDER BY (latitude, longitude, acq_date, acq_time, satellite, instrument, version)
+SETTINGS index_granularity = 8192;
