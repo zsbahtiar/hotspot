@@ -1,7 +1,6 @@
 ---
-import '../styles/global.css';
+import '@/styles/global.css';
 import 'react-tooltip/dist/react-tooltip.css';
-import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import '@fortawesome/fontawesome-svg-core/styles.css';
@@ -26,7 +25,49 @@ const { title = "OLAP Hotspot", description = "" } = Astro.props;
     <link rel="icon" type="image/svg+xml" href="/fire.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="dns-prefetch" href="//unpkg.com" />
+    <link rel="dns-prefetch" href="//sipongi.menlhk.go.id" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" /></noscript>
+
+    <style>
+      @font-face {
+        font-family: 'Plus Jakarta Sans';
+        font-style: normal;
+        font-weight: 400;
+        font-display: swap;
+        src: local('Plus Jakarta Sans Regular'), local('PlusJakartaSans-Regular');
+      }
+      @font-face {
+        font-family: 'Plus Jakarta Sans';
+        font-style: normal;
+        font-weight: 500;
+        font-display: swap;
+        src: local('Plus Jakarta Sans Medium'), local('PlusJakartaSans-Medium');
+      }
+      @font-face {
+        font-family: 'Plus Jakarta Sans';
+        font-style: normal;
+        font-weight: 600;
+        font-display: swap;
+        src: local('Plus Jakarta Sans SemiBold'), local('PlusJakartaSans-SemiBold');
+      }
+      @font-face {
+        font-family: 'Plus Jakarta Sans';
+        font-style: normal;
+        font-weight: 700;
+        font-display: swap;
+        src: local('Plus Jakarta Sans Bold'), local('PlusJakartaSans-Bold');
+      }
+    </style>
+
+    <style>
+      body {
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+      }
+    </style>
+
+    <link rel="preload" href="/assets/ipb.webp" as="image" type="image/webp" />
 
     <!-- Open Graph Meta Tags -->
     <meta property="og:title" content={title} />
@@ -76,33 +117,116 @@ const { title = "OLAP Hotspot", description = "" } = Astro.props;
       window.global = window.globalThis = window;
       window.process = window.process || { env: {} };
     </script>
+
+    <script is:inline>
+      (function() {
+        const theme = localStorage.getItem('theme') ||
+          (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.classList.add(theme);
+      })();
+    </script>
+  <!-- Optimized resource loading -->
+  <link rel="dns-prefetch" href="//tile.openstreetmap.org" />
+  <link rel="dns-prefetch" href="//a.tile.openstreetmap.org" />
+  <link rel="dns-prefetch" href="//b.tile.openstreetmap.org" />
+  <link rel="dns-prefetch" href="//c.tile.openstreetmap.org" />
+
   </head>
   <body>
+    <style is:inline>
+      body {
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        line-height: 1.6;
+        margin: 0;
+        padding: 0;
+        background: #ffffff;
+        color: #1f2937;
+      }
+
+      .dark body {
+        background: #111827;
+        color: #f9fafb;
+      }
+
+      .animate-spin {
+        animation: spin 1s linear infinite;
+      }
+
+      .text-center {
+        text-align: center;
+      }
+
+      .flex {
+        display: flex;
+      }
+
+      .items-center {
+        align-items: center;
+      }
+
+      .justify-center {
+        justify-content: center;
+      }
+
+      .min-h-screen {
+        min-height: 100vh;
+      }
+
+      .min-h-screen {
+        min-height: 100vh;
+      }
+
+      .rounded-full {
+        border-radius: 9999px;
+      }
+
+      .border-b-2 {
+        border-bottom-width: 2px;
+      }
+
+      .bg-green-600 {
+        background-color: #16a34a;
+      }
+
+      .mb-4 {
+        margin-bottom: 1rem;
+      }
+
+      .p-8 {
+        padding: 2rem;
+      }
+
+      .text-red-600 {
+        color: #dc2626;
+      }
+
+      .text-gray-600 {
+        color: #4b5563;
+      }
+
+      .font-medium {
+        font-weight: 500;
+      }
+
+      .text-lg {
+        font-size: 1.125rem;
+      }
+
+      .mt-2 {
+        margin-top: 0.5rem;
+      }
+
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+    </style>
     <slot />
 
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then((registration) => {
-              // SW registered successfully
-            })
-            .catch((registrationError) => {
-              // SW registration failed
-            });
-        });
-      }
-    </script>
-  </body>
+      </body>
 </html>
 
 <style is:global>
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-
   .leaflet-container {
     height: 100%;
     width: 100%;

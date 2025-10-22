@@ -1,29 +1,25 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
-import OfflineBanner from '../components/OfflineBanner';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import NavbarWithTheme from '@/components/NavbarWithTheme';
+import Footer from '@/components/layout/Footer';
+import OfflineBanner from '@/components/layout/OfflineBanner';
 ---
 
 <BaseLayout
   title="OLAP Hotspot - Sistem Pemantauan Titik Panas Karhutla"
   description="Sistem Pemantauan Hotspot Karhutla bersumber dari SIPONGI+ menggunakan teknologi Spatial Online Analytical Processing untuk menganalisis titik panas karhutla di Indonesia."
 >
+  <link rel="preconnect" href="//sipongi.menlhk.go.id" crossorigin />
   <link rel="dns-prefetch" href="//sipongi.menlhk.go.id" />
-  <link rel="dns-prefetch" href="//fonts.googleapis.com" />
-  <link rel="preload" href="/assets/kebakaran2.webp" as="image" />
-  <link rel="preload" href="/assets/ipb.png" as="image" />
+  <link rel="preload" href="/assets/ipb.webp" as="image" fetchpriority="high" />
 
   <OfflineBanner client:idle />
-  <Navbar client:load />
+  <NavbarWithTheme client:load />
 
   <div id="main-container">
     <div class="bg-white min-h-screen flex items-center justify-center">
       <div class="text-center">
         <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mb-4"></div>
-        <h2 class="text-2xl font-bold text-gray-900 mb-2">Memuat Dashboard</h2>
-        <p class="text-gray-600">Sistem sedang memuat data hotspot terkini...</p>
-        <p class="text-sm text-gray-500 mt-2">Waktu loading sedikit lebih lama di jaringan 3G</p>
       </div>
     </div>
   </div>
@@ -33,32 +29,59 @@ import OfflineBanner from '../components/OfflineBanner';
   </footer>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      import('../components/Main.tsx').then(module => {
-        const Main = module.default;
-        const container = document.getElementById('main-container');
-
-        if (container) {
-          import('react').then(React => {
-            import('react-dom/client').then(ReactDOM => {
-              const root = ReactDOM.createRoot(container);
-              root.render(React.createElement(Main));
-            });
-          });
-        }
-      }).catch(err => {
-        const container = document.getElementById('main-container');
-        if (container) {
-          container.innerHTML = `
-            <div class="bg-white min-h-screen flex items-center justify-center">
-              <div class="text-center p-8">
-                <p class="text-red-600 font-medium text-lg">⚠️ Gagal memuat dashboard</p>
-                <p class="text-gray-600 mt-2">Silakan refresh halaman</p>
-              </div>
-            </div>
-          `;
-        }
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
       });
-    });
+    }
+
+    const requestIdleCallback = window.requestIdleCallback || ((cb) => setTimeout(cb, 1));
+    let rootInstance = null;
+
+    const loadComponent = () => {
+      const container = document.getElementById('main-container');
+      if (!container || rootInstance) return;
+
+      const loadApp = () => {
+        Promise.all([
+          import('react'),
+          import('react-dom/client')
+        ]).then(([React, ReactDOM]) => {
+          import('@/components/DashboardWithTheme.tsx').then(module => {
+            const DashboardWithTheme = module.default;
+            if (!rootInstance) {
+              rootInstance = ReactDOM.createRoot(container);
+              rootInstance.render(React.createElement(DashboardWithTheme));
+            }
+          }).catch(() => {
+            container.innerHTML = `
+              <div class="bg-white min-h-screen flex items-center justify-center">
+                <div class="text-center p-8">
+                  <p class="text-red-600 font-medium text-lg">Gagal memuat</p>
+                  <p class="text-gray-600 mt-2">Silakan refresh halaman</p>
+                </div>
+              </div>
+            `;
+          });
+        });
+      };
+
+      if ('connection' in navigator) {
+        const conn = navigator.connection;
+        if (conn.saveData || conn.effectiveType === '2g' || conn.effectiveType === 'slow-2g') {
+          requestIdleCallback(loadApp, { timeout: 5000 });
+        } else {
+          requestIdleCallback(loadApp);
+        }
+      } else {
+        requestIdleCallback(loadApp);
+      }
+    };
+
+    if (document.readyState === 'complete') {
+      loadComponent();
+    } else {
+      window.addEventListener('load', loadComponent, { once: true });
+    }
   </script>
 </BaseLayout>

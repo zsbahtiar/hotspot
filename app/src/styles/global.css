@@ -1,192 +1,233 @@
+@import 'leaflet/dist/leaflet.css';
+@import 'leaflet.markercluster/dist/MarkerCluster.css';
+@import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-    --background: #ffffff;
-    --foreground: #171717;
-    --font-plus-jakarta:
-        "Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont,
-        "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-}
-
-@media (prefers-color-scheme: light) {
-    :root {
-        --background: #ffffff;
-        --foreground: #171717;
-    }
-}
-
-body {
-    color: var(--foreground);
-    background: var(--background);
-    font-family: var(--font-plus-jakarta);
-}
-
-.modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    backdrop-filter: blur(3px);
-}
-
-.modal-content {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    width: 300px;
-    max-width: 90%;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    text-align: center;
-    z-index: 1001;
-    animation: fadeIn 0.3s ease-in-out;
-}
-
-.modal-content select,
-.modal-content button {
-    width: 100%;
-    margin-top: 10px;
-    padding: 8px;
-    font-size: 16px;
-    border-radius: 6px;
-    border: 1px solid #ddd;
-    transition: all 0.2s ease-in-out;
-}
-
-.modal-content select {
-    background: #f9f9f9;
-}
-
-.modal-content button {
-    background: #007bff;
-    color: white;
-    border: none;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-.modal-content button:hover {
-    background: #0056b3;
-    transform: translateY(-2px);
-}
-
-.modal-content .tutup-btn {
-    background: rgba(107, 114, 128, 0.6);
-    color: white;
-}
-
-.modal-content .tutup-btn:hover {
-    background: rgba(75, 85, 99, 0.8);
-}
-
-.leaflet-top {
-    top: 10px !important;
+/* Leaflet CSS overrides and customizations */
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  border-radius: 0.5rem;
+  font-family: inherit;
 }
 
 .leaflet-control {
-    margin-top: 60px !important;
+  font-family: inherit;
 }
 
-.leaflet-bottom.leaflet-right {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
+.leaflet-popup-content-wrapper {
+  font-family: inherit;
 }
 
-.leaflet-control.legend {
-    margin: 0 20px 20px 0 !important;
-    z-index: 1000;
-    margin-bottom: 30px !important;
-    margin-right: 10px !important;
+.leaflet-tooltip {
+  font-family: inherit;
 }
 
-.leaflet-control-attribution {
-    font-size: 12px;
-    color: #555;
-    white-space: nowrap;
-    background: rgba(255, 255, 255, 0.7);
-    padding: 0 4px;
-    border-radius: 4px;
+.marker-cluster-small {
+  background-color: rgba(110, 204, 57, 0.6);
 }
 
-.attribution-lokasi-hotspot {
-    margin-bottom: 5px;
-    margin-right: 5px;
+.marker-cluster-small div {
+  background-color: rgba(110, 204, 57, 0.8);
 }
 
-@media (min-width: 768px) {
-    .leaflet-top {
-        top: 70px !important;
+.marker-cluster-medium {
+  background-color: rgba(240, 194, 12, 0.6);
+}
+
+.marker-cluster-medium div {
+  background-color: rgba(240, 194, 12, 0.8);
+}
+
+.marker-cluster-large {
+  background-color: rgba(241, 128, 23, 0.6);
+}
+
+.marker-cluster-large div {
+  background-color: rgba(241, 128, 23, 0.8);
+}
+
+.marker-cluster {
+  color: white;
+  font-weight: bold;
+  text-align: center;
+  border-radius: 50%;
+  font-family: inherit;
+}
+
+.leaflet-control-zoom {
+  border: none !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.leaflet-control-zoom a {
+  background-color: white !important;
+  border: 1px solid rgba(0,0,0,0.1) !important;
+  color: #333 !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background-color: #f4f4f4 !important;
+}
+
+/* Dark mode overrides */
+.dark .leaflet-control-zoom a {
+  background-color: #374151 !important;
+  border-color: rgba(75, 85, 99, 0.2) !important;
+  color: #e5e7eb !important;
+}
+
+.dark .leaflet-control-zoom a:hover {
+  background-color: #4b5563 !important;
+}
+
+.dark .leaflet-popup-content-wrapper {
+  background-color: #1f2937;
+  color: #e5e7eb;
+}
+
+.dark .leaflet-tooltip {
+  background-color: #374151;
+  color: #e5e7eb;
+  border-color: rgba(75, 85, 99, 0.3);
+}
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here.
+All colors MUST be HSL.
+*/
+
+@layer base {
+    :root {
+        --background: 0 0% 100%;
+        --foreground: 222.2 84% 4.9%;
+
+        --card: 0 0% 100%;
+        --card-foreground: 222.2 84% 4.9%;
+
+        --popover: 0 0% 100%;
+        --popover-foreground: 222.2 84% 4.9%;
+
+        --primary: 222 47% 15%;
+        --primary-foreground: 0 0% 100%;
+
+        --secondary: 210 40% 96.1%;
+        --secondary-foreground: 222.2 47.4% 11.2%;
+
+        --muted: 210 40% 96.1%;
+        --muted-foreground: 215.4 16.3% 46.9%;
+
+        --accent: 222 47% 20%;
+        --accent-foreground: 0 0% 100%;
+
+        --destructive: 0 84.2% 60.2%;
+        --destructive-foreground: 210 40% 98%;
+
+        --border: 214.3 31.8% 91.4%;
+        --input: 214.3 31.8% 91.4%;
+        --ring: 222 47% 15%;
+
+        --radius: 0.5rem;
     }
 
-    .leaflet-control {
-        margin-top: 70px !important;
+    .dark {
+        --background: 222 47% 11%;
+        --foreground: 210 40% 98%;
+
+        --card: 217 33% 17%;
+        --card-foreground: 210 40% 98%;
+
+        --popover: 217 33% 17%;
+        --popover-foreground: 210 40% 98%;
+
+        --primary: 222 47% 15%;
+        --primary-foreground: 0 0% 100%;
+
+        --secondary: 217 33% 17%;
+        --secondary-foreground: 210 40% 98%;
+
+        --muted: 217 33% 17%;
+        --muted-foreground: 215 20% 65%;
+
+        --accent: 222 47% 20%;
+        --accent-foreground: 0 0% 100%;
+
+        --destructive: 0 62.8% 30.6%;
+        --destructive-foreground: 210 40% 98%;
+
+        --border: 217 33% 20%;
+        --input: 217 33% 20%;
+        --ring: 222 47% 15%;
+        
+        --sidebar-background: 222 47% 11%;
+        --sidebar-foreground: 210 40% 98%;
+        --sidebar-primary: 222 47% 15%;
+        --sidebar-primary-foreground: 0 0% 100%;
+        --sidebar-accent: 217 33% 20%;
+        --sidebar-accent-foreground: 210 40% 98%;
+        --sidebar-border: 217 33% 20%;
+        --sidebar-ring: 222 47% 15%;
     }
 }
 
-.sidebar-transition {
-    transition: all 0.3s ease;
-}
+@layer base {
+    * {
+        @apply border-border;
+    }
 
-.leaflet-control-zoom-in,
-.leaflet-control-zoom-out {
-    width: 28px !important;
-    height: 28px !important;
-    line-height: 28px !important;
-    font-size: 16px !important;
-}
-
-@media (min-width: 768px) {
-    .leaflet-control-zoom-in,
-    .leaflet-control-zoom-out {
-        width: 30px !important;
-        height: 30px !important;
-        line-height: 30px !important;
-        font-size: 18px !important;
+    body {
+        @apply bg-background text-foreground;
     }
 }
 
-.map-container {
-    height: 100%;
-    width: 100%;
-    min-height: 300px;
-}
-
-.chart-container {
-    min-height: 200px;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: scale(0.95);
+/* Calendar date range picker styles */
+@layer components {
+    /* Selected range styling */
+    .rdp-day_selected,
+    .rdp-day_selected:hover,
+    .rdp-day_range_start,
+    .rdp-day_range_end {
+        background-color: hsl(var(--primary)) !important;
+        color: hsl(var(--primary-foreground)) !important;
+        border-radius: 9999px !important;
+        font-weight: 600 !important;
     }
-    to {
-        opacity: 1;
-        transform: scale(1);
+
+    /* Range middle days */
+    .rdp-day_range_middle {
+        background-color: hsl(var(--accent)) !important;
+        color: hsl(var(--foreground)) !important;
+        border-radius: 0 !important;
     }
-}
 
-body {
-    padding-top: 0;
-}
+    /* Today indicator */
+    .rdp-day_today:not(.rdp-day_selected) {
+        background-color: hsl(var(--accent)) !important;
+        font-weight: 600 !important;
+    }
 
-.main-content {
-    padding-top: 4rem;
-}
+    /* Cell background for range */
+    .rdp-cell:has(.rdp-day_range_start),
+    .rdp-cell:has(.rdp-day_range_end),
+    .rdp-cell:has(.rdp-day_range_middle) {
+        background-color: hsl(var(--accent) / 0.5) !important;
+    }
 
-.react-tooltip {
-    z-index: 99999 !important;
-    opacity: 1 !important;
-    background-color: black !important;
-    color: white !important;
-    padding: 8px 12px !important;
-    border-radius: 4px !important;
-    max-width: 250px;
-    white-space: pre-line;
-    word-break: break-word;
+    .rdp-cell:has(.rdp-day_range_start) {
+        border-top-left-radius: 0.375rem !important;
+        border-bottom-left-radius: 0.375rem !important;
+    }
+
+    .rdp-cell:has(.rdp-day_range_end) {
+        border-top-right-radius: 0.375rem !important;
+        border-bottom-right-radius: 0.375rem !important;
+    }
+
+    /* Hover states */
+    .rdp-day:not(.rdp-day_selected):not(.rdp-day_disabled):hover {
+        background-color: hsl(var(--accent)) !important;
+        color: hsl(var(--accent-foreground)) !important;
+    }
 }

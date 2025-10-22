@@ -1,8 +1,9 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
-import OfflineBanner from '../components/OfflineBanner';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import NavbarWithTheme from '@/components/NavbarWithTheme';
+import BreadcrumbWrapper from '@/components/layout/BreadcrumbWrapper';
+import Footer from '@/components/layout/Footer';
+import OfflineBanner from '@/components/layout/OfflineBanner';
 ---
 
 <BaseLayout
@@ -12,43 +13,36 @@ import OfflineBanner from '../components/OfflineBanner';
   <link rel="dns-prefetch" href="//sipongi.menlhk.go.id" />
 
   <OfflineBanner client:idle />
-  <Navbar client:load />
-  <main>
-    <div id="data-header" class="bg-white shadow-sm border-b">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div class="text-center">
-          <h1 class="text-3xl font-bold text-gray-900 mb-2">Data Hotspot</h1>
-          <p class="text-lg text-gray-600">Tabel data hotspot kebakaran hutan dan lahan Indonesia</p>
-          <div class="mt-4">
-            <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-green-600 mb-2"></div>
-            <p class="text-sm text-gray-500">Memuat tabel data...</p>
-          </div>
-        </div>
+  <NavbarWithTheme client:load />
+  <main class="min-h-screen flex flex-col bg-background pt-16">
+    <div class="border-b border-border py-3 bg-background">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <BreadcrumbWrapper client:load items={[{ label: 'Data' }]} />
       </div>
     </div>
 
-    <div id="hotspot-table-container" class="min-h-[400px] bg-gray-50">
+    <div id="hotspot-table-container" class="min-h-[400px] bg-background">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="bg-white rounded-lg shadow overflow-hidden">
-          <div class="px-6 py-4 border-b border-gray-200">
+        <div class="bg-card rounded-lg shadow overflow-hidden">
+          <div class="px-6 py-4 border-b border-border">
             <div class="flex justify-between items-center">
-              <div class="h-6 bg-gray-200 rounded w-32 animate-pulse"></div>
+              <div class="h-6 bg-muted rounded w-32 animate-pulse"></div>
               <div class="flex space-x-2">
-                <div class="h-8 bg-gray-200 rounded w-24 animate-pulse"></div>
-                <div class="h-8 bg-gray-200 rounded w-24 animate-pulse"></div>
+                <div class="h-8 bg-muted rounded w-24 animate-pulse"></div>
+                <div class="h-8 bg-muted rounded w-24 animate-pulse"></div>
               </div>
             </div>
           </div>
 
-          <div class="divide-y divide-gray-200">
+          <div class="divide-y divide-border">
             {[...Array(5)].map((_, i) => (
               <div class="px-6 py-4" key={`skeleton-${i}`}>
                 <div class="flex space-x-4">
-                  <div class="h-4 bg-gray-200 rounded w-16 animate-pulse"></div>
-                  <div class="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
-                  <div class="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
-                  <div class="h-4 bg-gray-200 rounded w-16 animate-pulse"></div>
-                  <div class="h-4 bg-gray-200 rounded w-28 animate-pulse"></div>
+                  <div class="h-4 bg-muted rounded w-16 animate-pulse"></div>
+                  <div class="h-4 bg-muted rounded w-24 animate-pulse"></div>
+                  <div class="h-4 bg-muted rounded w-20 animate-pulse"></div>
+                  <div class="h-4 bg-muted rounded w-16 animate-pulse"></div>
+                  <div class="h-4 bg-muted rounded w-28 animate-pulse"></div>
                 </div>
               </div>
             ))}
@@ -62,40 +56,41 @@ import OfflineBanner from '../components/OfflineBanner';
   </footer>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(() => {
-        import('../components/HotspotTable.tsx').then(module => {
-          const HotspotTable = module.default;
+    const requestIdleCallback = window.requestIdleCallback || ((cb) => setTimeout(cb, 200));
+
+    const loadTableComponent = () => {
+      Promise.all([
+        import('react'),
+        import('react-dom/client')
+      ]).then(([React, ReactDOM]) => {
+        import('@/components/HotspotDataTableWithTheme.tsx').then(module => {
+          const HotspotDataTableWithTheme = module.default;
           const container = document.getElementById('hotspot-table-container');
-          const header = document.getElementById('data-header');
 
-          if (container && header) {
-            header.innerHTML = `
-              <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-              </div>
-            `;
-
-            import('react').then(React => {
-              import('react-dom/client').then(ReactDOM => {
-                const root = ReactDOM.createRoot(container);
-                root.render(React.createElement(HotspotTable));
-              });
-            });
+          if (container) {
+            const root = ReactDOM.createRoot(container);
+            root.render(React.createElement(HotspotDataTableWithTheme));
           }
         }).catch(err => {
           const container = document.getElementById('hotspot-table-container');
           if (container) {
             container.innerHTML = `
               <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div class="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-                  <p class="text-red-600 font-medium">⚠️ Gagal memuat tabel data</p>
-                  <p class="text-sm text-gray-600 mt-2">Silakan refresh halaman atau coba koneksi yang lebih stabil</p>
+                <div class="bg-destructive/10 border border-destructive/20 rounded-lg p-6 text-center">
+                  <p class="text-destructive font-medium">⚠️ Gagal memuat tabel data</p>
+                  <p class="text-sm text-muted-foreground mt-2">Silakan refresh halaman atau coba koneksi yang lebih stabil</p>
                 </div>
               </div>
             `;
           }
         });
-      }, 500);
-    });
+      });
+    };
+
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(loadTableComponent);
+    } else {
+      setTimeout(loadTableComponent, 200);
+    }
   </script>
 </BaseLayout>
