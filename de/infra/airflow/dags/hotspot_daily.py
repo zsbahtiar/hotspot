@@ -33,7 +33,7 @@ dag = DAG(
     start_date=datetime(2015, 1, 1),
     catchup=False,
     max_active_runs=1,
-    tags=['hotspot', 'etl', 'hotspot-schema', 'production'],
+    tags=['hotspot', 'etl', 'daily'],
 )
 
 
