@@ -3,10 +3,13 @@ import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import tailwind from '@astrojs/tailwind';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
+import cloudflare from '@astrojs/cloudflare';
 
 // https://astro.build/config
 export default defineConfig({
   integrations: [react(), tailwind()],
+  output: 'static',
+  adapter: cloudflare(),
   vite: {
     plugins: [
       nodePolyfills({
