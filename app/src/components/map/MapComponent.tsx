@@ -1,5 +1,7 @@
 import useSWR from "swr";
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import { useGeoJsonCache } from "@/hooks/useGeoJsonCache";
+import type { CachedGeoJsonData } from "@/hooks/useGeoJsonCache";
 import {
   MapContainer,
   TileLayer,
@@ -25,7 +27,7 @@ import type {
   GeoData,
 } from "@/core/models/location";
 import type { HotspotFeatureGeo } from "@/core/models/hotspot";
-import { formatNumber, extractTime, decompressGzip } from "@/core/utils/formatters";
+import { formatNumber, extractTime } from "@/core/utils/formatters";
 import MapControlPanel from "@/components/map/MapControls";
 import MapLegend from "@/components/map/MapLegend";
 import MapZoomControls from "@/components/map/ZoomControls";
@@ -53,27 +55,6 @@ const fetcher = async (url: string) => {
     }
     return res.json();
   });
-};
-
-const geoJsonUrls = [
-  "/maps/batas_pulau.geojson.gz",
-  "/maps/batas_provinsi.geojson.gz",
-  "/maps/batas_kabkota.geojson.gz",
-  "/maps/batas_kecamatan.geojson.gz",
-  "/maps/batas_keldesa.geojson.gz",
-];
-const geoJsonFetcher = async (urls: string[]) => {
-  const responses = await Promise.all(urls.map((url) => fetch(url)));
-  for (const response of responses) {
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch ${response.url}: ${response.statusText}`,
-      );
-    }
-  }
-
-  // Decompress gzip files and parse as JSON
-  return Promise.all(responses.map((res) => decompressGzip(res)));
 };
 
 interface CustomAttributionControlProps {
@@ -234,6 +215,12 @@ const MapComponent: React.FC<MapComponentProps> = ({
     () => new Date().toISOString().split("T")[0],
   );
 
+  const {
+    cachedData: geoJsonCacheData,
+    isLoading: isGeoJsonLoading,
+    fetchAndCacheGeoJson,
+  } = useGeoJsonCache();
+
   const swrRetryConfig = {
     revalidateOnFocus: false,
     errorRetryCount: 3,
@@ -252,22 +239,45 @@ const MapComponent: React.FC<MapComponentProps> = ({
     },
   };
 
-  const {
-    data: geoJsonData,
-    error: geoJsonError,
-    isLoading: isGeoJsonLoading,
-  } = useSWR("geoJsonData", () => geoJsonFetcher(geoJsonUrls), swrRetryConfig);
-
   const geoData: GeoData = useMemo(
     () => ({
-      pulau: geoJsonData?.[0] || null,
-      provinsi: geoJsonData?.[1] || null,
-      kota: geoJsonData?.[2] || null,
-      kecamatan: geoJsonData?.[3] || null,
-      desa: geoJsonData?.[4] || null,
+      pulau: geoJsonCacheData?.island || null,
+      provinsi: geoJsonCacheData?.province || null,
+      kota: geoJsonCacheData?.city || null,
+      kecamatan: geoJsonCacheData?.district || null,
+      desa: geoJsonCacheData?.subdistrict || null,
     }),
-    [geoJsonData],
+    [geoJsonCacheData],
   );
+
+  useEffect(() => {
+    if (!geoJsonCacheData) {
+      fetchAndCacheGeoJson().catch((error) => {
+        console.error("Failed to fetch GeoJSON data:", error);
+      });
+    }
+  }, [geoJsonCacheData, fetchAndCacheGeoJson]);
+
+  useEffect(() => {
+    const levelMap: Record<
+      DrillDownLevel,
+      keyof Omit<CachedGeoJsonData, "timestamp">
+    > = {
+      pulau: "island",
+      provinsi: "province",
+      kota: "city",
+      kecamatan: "district",
+      desa: "subdistrict",
+    };
+
+    const currentLevel = levelMap[drillDownLevel];
+
+    if (geoJsonCacheData && !geoJsonCacheData[currentLevel]) {
+      fetchAndCacheGeoJson(currentLevel).catch((error) => {
+        console.error(`Failed to fetch ${currentLevel} GeoJSON data:`, error);
+      });
+    }
+  }, [drillDownLevel, geoJsonCacheData, fetchAndCacheGeoJson]);
 
   const getHotspotData = useMemo(() => {
     if (USE_MOCK_DATA) {
@@ -764,7 +774,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
   ]);
 
   const loading = isGeoJsonLoading || isHotspotLoading;
-  const error = geoJsonError || hotspotError;
+  const error = hotspotError;
 
   return (
     <div

@@ -1,0 +1,270 @@
+import { useState, useCallback } from "react";
+import { decompressGzip } from "@/core/utils/formatters";
+
+interface GeoJsonProperty {
+  KDPPUM?: string;
+  WADMPR?: string;
+  WADMKK?: string;
+  WADMKC?: string;
+  WADMKD?: string;
+  PULAU?: string;
+  PROVINSI?: string;
+  KAB_KOTA?: string;
+  KECAMATAN?: string;
+  DESA_KELUR?: string;
+}
+
+interface GeoJsonFeature extends GeoJSON.Feature {
+  type: "Feature";
+  properties: GeoJsonProperty;
+  geometry: GeoJSON.MultiPolygon;
+}
+
+interface GeoJsonFeatureCollection extends GeoJSON.FeatureCollection {
+  type: "FeatureCollection";
+  features: GeoJsonFeature[];
+}
+
+export interface CachedGeoJsonData {
+  island: GeoJsonFeatureCollection;
+  province: GeoJsonFeatureCollection;
+  city: GeoJsonFeatureCollection;
+  district: GeoJsonFeatureCollection;
+  subdistrict: GeoJsonFeatureCollection;
+  timestamp: number;
+}
+
+const DB_NAME = "HotspotGeoCache";
+const DB_VERSION = 1;
+const STORE_NAME = "geojson";
+const CACHE_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
+
+// IndexedDB helper functions
+const openDB = (): Promise<IDBDatabase> => {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+
+    request.onupgradeneeded = (event) => {
+      const db = (event.target as IDBOpenDBRequest).result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME);
+      }
+    };
+  });
+};
+
+const storeData = async (key: string, data: any): Promise<void> => {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([STORE_NAME], "readwrite");
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.put(data, key);
+
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve();
+  });
+};
+
+const getData = async (key: string): Promise<any> => {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([STORE_NAME], "readonly");
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.get(key);
+
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+  });
+};
+
+const removeData = async (key: string): Promise<void> => {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([STORE_NAME], "readwrite");
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.delete(key);
+
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve();
+  });
+};
+
+export const useGeoJsonCache = () => {
+  const [cachedData, setCachedData] = useState<CachedGeoJsonData | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const getCachedData = async (): Promise<CachedGeoJsonData | null> => {
+    try {
+      const cached = await getData("geojson_cache");
+      if (cached && Date.now() - cached.timestamp < CACHE_EXPIRY) {
+        return cached;
+      }
+    } catch (error) {
+      console.error("Error reading cache:", error);
+    }
+    return null;
+  };
+
+  const saveToCache = async (data: GeoJSON.FeatureCollection[]) => {
+    try {
+      const cacheData: CachedGeoJsonData = {
+        island: data[0],
+        province: data[1],
+        city: data[2],
+        district: data[3],
+        subdistrict: data[4],
+        timestamp: Date.now(),
+      };
+      await storeData("geojson_cache", cacheData);
+      setCachedData(cacheData);
+    } catch (error) {
+      console.error("Error saving to cache:", error);
+    }
+  };
+
+  const saveSingleToCache = async (
+    level: keyof Omit<CachedGeoJsonData, "timestamp">,
+    data: GeoJSON.FeatureCollection,
+  ) => {
+    try {
+      const existing =
+        (await getCachedData()) ||
+        ({
+          island: null,
+          province: null,
+          city: null,
+          district: null,
+          subdistrict: null,
+          timestamp: Date.now(),
+        } as CachedGeoJsonData);
+
+      existing[level] = data;
+      existing.timestamp = Date.now();
+
+      await storeData("geojson_cache", existing);
+      setCachedData(existing);
+    } catch (error) {
+      console.error("Error saving single level to cache:", error);
+    }
+  };
+
+  const fetchSingleGeoJson = useCallback(
+    async (
+      level: keyof Omit<CachedGeoJsonData, "timestamp">,
+    ): Promise<GeoJSON.FeatureCollection> => {
+      try {
+        // Use production server directly for both development and production
+        const urls: Record<string, string> = {
+          island: "https://hotspot.zsbahtiar.com/maps/batas_pulau.geojson.gz",
+          province:
+            "https://hotspot.zsbahtiar.com/maps/batas_provinsi.geojson.gz",
+          city: "https://hotspot.zsbahtiar.com/maps/batas_kabkota.geojson.gz",
+          district:
+            "https://hotspot.zsbahtiar.com/maps/batas_kecamatan.geojson.gz",
+          subdistrict:
+            "https://hotspot.zsbahtiar.com/maps/batas_keldesa.geojson.gz",
+        };
+
+        const response = await fetch(urls[level]);
+
+        if (!response.ok) {
+          throw new Error(
+            `Failed to fetch ${urls[level]}: ${response.statusText}`,
+          );
+        }
+
+        const data = await decompressGzip(response);
+        return data;
+      } catch (error) {
+        console.error(`Error fetching ${level} GeoJSON:`, error);
+
+        // Return empty GeoJSON as last resort
+        return {
+          type: "FeatureCollection",
+          features: [],
+        };
+      }
+    },
+    [],
+  );
+
+  const fetchAndCacheGeoJson = useCallback(
+    async (
+      level?: keyof Omit<CachedGeoJsonData, "timestamp">,
+    ): Promise<CachedGeoJsonData> => {
+      setIsLoading(true);
+      try {
+        const cached = await getCachedData();
+        if (cached && (!level || cached[level])) {
+          setCachedData(cached);
+          return cached;
+        }
+
+        // Load all data if no specific level requested
+        if (!level) {
+          // Load individual files to avoid large parallel requests
+          const levels: (keyof Omit<CachedGeoJsonData, "timestamp">)[] = [
+            "island",
+            "province",
+            "city",
+            "district",
+            "subdistrict",
+          ];
+          const result = { timestamp: Date.now() } as CachedGeoJsonData;
+
+          for (const lvl of levels) {
+            result[lvl] = await fetchSingleGeoJson(lvl);
+          }
+
+          await storeData("geojson_cache", result);
+          setCachedData(result);
+          return result;
+        }
+
+        // Load specific level
+        const existingCache =
+          cached ||
+          ({
+            island: null,
+            province: null,
+            city: null,
+            district: null,
+            subdistrict: null,
+            timestamp: Date.now(),
+          } as CachedGeoJsonData);
+
+        const specificData = await fetchSingleGeoJson(level);
+        existingCache[level] = specificData;
+        existingCache.timestamp = Date.now();
+
+        await saveSingleToCache(level, specificData);
+        return existingCache;
+      } catch (error) {
+        console.error("Error fetching GeoJSON:", error);
+        throw error;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [fetchSingleGeoJson],
+  );
+
+  const clearCache = async () => {
+    try {
+      await removeData("geojson_cache");
+      setCachedData(null);
+    } catch (error) {
+      console.error("Error clearing cache:", error);
+    }
+  };
+
+  return {
+    cachedData,
+    isLoading,
+    fetchAndCacheGeoJson,
+    clearCache,
+  };
+};
