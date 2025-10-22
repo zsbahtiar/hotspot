@@ -4,179 +4,289 @@ from airflow.operators.python import PythonOperator
 from airflow.operators.bash import BashOperator
 import sys
 import os
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../'))
-
-from src.etl.clients import NASAFIRMSClient
-from src.utils.logging import setup_logging, get_logger
 import asyncio
-import pandas as pd
+import polars as pl
+from ulid import ULID
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
+
+from src.etl.clients import LocationService, WeatherService
+from src.etl.loader import ClickHouseLoader
+from src.etl.transformer import HotspotTransformer
+from src.utils.logging import setup_logging, get_logger
 
 
 setup_logging()
 logger = get_logger(__name__)
 
 default_args = {
-    'owner': 'hotspot-team',
-    'depends_on_past': False,
-    'start_date': datetime(2024, 12, 1),
-    'email_on_failure': False,
-    'email_on_retry': False,
-    'retries': 5,
-    'retry_delay': timedelta(minutes=10),
+    "owner": "zsbahtiar",
+    "depends_on_past": False,
+    "start_date": datetime(2015, 1, 1),
+    "email_on_failure": False,
+    "email_on_retry": False,
+    "retries": 5,
+    "retry_delay": timedelta(minutes=15),
 }
 
 dag = DAG(
-    'hotspot_backfill',
+    "hotspot_backfill",
     default_args=default_args,
-    description='Backfill historical hotspot data from 2015-2025',
-    schedule_interval=None,
+    description="Backfill from january 2015 to current 03 October 2025",
+    schedule_interval=timedelta(minutes=10),
     catchup=False,
-    tags=['hotspot', 'backfill', 'historical'],
+    max_active_runs=1,
+    tags=["etl", "hotspot", "backfill"],
 )
 
 
-def backfill_year_data(**context):
-    year = context['dag_run'].conf.get('year', 2024)
-    start_month = context['dag_run'].conf.get('start_month', 1)
-    end_month = context['dag_run'].conf.get('end_month', 12)
-    
-    logger.info(f"Starting backfill for year {year}, months {start_month}-{end_month}")
-    
-    async def _backfill():
-        client = NASAFIRMSClient()
-        try:
-            sources = ["MODIS_NRT", "VIIRS_SNPP_NRT", "VIIRS_NOAA20_NRT"]
-            if year >= 2024:
-                sources.append("VIIRS_NOAA21_NRT")
-            elif year < 2018:
-                sources = ["MODIS_NRT", "VIIRS_SNPP_NRT"]
-            
-            all_data = []
-            
-            for month in range(start_month, end_month + 1):
-                start_date = f"{year}-{month:02d}-01"
-                
-                if month == 12:
-                    end_date = f"{year}-12-31"
-                else:
-                    end_date = f"{year}-{month+1:02d}-01"
-                    end_date = (pd.to_datetime(end_date) - timedelta(days=1)).strftime('%Y-%m-%d')
-                
-                logger.info(f"Backfilling {year}-{month:02d} from {start_date} to {end_date}")
-                
-                month_data = await client.get_hotspots_bulk(start_date, end_date, sources)
-                if not month_data.empty:
-                    month_data['backfill_timestamp'] = datetime.now()
-                    month_data['backfill_year'] = year
-                    month_data['backfill_month'] = month
-                    all_data.append(month_data)
-                    
-                await asyncio.sleep(1)
-            
-            if all_data:
-                combined_df = pd.concat(all_data, ignore_index=True)
-                csv_path = f"/tmp/backfill_hotspots_{year}_{start_month}_{end_month}.csv"
-                combined_df.to_csv(csv_path, index=False)
-                logger.info(f"Backfilled {len(combined_df)} hotspots for {year} to {csv_path}")
-                return csv_path
-            else:
-                logger.warning(f"No backfill data found for {year}")
-                return None
-                
-        finally:
-            await client.close()
-    
-    return asyncio.run(_backfill())
+def get_month_to_process(**context):
+    async def _get_month():
+        loader = ClickHouseLoader()
+
+        query = """
+        SELECT month, COUNT(*) as available_records
+        FROM hotspot.backfill_state
+        WHERE status = 'pending'
+        GROUP BY month
+        ORDER BY month ASC
+        LIMIT 1
+        """
+
+        result = await loader.execute_query(query)
+        if not result or not result.strip():
+            logger.info("No more months to process")
+            return None
+
+        month = result.strip().split("\t")[0]
+        record_count = result.strip().split("\t")[1]
+
+        logger.info(f"Processing month {month} with {record_count} records")
+        return month
+
+    return asyncio.run(_get_month())
 
 
-def validate_backfill_data(**context):
-    year = context['dag_run'].conf.get('year', 2024)
-    
-    backfill_file = context['task_instance'].xcom_pull(task_ids='backfill_year')
-    if not backfill_file:
-        logger.error(f"No backfill data found for {year}")
+def process_month_data(**context):
+    async def _process():
+        loader = ClickHouseLoader()
+
+        query = """
+        SELECT month, COUNT(*) as available_records
+        FROM hotspot.backfill_state
+        WHERE status = 'pending'
+        GROUP BY month
+        ORDER BY month ASC
+        LIMIT 1
+        """
+
+        result = await loader.execute_query(query)
+        if not result or not result.strip():
+            logger.info("No more months to process")
+            return {"status": "completed", "message": "Backfill completed"}
+
+        month = result.strip().split("\t")[0]
+        record_count = result.strip().split("\t")[1]
+
+        logger.info(f"Processing month {month} with {record_count} records")
+
+        logger.info(f"Starting backfill for month: {month}")
+
+        location_service = LocationService()
+        weather_service = WeatherService()
+        transformer = HotspotTransformer()
+
+        query = f"""
+        SELECT * FROM hotspot.backfill_hotspot
+        WHERE toYYYYMM(acq_date) = '{month}'
+        ORDER BY acq_date, acq_time
+        """
+
+        result = await loader.execute_query(query + " FORMAT CSVWithNames")
+        if not result or not result.strip():
+            logger.warning(f"No data found for month {month}")
+            return None
+
+        import io
+
+        df = pl.read_csv(io.StringIO(result))
+        batch_id = str(ULID())
+        ingested_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+        df = df.with_columns(
+            [
+                pl.lit(batch_id).alias("batch_id"),
+                pl.lit(ingested_at).alias("ingested_at"),
+            ]
+        )
+
+        logger.info(f"Extracted {len(df)} records for month {month}")
+
+        await loader.load_staging_table("staging_hotspot", df)
+        logger.info(f"Loaded {len(df)} records to staging_hotspot")
+
+        unique_coords = df.select(["latitude", "longitude"]).unique()
+        logger.info(f"Processing {len(unique_coords)} unique coordinates")
+
+        location_records = unique_coords.to_dicts()
+        weather_records = df.to_dicts()
+
+        logger.info("Fetching location and weather data concurrently")
+
+        location_task = location_service.get_location_bulk(
+            location_records,
+            concurrent=False,
+        )
+
+        weather_task = weather_service.get_weather_bulk(
+            weather_records,
+            concurrent=False,
+        )
+
+        locations, weather_data = await asyncio.gather(location_task, weather_task)
+
+        if locations:
+            for location in locations:
+                location["id"] = str(ULID())
+
+            column_order = [
+                "id",
+                "latitude",
+                "longitude",
+                "province_code",
+                "province_name",
+                "city_code",
+                "city_name",
+                "district_code",
+                "district_name",
+                "subdistrict_code",
+                "subdistrict_name",
+            ]
+
+            location_df = pl.DataFrame(locations).select(column_order)
+            await loader.load_dimension_composite_key(
+                "dim_location", location_df, ["latitude", "longitude"]
+            )
+            logger.info(f"Loaded {len(location_df)} locations")
+
+        if weather_data:
+            for weather in weather_data:
+                weather["batch_id"] = batch_id
+                weather["ingested_at"] = datetime.now().strftime(
+                    "%Y-%m-%d %H:%M:%S.%f"
+                )[:-3]
+
+            column_order = [
+                "batch_id",
+                "ingested_at",
+                "latitude",
+                "longitude",
+                "datetime",
+                "temperature",
+                "feels_like",
+                "humidity",
+                "precipitation",
+                "precip_prob",
+                "wind_speed",
+                "wind_degree",
+                "wind_gust",
+                "pressure",
+                "visibility",
+                "cloud_coverage",
+                "solar_radiation",
+                "solar_energy",
+                "uv_index",
+                "severe_risk",
+                "conditions",
+                "icon",
+            ]
+
+            weather_df = pl.DataFrame(weather_data).select(column_order)
+            await loader.load_staging_table("staging_weather", weather_df)
+            logger.info(f"Loaded {len(weather_df)} weather records")
+
+        logger.info("Transforming to dimensional model")
+        dimensional_data = await transformer.transform_staging_to_hotspot(batch_id)
+
+        dimension_order = [
+            ("dim_period", "load_dimension_insert_only"),
+            ("dim_satellite", "load_dimension_small"),
+            ("dim_confidence", "load_dimension_small"),
+            ("dim_weather_condition", "load_dimension_small"),
+        ]
+
+        for table_name, load_method in dimension_order:
+            if table_name in dimensional_data:
+                df_data = dimensional_data[table_name]
+                if not df_data.is_empty():
+                    if load_method == "load_dimension_insert_only":
+                        await loader.load_dimension_insert_only(table_name, df_data)
+                    elif load_method == "load_dimension_small":
+                        await loader.load_dimension_small(table_name, df_data)
+                    logger.info(f"Loaded {table_name} with {len(df_data)} records")
+
+        for table_name, df_data in dimensional_data.items():
+            if not df_data.is_empty() and table_name.startswith("fact_"):
+                month_end = f"{month[:4]}-{month[4:]}-28"
+                await loader.load_fact_with_staging(table_name, df_data, month_end)
+                logger.info(f"Loaded {table_name} with {len(df_data)} records")
+
+        await loader.execute_query(
+            f"DELETE FROM hotspot.backfill_state WHERE month = '{month}'"
+        )
+
+        await loader.execute_query(
+            f"INSERT INTO hotspot.backfill_state (month, status, record_count, last_processed) "
+            f"VALUES ('{month}', 'completed', {len(df)}, now64())"
+        )
+
+        logger.info(f"Successfully processed month {month}: {len(df)} records")
+
+        return {"month": month, "record_count": len(df), "batch_id": batch_id}
+
+    return asyncio.run(_process())
+
+
+def validate_monthly_processing(**context):
+    process_result = context["task_instance"].xcom_pull(task_ids="process_month_data")
+    if not process_result:
+        logger.error("No processing result found")
         return False
-        
-    df = pd.read_csv(backfill_file)
-    
-    expected_min_records = 1000 if year >= 2019 else 500
-    if len(df) < expected_min_records:
-        logger.warning(f"Low record count for {year}: {len(df)} < {expected_min_records}")
-    
-    missing_coords = df[['latitude', 'longitude']].isna().sum().sum()
-    if missing_coords > 0:
-        logger.error(f"Found {missing_coords} missing coordinates")
+
+    if process_result.get("status") == "completed":
+        logger.info("Backfill completed - validation passed")
+        return True
+
+    month = process_result.get("month")
+    record_count = process_result.get("record_count", 0)
+
+    logger.info(f"Validation for month {month}: {record_count} records processed")
+
+    if record_count == 0:
+        logger.warning(f"No records processed for month {month}")
         return False
-    
-    indonesia_bounds = {
-        'lat_min': -11, 'lat_max': 6,
-        'lon_min': 95, 'lon_max': 141
-    }
-    
-    out_of_bounds = (
-        (df['latitude'] < indonesia_bounds['lat_min']) |
-        (df['latitude'] > indonesia_bounds['lat_max']) |
-        (df['longitude'] < indonesia_bounds['lon_min']) |
-        (df['longitude'] > indonesia_bounds['lon_max'])
-    ).sum()
-    
-    if out_of_bounds > len(df) * 0.1:
-        logger.error(f"Too many out-of-bounds coordinates: {out_of_bounds}")
-        return False
-    
-    logger.info(f"Validation passed for {year}: {len(df)} records")
+
     return True
 
 
-def load_backfill_to_clickhouse(**context):
-    year = context['dag_run'].conf.get('year', 2024)
-    
-    validation_result = context['task_instance'].xcom_pull(task_ids='validate_backfill')
-    if not validation_result:
-        logger.error(f"Validation failed, skipping load for {year}")
-        return
-    
-    backfill_file = context['task_instance'].xcom_pull(task_ids='backfill_year')
-    if not backfill_file:
-        logger.error(f"No backfill data to load for {year}")
-        return
-        
-    logger.info(f"Loading backfill data to ClickHouse for {year}")
-    
-    df = pd.read_csv(backfill_file)
-    
-    df['acq_datetime'] = pd.to_datetime(df['acq_date'] + ' ' + df['acq_time'].astype(str).str.zfill(4), format='%Y-%m-%d %H%M')
-    df['country_code'] = 'IDN'
-    
-    processed_path = f"/tmp/processed_backfill_{year}.csv"
-    df.to_csv(processed_path, index=False)
-    
-    logger.info(f"Processed and ready to load {len(df)} records for {year}")
 
 
-backfill_task = PythonOperator(
-    task_id='backfill_year',
-    python_callable=backfill_year_data,
+process_month_task = PythonOperator(
+    task_id="process_month_data",
+    python_callable=process_month_data,
     dag=dag,
 )
 
-validate_task = PythonOperator(
-    task_id='validate_backfill',
-    python_callable=validate_backfill_data,
-    dag=dag,
-)
-
-load_task = PythonOperator(
-    task_id='load_backfill',
-    python_callable=load_backfill_to_clickhouse,
+validate_month_task = PythonOperator(
+    task_id="validate_monthly_processing",
+    python_callable=validate_monthly_processing,
     dag=dag,
 )
 
 cleanup_task = BashOperator(
-    task_id='cleanup_temp_files',
-    bash_command='find /tmp -name "*backfill*" -type f -mtime +1 -delete',
+    task_id="cleanup_temp_files",
+    bash_command='find /tmp -name "*staging_*" -type d -mtime +1 -exec rm -rf {} +',
     dag=dag,
+    trigger_rule="all_done",
 )
 
-backfill_task >> validate_task >> load_task >> cleanup_task
+process_month_task >> validate_month_task >> cleanup_task
