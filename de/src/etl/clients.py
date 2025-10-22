@@ -5,11 +5,78 @@ from typing import Dict, List, Optional
 import polars as pl
 import time
 import json
+import random
+from functools import wraps
 from src.config import settings
 from src.utils.logging import get_logger
 from src.utils.connections import redis_manager, http_manager
 
 logger = get_logger(__name__)
+
+
+def retry_with_exponential_backoff(
+    max_retries: int = 3,
+    base_delay: float = 1.0,
+    max_delay: float = 60.0,
+    backoff_factor: float = 2.0,
+    retryable_status_codes: List[int] = None
+):
+    if retryable_status_codes is None:
+        retryable_status_codes = [502, 503, 504, 429]
+
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            last_exception = None
+
+            for attempt in range(max_retries + 1):
+                try:
+                    return await func(*args, **kwargs)
+
+                except Exception as e:
+                    last_exception = e
+
+                    should_retry = False
+                    error_message = str(e).lower()
+
+                    for status_code in retryable_status_codes:
+                        if f"{status_code}" in error_message:
+                            should_retry = True
+                            break
+
+                    network_error_patterns = [
+                        "connection", "timeout", "server error",
+                        "temporary", "unavailable", "overloaded"
+                    ]
+                    for pattern in network_error_patterns:
+                        if pattern in error_message:
+                            should_retry = True
+                            break
+
+                    if not should_retry or attempt == max_retries:
+                        if attempt == max_retries:
+                            logger.error(
+                                f"Max retries ({max_retries}) exceeded for {func.__name__}: {e}"
+                            )
+                        else:
+                            logger.error(f"Non-retryable error in {func.__name__}: {e}")
+                        raise
+
+                    delay = min(base_delay * (backoff_factor ** attempt), max_delay)
+                    jitter = random.uniform(0.1, 0.3) * delay
+                    total_delay = delay + jitter
+
+                    logger.warning(
+                        f"Attempt {attempt + 1}/{max_retries + 1} failed for {func.__name__}: {e}. "
+                        f"Retrying in {total_delay:.2f} seconds..."
+                    )
+
+                    await asyncio.sleep(total_delay)
+
+            raise last_exception
+
+        return wrapper
+    return decorator
 
 
 class RateLimiter:
@@ -124,36 +191,38 @@ class LocationService:
     def __init__(self):
         self.base_url = settings.bmkg_api_base_url
 
+    @retry_with_exponential_backoff(
+        max_retries=3,
+        base_delay=2.0,
+        max_delay=30.0,
+        backoff_factor=2.0,
+        retryable_status_codes=[502, 503, 504, 429, 500]
+    )
     async def get_location_by_coordinates(
         self, longitude: float, latitude: float
     ) -> Dict:
         url = f"{self.base_url}/df/v1/adm/coord"
         params = {"lat": latitude, "lon": longitude}
 
-        try:
-            client = http_manager.get_client()
-            response = await client.get(url, params=params)
-            response.raise_for_status()
-            location = response.json()
+        client = http_manager.get_client()
+        response = await client.get(url, params=params)
+        response.raise_for_status()
+        location = response.json()
 
-            if location.get("kecamatan") is None:
-                logger.warning(
-                    f"Coordinate {latitude},{longitude} rejected: kecamatan is null (not in Indonesia)"
-                )
-                return {}
-
-            desa = location.get("desa", "")
-            if not desa or desa == "Area Tidak Terdefinisi":
-                logger.warning(
-                    f"Coordinate {latitude},{longitude} rejected: desa is undefined (not in Indonesia)"
-                )
-                return {}
-
-            return location
-
-        except Exception as e:
-            logger.error(f"Error fetching location: {e}")
+        if location.get("kecamatan") is None:
+            logger.warning(
+                f"Coordinate {latitude},{longitude} rejected: kecamatan is null (not in Indonesia)"
+            )
             return {}
+
+        desa = location.get("desa", "")
+        if not desa or desa == "Area Tidak Terdefinisi":
+            logger.warning(
+                f"Coordinate {latitude},{longitude} rejected: desa is undefined (not in Indonesia)"
+            )
+            return {}
+
+        return location
 
     async def get_location_bulk(
         self,
@@ -315,6 +384,13 @@ class WeatherService:
         self.base_url = settings.visualcrossing_base_url
         self.api_key = settings.visualcrossing_api_key
 
+    @retry_with_exponential_backoff(
+        max_retries=3,
+        base_delay=2.0,
+        max_delay=30.0,
+        backoff_factor=2.0,
+        retryable_status_codes=[502, 503, 504, 429, 500, 422]
+    )
     async def get_weather_by_coordinates(
         self, longitude: float, latitude: float, datetime_str: str = None
     ) -> Dict:
@@ -333,15 +409,10 @@ class WeatherService:
             "timezone": "Z",
         }
 
-        try:
-            client = http_manager.get_client()
-            response = await client.get(url, params=params)
-            response.raise_for_status()
-            return response.json()
-
-        except Exception as e:
-            logger.error(f"Error fetching weather from Visual Crossing: {e}")
-            return {}
+        client = http_manager.get_client()
+        response = await client.get(url, params=params)
+        response.raise_for_status()
+        return response.json()
 
     async def get_weather_bulk(
         self,
