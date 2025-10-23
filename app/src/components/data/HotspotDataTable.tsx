@@ -31,70 +31,272 @@ import type { AccumulatedData } from "@/core/models/hotspot";
 
 const USE_MOCK_DATA = true;
 
-const MOCK_HOTSPOT_DATA: HotspotFeature[] = Array.from({ length: 100 }, (_, i) => {
-  const provinces = [
-    { pulau: "Sumatera", provinsi: "Aceh", kab_kota: "Banda Aceh", kecamatan: "Kuta Alam", desa: "Mulia", coords: [95.3238, 5.5483] },
-    { pulau: "Sumatera", provinsi: "Sumatera Utara", kab_kota: "Medan", kecamatan: "Medan Kota", desa: "Pasar Baru", coords: [98.6722, 3.5952] },
-    { pulau: "Sumatera", provinsi: "Sumatera Barat", kab_kota: "Padang", kecamatan: "Padang Utara", desa: "Lolong Belanti", coords: [100.3543, -0.9471] },
-    { pulau: "Sumatera", provinsi: "Riau", kab_kota: "Pekanbaru", kecamatan: "Tampan", desa: "Sidomulyo Barat", coords: [101.4478, 0.5071] },
-    { pulau: "Sumatera", provinsi: "Jambi", kab_kota: "Jambi", kecamatan: "Jambi Selatan", desa: "Legok", coords: [103.6102, -1.6102] },
-    { pulau: "Sumatera", provinsi: "Sumatera Selatan", kab_kota: "Palembang", kecamatan: "Ilir Timur I", desa: "Bukit Baru", coords: [104.7754, -2.9761] },
-    { pulau: "Sumatera", provinsi: "Bengkulu", kab_kota: "Bengkulu", kecamatan: "Teluk Segara", desa: "Pasar Bengkulu", coords: [102.2656, -3.7928] },
-    { pulau: "Sumatera", provinsi: "Lampung", kab_kota: "Bandar Lampung", kecamatan: "Tanjung Karang", desa: "Enggal", coords: [105.2663, -5.4286] },
-    { pulau: "Jawa", provinsi: "Banten", kab_kota: "Tangerang", kecamatan: "Cipondoh", desa: "Poris Plawad", coords: [106.6894, -6.1162] },
-    { pulau: "Jawa", provinsi: "DKI Jakarta", kab_kota: "Jakarta Pusat", kecamatan: "Menteng", desa: "Gondangdia", coords: [106.8271, -6.1751] },
-    { pulau: "Jawa", provinsi: "Jawa Barat", kab_kota: "Bandung", kecamatan: "Coblong", desa: "Dago", coords: [107.6191, -6.9175] },
-    { pulau: "Jawa", provinsi: "Jawa Tengah", kab_kota: "Semarang", kecamatan: "Semarang Tengah", desa: "Pandansari", coords: [110.4203, -6.9734] },
-    { pulau: "Jawa", provinsi: "DI Yogyakarta", kab_kota: "Sleman", kecamatan: "Mlati", desa: "Sendangadi", coords: [110.3695, -7.7972] },
-    { pulau: "Jawa", provinsi: "Jawa Timur", kab_kota: "Surabaya", kecamatan: "Sukolilo", desa: "Keputih", coords: [112.7508, -7.2575] },
-    { pulau: "Kalimantan", provinsi: "Kalimantan Barat", kab_kota: "Pontianak", kecamatan: "Pontianak Kota", desa: "Sungai Bangkong", coords: [109.3425, -0.0263] },
-    { pulau: "Kalimantan", provinsi: "Kalimantan Tengah", kab_kota: "Palangka Raya", kecamatan: "Jekan Raya", desa: "Menteng", coords: [113.9213, -0.7893] },
-    { pulau: "Kalimantan", provinsi: "Kalimantan Selatan", kab_kota: "Banjarmasin", kecamatan: "Banjarmasin Tengah", desa: "Kelayan Timur", coords: [114.5906, -3.3186] },
-    { pulau: "Kalimantan", provinsi: "Kalimantan Timur", kab_kota: "Samarinda", kecamatan: "Samarinda Ulu", desa: "Air Hitam", coords: [117.1436, -0.5022] },
-    { pulau: "Kalimantan", provinsi: "Kalimantan Utara", kab_kota: "Tarakan", kecamatan: "Tarakan Tengah", desa: "Karang Balik", coords: [117.6333, 3.3] },
-    { pulau: "Sulawesi", provinsi: "Sulawesi Utara", kab_kota: "Manado", kecamatan: "Wenang", desa: "Calaca", coords: [124.8405, 1.4748] },
-    { pulau: "Sulawesi", provinsi: "Sulawesi Tengah", kab_kota: "Palu", kecamatan: "Palu Barat", desa: "Pantoloan", coords: [119.8707, -0.8999] },
-    { pulau: "Sulawesi", provinsi: "Sulawesi Selatan", kab_kota: "Makassar", kecamatan: "Tamalate", desa: "Jongaya", coords: [119.4327, -5.1477] },
-    { pulau: "Sulawesi", provinsi: "Sulawesi Tenggara", kab_kota: "Kendari", kecamatan: "Mandonga", desa: "Anduonohu", coords: [122.4991, -3.9689] },
-    { pulau: "Bali", provinsi: "Bali", kab_kota: "Denpasar", kecamatan: "Denpasar Selatan", desa: "Sanur", coords: [115.2126, -8.6705] },
-    { pulau: "Nusa Tenggara", provinsi: "Nusa Tenggara Barat", kab_kota: "Mataram", kecamatan: "Mataram", desa: "Cakranegara", coords: [116.1169, -8.5833] },
-    { pulau: "Nusa Tenggara", provinsi: "Nusa Tenggara Timur", kab_kota: "Kupang", kecamatan: "Oebobo", desa: "Fontein", coords: [123.5889, -10.1718] },
-    { pulau: "Maluku", provinsi: "Maluku", kab_kota: "Ambon", kecamatan: "Sirimau", desa: "Uritetu", coords: [128.1808, -3.6954] },
-    { pulau: "Papua", provinsi: "Papua", kab_kota: "Jayapura", kecamatan: "Jayapura Utara", desa: "Gurabesi", coords: [140.6719, -2.5924] },
-  ];
-
-  const satellites = ["VIIRS", "MODIS", "Terra", "Aqua", "SNPP"];
-  const confidences = ["high", "medium", "low"];
-
-  const loc = provinces[i % provinces.length];
-  const date = new Date(2025, 0, 1);
-  date.setDate(date.getDate() - Math.floor(i / 2));
-
-  const hour = 8 + (i % 12);
-  const minute = (i * 15) % 60;
-
-  return {
-    type: "Feature" as const,
-    geometry: {
-      type: "Point" as const,
-      coordinates: [loc.coords[0] + (Math.random() - 0.5) * 0.1, loc.coords[1] + (Math.random() - 0.5) * 0.1]
-    },
-    properties: {
-      time: date.toISOString().split("T")[0],
-      hotspot_time: `${date.toISOString().split("T")[0]}T${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}:00`,
-      hotspot_count: Math.floor(Math.random() * 10) + 1,
-      satellite: satellites[i % satellites.length],
-      confidence: confidences[i % confidences.length],
-      location: {
-        pulau: loc.pulau,
-        provinsi: loc.provinsi,
-        kab_kota: loc.kab_kota,
-        kecamatan: loc.kecamatan,
-        desa: loc.desa,
+const MOCK_HOTSPOT_DATA: HotspotFeature[] = Array.from(
+  { length: 100 },
+  (_, i) => {
+    const provinces = [
+      {
+        pulau: "Sumatera",
+        provinsi: "Aceh",
+        kab_kota: "Banda Aceh",
+        kecamatan: "Kuta Alam",
+        desa: "Mulia",
+        coords: [95.3238, 5.5483],
       },
-    },
-  };
-});
+      {
+        pulau: "Sumatera",
+        provinsi: "Sumatera Utara",
+        kab_kota: "Medan",
+        kecamatan: "Medan Kota",
+        desa: "Pasar Baru",
+        coords: [98.6722, 3.5952],
+      },
+      {
+        pulau: "Sumatera",
+        provinsi: "Sumatera Barat",
+        kab_kota: "Padang",
+        kecamatan: "Padang Utara",
+        desa: "Lolong Belanti",
+        coords: [100.3543, -0.9471],
+      },
+      {
+        pulau: "Sumatera",
+        provinsi: "Riau",
+        kab_kota: "Pekanbaru",
+        kecamatan: "Tampan",
+        desa: "Sidomulyo Barat",
+        coords: [101.4478, 0.5071],
+      },
+      {
+        pulau: "Sumatera",
+        provinsi: "Jambi",
+        kab_kota: "Jambi",
+        kecamatan: "Jambi Selatan",
+        desa: "Legok",
+        coords: [103.6102, -1.6102],
+      },
+      {
+        pulau: "Sumatera",
+        provinsi: "Sumatera Selatan",
+        kab_kota: "Palembang",
+        kecamatan: "Ilir Timur I",
+        desa: "Bukit Baru",
+        coords: [104.7754, -2.9761],
+      },
+      {
+        pulau: "Sumatera",
+        provinsi: "Bengkulu",
+        kab_kota: "Bengkulu",
+        kecamatan: "Teluk Segara",
+        desa: "Pasar Bengkulu",
+        coords: [102.2656, -3.7928],
+      },
+      {
+        pulau: "Sumatera",
+        provinsi: "Lampung",
+        kab_kota: "Bandar Lampung",
+        kecamatan: "Tanjung Karang",
+        desa: "Enggal",
+        coords: [105.2663, -5.4286],
+      },
+      {
+        pulau: "Jawa",
+        provinsi: "Banten",
+        kab_kota: "Tangerang",
+        kecamatan: "Cipondoh",
+        desa: "Poris Plawad",
+        coords: [106.6894, -6.1162],
+      },
+      {
+        pulau: "Jawa",
+        provinsi: "DKI Jakarta",
+        kab_kota: "Jakarta Pusat",
+        kecamatan: "Menteng",
+        desa: "Gondangdia",
+        coords: [106.8271, -6.1751],
+      },
+      {
+        pulau: "Jawa",
+        provinsi: "Jawa Barat",
+        kab_kota: "Bandung",
+        kecamatan: "Coblong",
+        desa: "Dago",
+        coords: [107.6191, -6.9175],
+      },
+      {
+        pulau: "Jawa",
+        provinsi: "Jawa Tengah",
+        kab_kota: "Semarang",
+        kecamatan: "Semarang Tengah",
+        desa: "Pandansari",
+        coords: [110.4203, -6.9734],
+      },
+      {
+        pulau: "Jawa",
+        provinsi: "DI Yogyakarta",
+        kab_kota: "Sleman",
+        kecamatan: "Mlati",
+        desa: "Sendangadi",
+        coords: [110.3695, -7.7972],
+      },
+      {
+        pulau: "Jawa",
+        provinsi: "Jawa Timur",
+        kab_kota: "Surabaya",
+        kecamatan: "Sukolilo",
+        desa: "Keputih",
+        coords: [112.7508, -7.2575],
+      },
+      {
+        pulau: "Kalimantan",
+        provinsi: "Kalimantan Barat",
+        kab_kota: "Pontianak",
+        kecamatan: "Pontianak Kota",
+        desa: "Sungai Bangkong",
+        coords: [109.3425, -0.0263],
+      },
+      {
+        pulau: "Kalimantan",
+        provinsi: "Kalimantan Tengah",
+        kab_kota: "Palangka Raya",
+        kecamatan: "Jekan Raya",
+        desa: "Menteng",
+        coords: [113.9213, -0.7893],
+      },
+      {
+        pulau: "Kalimantan",
+        provinsi: "Kalimantan Selatan",
+        kab_kota: "Banjarmasin",
+        kecamatan: "Banjarmasin Tengah",
+        desa: "Kelayan Timur",
+        coords: [114.5906, -3.3186],
+      },
+      {
+        pulau: "Kalimantan",
+        provinsi: "Kalimantan Timur",
+        kab_kota: "Samarinda",
+        kecamatan: "Samarinda Ulu",
+        desa: "Air Hitam",
+        coords: [117.1436, -0.5022],
+      },
+      {
+        pulau: "Kalimantan",
+        provinsi: "Kalimantan Utara",
+        kab_kota: "Tarakan",
+        kecamatan: "Tarakan Tengah",
+        desa: "Karang Balik",
+        coords: [117.6333, 3.3],
+      },
+      {
+        pulau: "Sulawesi",
+        provinsi: "Sulawesi Utara",
+        kab_kota: "Manado",
+        kecamatan: "Wenang",
+        desa: "Calaca",
+        coords: [124.8405, 1.4748],
+      },
+      {
+        pulau: "Sulawesi",
+        provinsi: "Sulawesi Tengah",
+        kab_kota: "Palu",
+        kecamatan: "Palu Barat",
+        desa: "Pantoloan",
+        coords: [119.8707, -0.8999],
+      },
+      {
+        pulau: "Sulawesi",
+        provinsi: "Sulawesi Selatan",
+        kab_kota: "Makassar",
+        kecamatan: "Tamalate",
+        desa: "Jongaya",
+        coords: [119.4327, -5.1477],
+      },
+      {
+        pulau: "Sulawesi",
+        provinsi: "Sulawesi Tenggara",
+        kab_kota: "Kendari",
+        kecamatan: "Mandonga",
+        desa: "Anduonohu",
+        coords: [122.4991, -3.9689],
+      },
+      {
+        pulau: "Bali",
+        provinsi: "Bali",
+        kab_kota: "Denpasar",
+        kecamatan: "Denpasar Selatan",
+        desa: "Sanur",
+        coords: [115.2126, -8.6705],
+      },
+      {
+        pulau: "Nusa Tenggara",
+        provinsi: "Nusa Tenggara Barat",
+        kab_kota: "Mataram",
+        kecamatan: "Mataram",
+        desa: "Cakranegara",
+        coords: [116.1169, -8.5833],
+      },
+      {
+        pulau: "Nusa Tenggara",
+        provinsi: "Nusa Tenggara Timur",
+        kab_kota: "Kupang",
+        kecamatan: "Oebobo",
+        desa: "Fontein",
+        coords: [123.5889, -10.1718],
+      },
+      {
+        pulau: "Maluku",
+        provinsi: "Maluku",
+        kab_kota: "Ambon",
+        kecamatan: "Sirimau",
+        desa: "Uritetu",
+        coords: [128.1808, -3.6954],
+      },
+      {
+        pulau: "Papua",
+        provinsi: "Papua",
+        kab_kota: "Jayapura",
+        kecamatan: "Jayapura Utara",
+        desa: "Gurabesi",
+        coords: [140.6719, -2.5924],
+      },
+    ];
+
+    const satellites = ["VIIRS", "MODIS", "Terra", "Aqua", "SNPP"];
+    const confidences = ["high", "medium", "low"];
+
+    const loc = provinces[i % provinces.length];
+    const date = new Date(2025, 0, 1);
+    date.setDate(date.getDate() - Math.floor(i / 2));
+
+    const hour = 8 + (i % 12);
+    const minute = (i * 15) % 60;
+
+    return {
+      type: "Feature" as const,
+      geometry: {
+        type: "Point" as const,
+        coordinates: [
+          loc.coords[0] + (Math.random() - 0.5) * 0.1,
+          loc.coords[1] + (Math.random() - 0.5) * 0.1,
+        ],
+      },
+      properties: {
+        time: date.toISOString().split("T")[0],
+        hotspot_time: `${date.toISOString().split("T")[0]}T${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}:00`,
+        hotspot_count: Math.floor(Math.random() * 10) + 1,
+        satellite: satellites[i % satellites.length],
+        confidence: confidences[i % confidences.length],
+        location: {
+          pulau: loc.pulau,
+          provinsi: loc.provinsi,
+          kab_kota: loc.kab_kota,
+          kecamatan: loc.kecamatan,
+          desa: loc.desa,
+        },
+      },
+    };
+  },
+);
 
 export default function HotspotTable() {
   const [data, setData] = useState<HotspotFeature[]>([]);
@@ -361,7 +563,9 @@ export default function HotspotTable() {
                 <span className="text-blue-600 dark:text-blue-400">▼</span>
               )
             ) : (
-              <span className="text-gray-300 dark:text-gray-600 text-[15px]">⬍</span>
+              <span className="text-gray-300 dark:text-gray-600 text-[15px]">
+                ⬍
+              </span>
             )}
           </span>
         </div>
@@ -440,7 +644,7 @@ export default function HotspotTable() {
             {/* Search Input */}
             <div>
               <Label htmlFor="search-location" className="mb-2 text-sm">
-                Cari Lokasi
+                Lokasi
               </Label>
               <Input
                 id="search-location"
@@ -714,7 +918,9 @@ export default function HotspotTable() {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
                   disabled={currentPage === 1}
                   title="Halaman sebelumnya"
                 >
@@ -724,7 +930,9 @@ export default function HotspotTable() {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  }
                   disabled={currentPage === totalPages}
                   title="Halaman selanjutnya"
                 >
