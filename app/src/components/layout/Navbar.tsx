@@ -79,7 +79,7 @@ const Navbar = () => {
     <nav className="bg-white/80 backdrop-blur-xl border-b border-gray-200/60 dark:bg-gray-900/90 dark:border-gray-700/60 fixed w-full top-0 z-[99999] shadow-sm">
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex justify-between items-center h-16">
-          <a href="/" className="flex items-center space-x-3 min-w-0 group">
+          <a href="/" className="flex items-center space-x-3 min-w-0 group" title="OLAP Hotspot - Beranda">
             <div className="relative">
               <img
                 src="/assets/ipb.webp"
@@ -107,6 +107,7 @@ const Navbar = () => {
                   ? "text-gray-900 dark:text-gray-100 font-semibold"
                   : "text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
               }`}
+              title="Halaman Beranda"
             >
               Beranda
             </a>
@@ -118,6 +119,7 @@ const Navbar = () => {
                   ? "text-gray-900 dark:text-gray-100 font-semibold"
                   : "text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
               }`}
+              title="Lihat Peta Hotspot"
             >
               Peta
             </a>
@@ -128,6 +130,7 @@ const Navbar = () => {
                   ? "text-gray-900 dark:text-gray-100 font-semibold"
                   : "text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
               }`}
+              title="Lihat Data Tabel Hotspot"
             >
               Data
             </a>
@@ -138,6 +141,7 @@ const Navbar = () => {
                   ? "text-gray-900 dark:text-gray-100 font-semibold"
                   : "text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
               }`}
+              title="Tentang Sistem"
             >
               Tentang
             </a>
@@ -184,6 +188,7 @@ const Navbar = () => {
                   ? "text-gray-900 dark:text-gray-100 font-semibold"
                   : "text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
               }`}
+              title="Halaman Beranda"
             >
               <div className="flex items-center space-x-2">
                 <svg
@@ -210,6 +215,7 @@ const Navbar = () => {
                   ? "text-gray-900 dark:text-gray-100 font-semibold"
                   : "text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
               }`}
+              title="Lihat Peta Hotspot"
             >
               <div className="flex items-center space-x-2">
                 <svg
@@ -236,6 +242,7 @@ const Navbar = () => {
                   ? "text-gray-900 dark:text-gray-100 font-semibold"
                   : "text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
               }`}
+              title="Lihat Data Tabel Hotspot"
             >
               <div className="flex items-center space-x-2">
                 <svg
@@ -262,6 +269,7 @@ const Navbar = () => {
                   ? "text-gray-900 dark:text-gray-100 font-semibold"
                   : "text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
               }`}
+              title="Tentang Sistem"
             >
               <div className="flex items-center space-x-2">
                 <svg

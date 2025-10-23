@@ -20,6 +20,7 @@ export default function Breadcrumb({ items, className }: BreadcrumbProps) {
             href="/"
             className="text-muted-foreground hover:text-foreground transition-colors flex items-center"
             aria-label="Beranda"
+            title="Kembali ke Beranda"
           >
             <Home className="h-4 w-4" />
           </a>
@@ -31,6 +32,7 @@ export default function Breadcrumb({ items, className }: BreadcrumbProps) {
               <a
                 href={item.href}
                 className="text-muted-foreground hover:text-foreground transition-colors"
+                title={item.label}
               >
                 {item.label}
               </a>

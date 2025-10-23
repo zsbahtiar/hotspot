@@ -324,6 +324,7 @@ const Main = ({ showHero = true, showMitigation = true }: MainProps) => {
               <a
                 href="/map"
                 className="inline-flex items-center justify-center px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-lg shadow-lg hover:bg-white/20 hover:shadow-xl transition-all duration-200 border border-white/20"
+                title="Lihat Peta Persebaran Hotspot Karhutla"
               >
                 <svg
                   className="w-5 h-5 mr-2"
@@ -343,6 +344,7 @@ const Main = ({ showHero = true, showMitigation = true }: MainProps) => {
               <a
                 href="/data"
                 className="inline-flex items-center justify-center px-8 py-4 border-2 border-white/60 text-white font-semibold rounded-lg hover:bg-white hover:text-gray-900 transition-all duration-200"
+                title="Lihat Data Tabel Hotspot Karhutla"
               >
                 <svg
                   className="w-5 h-5 mr-2"
@@ -377,8 +379,9 @@ const Main = ({ showHero = true, showMitigation = true }: MainProps) => {
               <a
                 href="https://firms.modaps.eosdis.nasa.gov/"
                 target="_blank"
-                rel="noopener noreferrer"
+                rel="nofollow noopener noreferrer"
                 className="dark:text-blue-400 text-blue-600 hover:text-blue-700 dark:hover:text-blue-300 font-medium underline decoration-2 underline-offset-2"
+                title="NASA Fire Information for Resource Management System"
               >
                 NASA FIRMS
               </a>{" "}
@@ -386,8 +389,9 @@ const Main = ({ showHero = true, showMitigation = true }: MainProps) => {
               <a
                 href="https://www.visualcrossing.com/"
                 target="_blank"
-                rel="noopener noreferrer"
+                rel="nofollow noopener noreferrer"
                 className="dark:text-blue-400 text-blue-600 hover:text-blue-700 dark:hover:text-blue-300 font-medium underline decoration-2 underline-offset-2"
+                title="Visual Crossing Weather Data & API"
               >
                 Visual Crossing
               </a>

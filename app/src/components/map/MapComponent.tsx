@@ -1075,8 +1075,9 @@ const MapComponent: React.FC<MapComponentProps> = ({
                                   <a
                                     href={`https://www.google.com/maps?q=${latitude},${longitude}`}
                                     target="_blank"
-                                    rel="noopener noreferrer"
+                                    rel="nofollow noopener noreferrer"
                                     className="font-medium text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                                    title="Lihat lokasi di Google Maps"
                                   >
                                     {latitude.toFixed(4)},{" "}
                                     {longitude.toFixed(4)}
