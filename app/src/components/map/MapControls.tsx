@@ -55,16 +55,19 @@ export default function MapControlPanel({
       <div
         style={{
           position: "absolute",
-          top: isMobile ? "7rem" : "1rem",
-          right: isMobile ? "0.5rem" : "1rem",
+          top: isFullscreen ? "4.5rem" : isMobile ? "0.5rem" : "2rem",
+          right: "0.5rem",
           zIndex: 1000,
-          width: isControlPanelCollapsed 
-            ? "2.5rem" 
-            : isMobile 
-              ? "260px" 
+          width: isControlPanelCollapsed
+            ? "2.5rem"
+            : isMobile
+              ? "260px"
               : "280px",
           height: isControlPanelCollapsed ? "2.5rem" : "auto",
-          maxWidth: isMobile && !isControlPanelCollapsed ? "calc(100% - 20px)" : undefined,
+          maxWidth:
+            isMobile && !isControlPanelCollapsed
+              ? "calc(100% - 20px)"
+              : undefined,
           padding: isControlPanelCollapsed ? 0 : "0.75rem",
         }}
         className={`
@@ -100,21 +103,21 @@ export default function MapControlPanel({
                   padding: 0,
                 }
           }
-          onMouseEnter={(e) => (e.currentTarget.style.color = "hsl(var(--foreground))")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "hsl(var(--muted-foreground))")}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.color = "hsl(var(--foreground))")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.color = "hsl(var(--muted-foreground))")
+          }
           onClick={() => setIsControlPanelCollapsed(!isControlPanelCollapsed)}
           aria-label={
             isControlPanelCollapsed ? "Expand panel" : "Collapse panel"
           }
         >
           {isControlPanelCollapsed ? (
-            <ChevronLeft
-              style={{ width: "16px", height: "16px" }}
-            />
+            <ChevronLeft style={{ width: "16px", height: "16px" }} />
           ) : (
-            <ChevronRight
-              style={{ width: "16px", height: "16px" }}
-            />
+            <ChevronRight style={{ width: "16px", height: "16px" }} />
           )}
         </button>
 
@@ -125,7 +128,9 @@ export default function MapControlPanel({
                 <h3 className="font-medium text-sm mb-2">Pilih Layer</h3>
               </div>
               <RadioGroup
-                value={showJumlahHotspot ? "hotspot-count" : "hotspot-locations"}
+                value={
+                  showJumlahHotspot ? "hotspot-count" : "hotspot-locations"
+                }
                 onValueChange={(value) => {
                   if (value === "hotspot-count") {
                     onLayerChange?.("hotspot-count");
@@ -140,9 +145,13 @@ export default function MapControlPanel({
                 className="flex flex-col gap-2"
               >
                 <div className="flex items-center">
-                  <RadioGroupItem value="hotspot-count" id="hotspot-count" className="mr-2" />
-                  <Label 
-                    htmlFor="hotspot-count" 
+                  <RadioGroupItem
+                    value="hotspot-count"
+                    id="hotspot-count"
+                    className="mr-2"
+                  />
+                  <Label
+                    htmlFor="hotspot-count"
                     className="text-sm whitespace-nowrap cursor-pointer"
                   >
                     Jumlah Hotspot
@@ -164,9 +173,13 @@ export default function MapControlPanel({
                   </span>
                 </div>
                 <div className="flex items-center">
-                  <RadioGroupItem value="hotspot-locations" id="hotspot-locations" className="mr-2" />
-                  <Label 
-                    htmlFor="hotspot-locations" 
+                  <RadioGroupItem
+                    value="hotspot-locations"
+                    id="hotspot-locations"
+                    className="mr-2"
+                  />
+                  <Label
+                    htmlFor="hotspot-locations"
                     className="text-sm whitespace-nowrap cursor-pointer"
                   >
                     Lokasi Hotspot
@@ -232,12 +245,19 @@ export default function MapControlPanel({
                     Tanggal
                   </Label>
                   <DatePicker
-                    value={selectedDate ? new Date(selectedDate + 'T00:00:00') : undefined}
+                    value={
+                      selectedDate
+                        ? new Date(selectedDate + "T00:00:00")
+                        : undefined
+                    }
                     onChange={(date) => {
                       if (date) {
                         const year = date.getFullYear();
-                        const month = String(date.getMonth() + 1).padStart(2, '0');
-                        const day = String(date.getDate()).padStart(2, '0');
+                        const month = String(date.getMonth() + 1).padStart(
+                          2,
+                          "0",
+                        );
+                        const day = String(date.getDate()).padStart(2, "0");
                         const dateString = `${year}-${month}-${day}`;
                         setSelectedDate(dateString);
                       } else {

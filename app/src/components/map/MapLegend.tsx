@@ -1,7 +1,10 @@
 import { formatNumber } from "@/core/utils/formatters";
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
+import {
+  faChevronLeft,
+  faChevronRight,
+} from "@fortawesome/free-solid-svg-icons";
 
 interface MapLegendProps {
   showJumlahHotspot: boolean;
@@ -24,10 +27,11 @@ export default function MapLegend({
     <>
       {showJumlahHotspot && (
         <div
-          className={`legend-box absolute bottom-5 left-2 z-[1200] bg-card rounded-lg shadow-md text-xs text-card-foreground transition-all duration-300
-        md:bottom-40 md:left-5 md:z-[1000] md:text-xs ${
-          isCollapsedJumlah ? 'w-10 h-10' : 'w-[200px] md:w-auto'
+          className={`legend-box absolute bottom-5 z-[1200] bg-card rounded-lg shadow-md text-xs text-card-foreground transition-all duration-300
+        md:bottom-30 md:z-[1000] md:text-xs ${
+          isCollapsedJumlah ? "w-8 h-10" : "w-[200px] md:w-auto"
         }`}
+          style={{ left: "1.25rem" }}
         >
           {isCollapsedJumlah ? (
             <button
@@ -35,10 +39,7 @@ export default function MapLegend({
               className="w-full h-full flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
               aria-label="Expand legend"
             >
-              <FontAwesomeIcon
-                icon={faChevronRight}
-                className="w-3 h-3"
-              />
+              <FontAwesomeIcon icon={faChevronRight} className="w-3 h-3" />
             </button>
           ) : (
             <>
@@ -49,53 +50,50 @@ export default function MapLegend({
                   className="ml-2 text-muted-foreground hover:text-foreground transition-colors p-1"
                   aria-label="Collapse legend"
                 >
-                  <FontAwesomeIcon
-                    icon={faChevronLeft}
-                    className="w-3 h-3"
-                  />
+                  <FontAwesomeIcon icon={faChevronLeft} className="w-3 h-3" />
                 </button>
               </div>
               <div className="p-2 md:p-3 pt-2 space-y-1">
-          <div>
-            <span
-              style={{
-                background: "#FFCDD2",
-                display: "inline-block",
-                width: 18,
-                height: 18,
-                marginRight: 8,
-                borderRadius: 4,
-              }}
-            ></span>
-            Rendah (&lt; {formatNumber(Math.round(threshold1))})
-          </div>
-          <div>
-            <span
-              style={{
-                background: "#EF5350",
-                display: "inline-block",
-                width: 18,
-                height: 18,
-                marginRight: 8,
-                borderRadius: 4,
-              }}
-            ></span>
-            Sedang ({formatNumber(Math.round(threshold1))} -{" "}
-            {formatNumber(Math.round(threshold2))})
-          </div>
-          <div>
-            <span
-              style={{
-                background: "#B71C1C",
-                display: "inline-block",
-                width: 18,
-                height: 18,
-                marginRight: 8,
-                borderRadius: 4,
-              }}
-            ></span>
-            Tinggi (&gt; {formatNumber(Math.round(threshold2))})
-          </div>
+                <div>
+                  <span
+                    style={{
+                      background: "#FFCDD2",
+                      display: "inline-block",
+                      width: 18,
+                      height: 18,
+                      marginRight: 8,
+                      borderRadius: 4,
+                    }}
+                  ></span>
+                  Rendah (&lt; {formatNumber(Math.round(threshold1))})
+                </div>
+                <div>
+                  <span
+                    style={{
+                      background: "#EF5350",
+                      display: "inline-block",
+                      width: 18,
+                      height: 18,
+                      marginRight: 8,
+                      borderRadius: 4,
+                    }}
+                  ></span>
+                  Sedang ({formatNumber(Math.round(threshold1))} -{" "}
+                  {formatNumber(Math.round(threshold2))})
+                </div>
+                <div>
+                  <span
+                    style={{
+                      background: "#B71C1C",
+                      display: "inline-block",
+                      width: 18,
+                      height: 18,
+                      marginRight: 8,
+                      borderRadius: 4,
+                    }}
+                  ></span>
+                  Tinggi (&gt; {formatNumber(Math.round(threshold2))})
+                </div>
               </div>
             </>
           )}
@@ -103,19 +101,19 @@ export default function MapLegend({
       )}
 
       {showLokasiHotspot && (
-        <div className={`legend-box absolute bottom-5 left-5 z-[1000] bg-card rounded-lg shadow-md text-card-foreground transition-all duration-300 ${
-          isCollapsedLokasi ? 'w-10 h-10' : 'w-auto'
-        }`}>
+        <div
+          className={`legend-box absolute bottom-5 z-[1000] bg-card rounded-lg shadow-md text-card-foreground transition-all duration-300 ${
+            isCollapsedLokasi ? "w-10 h-10" : "w-auto"
+          }`}
+          style={{ left: "0.5rem" }}
+        >
           {isCollapsedLokasi ? (
             <button
               onClick={() => setIsCollapsedLokasi(false)}
               className="w-full h-full flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
               aria-label="Expand legend"
             >
-              <FontAwesomeIcon
-                icon={faChevronRight}
-                className="w-3 h-3"
-              />
+              <FontAwesomeIcon icon={faChevronRight} className="w-3 h-3" />
             </button>
           ) : (
             <>
@@ -126,58 +124,56 @@ export default function MapLegend({
                   className="ml-2 text-muted-foreground hover:text-foreground transition-colors p-1"
                   aria-label="Collapse legend"
                 >
-                  <FontAwesomeIcon
-                    icon={faChevronLeft}
-                    className="w-3 h-3"
-                  />
+                  <FontAwesomeIcon icon={faChevronLeft} className="w-3 h-3" />
                 </button>
               </div>
               <div className="p-3 pt-2 space-y-1">
-          <div className="mt-2 text-xs text-muted-foreground">
-            <i>
-              Klik dan zoom in marker untuk melihat titik hotspot individual
-            </i>
-          </div>
-          <div>
-            <span
-              style={{
-                background: "red",
-                display: "inline-block",
-                width: 18,
-                height: 18,
-                marginRight: 8,
-                borderRadius: 4,
-              }}
-            ></span>
-            High
-          </div>
-          <div>
-            <span
-              style={{
-                background: "yellow",
-                display: "inline-block",
-                width: 18,
-                height: 18,
-                marginRight: 8,
-                borderRadius: 4,
-                border: "1px solid #aaa",
-              }}
-            ></span>
-            Medium
-          </div>
-          <div>
-            <span
-              style={{
-                background: "green",
-                display: "inline-block",
-                width: 18,
-                height: 18,
-                marginRight: 8,
-                borderRadius: 4,
-              }}
-            ></span>
-            Low
-          </div>
+                <div className="mt-2 text-xs text-muted-foreground">
+                  <i>
+                    Klik dan zoom in marker untuk melihat titik hotspot
+                    individual
+                  </i>
+                </div>
+                <div>
+                  <span
+                    style={{
+                      background: "red",
+                      display: "inline-block",
+                      width: 18,
+                      height: 18,
+                      marginRight: 8,
+                      borderRadius: 4,
+                    }}
+                  ></span>
+                  High
+                </div>
+                <div>
+                  <span
+                    style={{
+                      background: "yellow",
+                      display: "inline-block",
+                      width: 18,
+                      height: 18,
+                      marginRight: 8,
+                      borderRadius: 4,
+                      border: "1px solid #aaa",
+                    }}
+                  ></span>
+                  Medium
+                </div>
+                <div>
+                  <span
+                    style={{
+                      background: "green",
+                      display: "inline-block",
+                      width: 18,
+                      height: 18,
+                      marginRight: 8,
+                      borderRadius: 4,
+                    }}
+                  ></span>
+                  Low
+                </div>
               </div>
             </>
           )}

@@ -247,9 +247,15 @@ const OlapComponent = () => {
   const scrollTargetId = useRef<string | null>(null);
   const [mapKey, setMapKey] = useState(Date.now());
   const [isLoading, setIsLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth < 768;
+    }
+    return false;
+  });
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
     // Default closed on mobile, open on desktop
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       return window.innerWidth >= 768;
     }
     return false;
@@ -442,11 +448,12 @@ const OlapComponent = () => {
   useEffect(() => {
     const handleResize = () => {
       const isDesktop = window.innerWidth >= 768;
+      setIsMobile(!isDesktop);
       setIsSidebarOpen(isDesktop && activeMapLayer !== "hotspot-locations");
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, [activeMapLayer]);
 
   useEffect(() => {
@@ -1110,7 +1117,9 @@ const OlapComponent = () => {
         {/* Sidebar - Desktop Only */}
         <div
           className={`${
-            activeMapLayer === "hotspot-locations" ? "!hidden" : "hidden md:flex"
+            activeMapLayer === "hotspot-locations"
+              ? "!hidden"
+              : "hidden md:flex"
           } md:w-[320px] lg:w-[360px] bg-background border-r border-border flex-col overflow-y-auto relative`}
           style={{ zIndex: 10 }}
         >
@@ -1308,9 +1317,12 @@ const OlapComponent = () => {
                     align="start"
                     onOpenAutoFocus={(e) => e.preventDefault()}
                     sideOffset={5}
-                    style={{ pointerEvents: 'auto' }}
+                    style={{ pointerEvents: "auto" }}
                   >
-                    <div className="pointer-events-auto" style={{ pointerEvents: 'auto' }}>
+                    <div
+                      className="pointer-events-auto"
+                      style={{ pointerEvents: "auto" }}
+                    >
                       <Calendar
                         mode="single"
                         selected={
@@ -1630,15 +1642,17 @@ const OlapComponent = () => {
         </div>
 
         {/* Right Content */}
-        <div className={`w-full flex flex-col md:overflow-hidden ${
-          activeMapLayer === "hotspot-locations" ? "flex-1" : "md:flex-1"
-        }`}>
+        <div
+          className={`w-full flex flex-col md:overflow-hidden ${
+            activeMapLayer === "hotspot-locations" ? "flex-1" : "md:flex-1"
+          }`}
+        >
           {/* Map Section */}
           <div
             className={`relative text-foreground flex-shrink-0 mt-4 md:mt-0 ${
               activeMapLayer === "hotspot-locations"
                 ? "h-full flex-grow"
-                : "h-[40vh] min-h-[300px] md:h-[65%]"
+                : "h-[60vh] min-h-[400px] md:h-[65%]"
             }`}
           >
             <div className="w-full h-full">
@@ -1677,14 +1691,18 @@ const OlapComponent = () => {
                   padding: 0,
                 }}
                 filters={memoizedFilters}
-                defaultZoom={activeMapLayer === "hotspot-locations" ? 5 : 4}
+                defaultZoom={
+                  isMobile
+                    ? 13
+                    : (activeMapLayer === "hotspot-locations" ? 5 : 4)
+                }
               />
             </div>
           </div>
 
           {/* Chart Section */}
           <div
-            className={`${isChartCollapsed ? 'h-[52px]' : 'h-[280px] md:h-[35%]'} bg-card border-t-2 border-border flex-shrink-0 mt-0 transition-all duration-300
+            className={`${isChartCollapsed ? "h-[52px]" : "h-[280px] md:h-[35%]"} bg-card border-t-2 border-border flex-shrink-0 mt-0 transition-all duration-300
             ${activeMapLayer === "hotspot-locations" ? "hidden" : ""}`}
           >
             <div className="h-full p-3 md:p-6 flex flex-col">
@@ -1707,8 +1725,10 @@ const OlapComponent = () => {
                   )}
                   <button
                     onClick={() => setIsChartCollapsed(!isChartCollapsed)}
-                    className="text-muted-foreground hover:text-foreground hover:bg-muted transition-colors p-2 rounded-md border border-border"
-                    aria-label={isChartCollapsed ? "Expand chart" : "Collapse chart"}
+                    className="text-muted-foreground hover:text-foreground hover:bg-muted transition-colors p-2 rounded-md border border-border md:hidden"
+                    aria-label={
+                      isChartCollapsed ? "Expand chart" : "Collapse chart"
+                    }
                   >
                     <FontAwesomeIcon
                       icon={isChartCollapsed ? faChevronDown : faChevronUp}
@@ -1720,627 +1740,666 @@ const OlapComponent = () => {
               {!isChartCollapsed && (
                 <div className="flex-1 min-h-0">
                   {isLoading ? (
-                  <div className="min-h-full flex flex-col justify-center items-center bg-muted/30">
-                    <FontAwesomeIcon
-                      icon={faSpinner}
-                      spin
-                      size="3x"
-                      className="text-gray-600 dark:text-gray-400 mb-4"
-                    />
-                  </div>
-                ) : !barChartData ||
-                  !barChartData.labels ||
-                  barChartData.labels.length === 0 ? (
-                  <div className="min-h-full flex flex-col justify-center items-center bg-muted/30">
-                    <p className="text-muted-foreground text-md">
-                      Tidak ada data
-                    </p>
-                  </div>
-                ) : (
-                  <div className="relative h-full">
-                    <Bar
-                      data={barChartData}
-                      options={{
-                        ...barChartOptions,
-                        maintainAspectRatio: false,
-                        responsive: true,
-                        onClick:
-                          activeMapLayer === "hotspot-locations"
-                            ? undefined
-                            : handleChartClick,
-                        plugins: {
-                          legend: {
-                            position: "top",
-                            labels: {
-                              font: {
+                    <div className="min-h-full flex flex-col justify-center items-center bg-muted/30">
+                      <FontAwesomeIcon
+                        icon={faSpinner}
+                        spin
+                        size="3x"
+                        className="text-gray-600 dark:text-gray-400 mb-4"
+                      />
+                    </div>
+                  ) : !barChartData ||
+                    !barChartData.labels ||
+                    barChartData.labels.length === 0 ? (
+                    <div className="min-h-full flex flex-col justify-center items-center bg-muted/30">
+                      <p className="text-muted-foreground text-md">
+                        Tidak ada data
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="relative h-full">
+                      <Bar
+                        data={barChartData}
+                        options={{
+                          ...barChartOptions,
+                          maintainAspectRatio: false,
+                          responsive: true,
+                          onClick:
+                            activeMapLayer === "hotspot-locations"
+                              ? undefined
+                              : handleChartClick,
+                          plugins: {
+                            legend: {
+                              position: "top",
+                              labels: {
+                                font: {
+                                  size: 11,
+                                },
+                                boxWidth: 12,
+                                color:
+                                  activeMapLayer === "hotspot-locations"
+                                    ? "#999999"
+                                    : undefined,
+                              },
+                            },
+                            tooltip: {
+                              enabled: activeMapLayer !== "hotspot-locations",
+                              bodyFont: {
                                 size: 11,
                               },
-                              boxWidth: 12,
-                              color:
-                                activeMapLayer === "hotspot-locations"
-                                  ? "#999999"
-                                  : undefined,
-                            },
-                          },
-                          tooltip: {
-                            enabled: activeMapLayer !== "hotspot-locations",
-                            bodyFont: {
-                              size: 11,
-                            },
-                            titleFont: {
-                              size: 12,
-                            },
-                            callbacks: {
-                              label: function (
-                                tooltipItem: TooltipItem<"bar">,
-                              ) {
-                                setSelectedHotspot(tooltipItem.raw as number);
-                                return `Jumlah Hotspot: ${formatNumber(
-                                  tooltipItem.raw as number,
-                                )}`;
+                              titleFont: {
+                                size: 12,
+                              },
+                              callbacks: {
+                                label: function (
+                                  tooltipItem: TooltipItem<"bar">,
+                                ) {
+                                  setSelectedHotspot(tooltipItem.raw as number);
+                                  return `Jumlah Hotspot: ${formatNumber(
+                                    tooltipItem.raw as number,
+                                  )}`;
+                                },
                               },
                             },
-                          },
 
-                          datalabels: {
-                            display: true,
-                            color: (context: any) => {
-                              const isDark =
-                                document.documentElement.classList.contains(
-                                  "dark",
-                                );
-                              return isDark ? "#e5e7eb" : "#1f2937";
-                            },
-                            anchor: "end",
-                            align: "end",
-                            offset: 1,
-                            formatter: (value) => formatNumber(value),
-                            font: {
-                              weight: "bold",
-                              size: 10,
-                            },
-                            clamp: true,
-                          },
-                        },
-                        scales: {
-                          x: {
-                            grid: {
-                              display: false,
-                            },
-                            ticks: {
+                            datalabels: {
+                              display: true,
+                              color: (context: any) => {
+                                const isDark =
+                                  document.documentElement.classList.contains(
+                                    "dark",
+                                  );
+                                return isDark ? "#e5e7eb" : "#1f2937";
+                              },
+                              anchor: "end",
+                              align: "end",
+                              offset: 1,
+                              formatter: (value) => formatNumber(value),
                               font: {
+                                weight: "bold",
                                 size: 10,
                               },
-                              color:
-                                activeMapLayer === "hotspot-locations"
-                                  ? "#999999"
-                                  : undefined,
+                              clamp: true,
                             },
                           },
-                          y: {
-                            ticks: {
-                              font: {
-                                size: 10,
+                          scales: {
+                            x: {
+                              grid: {
+                                display: false,
                               },
-                              precision: 0,
-                              color:
-                                activeMapLayer === "hotspot-locations"
-                                  ? "#999999"
-                                  : undefined,
-                              callback: function (value) {
-                                return value.toLocaleString("id-ID");
+                              ticks: {
+                                font: {
+                                  size: 10,
+                                },
+                                color:
+                                  activeMapLayer === "hotspot-locations"
+                                    ? "#999999"
+                                    : undefined,
+                              },
+                            },
+                            y: {
+                              ticks: {
+                                font: {
+                                  size: 10,
+                                },
+                                precision: 0,
+                                color:
+                                  activeMapLayer === "hotspot-locations"
+                                    ? "#999999"
+                                    : undefined,
+                                callback: function (value) {
+                                  return value.toLocaleString("id-ID");
+                                },
                               },
                             },
                           },
-                        },
-                      }}
-                    />
-                  </div>
-                )}
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           </div>
 
           {/* Mobile Filters Section */}
-          <div className={`md:hidden bg-background border-t-2 border-border flex-shrink-0 min-h-[400px] ${
-            activeMapLayer === "hotspot-locations" ? "hidden" : ""
-          }`}>
-                {/* FILTERS HEADER - Mobile */}
-                <div className="px-4 py-3 border-b border-border bg-muted/50">
-                  <h2 className="text-base font-bold text-foreground">Filters</h2>
-                </div>
+          <div
+            className={`md:hidden bg-background border-t-2 border-border flex-shrink-0 min-h-[400px] ${
+              activeMapLayer === "hotspot-locations" ? "hidden" : ""
+            }`}
+          >
+            {/* FILTERS HEADER - Mobile */}
+            <div className="px-4 py-3 border-b border-border bg-muted/50">
+              <h2 className="text-base font-bold text-foreground">Filters</h2>
+            </div>
 
-                {/* FILTERS CONTENT - Mobile */}
-                <div className="px-4 py-4 space-y-4 border-b border-border">
-                  {/* Confidence Level */}
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="confidence-filter-mobile"
-                      className="text-sm font-medium flex items-center"
-                    >
-                      Confidence Level
-                    </Label>
-                    <Select
-                      value={globalFilters.confidence || "all"}
-                      onValueChange={(value) =>
-                        setGlobalFilters({
-                          ...globalFilters,
-                          confidence: value === "all" ? undefined : value,
-                        })
-                      }
-                    >
-                      <SelectTrigger id="confidence-filter-mobile" className="w-full">
-                        <SelectValue placeholder="Semua Confidence" />
-                      </SelectTrigger>
-                      <SelectContent className="z-[9999] bg-popover">
-                        <SelectItem value="all">Semua Confidence</SelectItem>
-                        {dataConfidence &&
-                          dataConfidence.map((conf: OlapData, i: number) => (
-                            <SelectItem key={i} value={String(conf[0])}>
-                              {String(conf[0])}
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+            {/* FILTERS CONTENT - Mobile */}
+            <div className="px-4 py-4 space-y-4 border-b border-border">
+              {/* Confidence Level */}
+              <div className="space-y-2">
+                <Label
+                  htmlFor="confidence-filter-mobile"
+                  className="text-sm font-medium flex items-center"
+                >
+                  Confidence Level
+                </Label>
+                <Select
+                  value={globalFilters.confidence || "all"}
+                  onValueChange={(value) =>
+                    setGlobalFilters({
+                      ...globalFilters,
+                      confidence: value === "all" ? undefined : value,
+                    })
+                  }
+                >
+                  <SelectTrigger
+                    id="confidence-filter-mobile"
+                    className="w-full"
+                  >
+                    <SelectValue placeholder="Semua Confidence" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[9999] bg-popover">
+                    <SelectItem value="all">Semua Confidence</SelectItem>
+                    {dataConfidence &&
+                      dataConfidence.map((conf: OlapData, i: number) => (
+                        <SelectItem key={i} value={String(conf[0])}>
+                          {String(conf[0])}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-                  {/* Satellite */}
-                  <div className="space-y-2">
-                    <Label htmlFor="satellite-filter-mobile" className="text-sm font-medium">
-                      Satellite
-                    </Label>
-                    <Select
-                      value={globalFilters.satelite || "all"}
-                      onValueChange={(value) =>
-                        setGlobalFilters({
-                          ...globalFilters,
-                          satelite: value === "all" ? undefined : value,
-                        })
-                      }
-                    >
-                      <SelectTrigger id="satellite-filter-mobile" className="w-full">
-                        <SelectValue placeholder="Semua Satelit" />
-                      </SelectTrigger>
-                      <SelectContent className="z-[9999] bg-popover">
-                        <SelectItem value="all">Semua Satelit</SelectItem>
-                        {dataSatelite &&
-                          dataSatelite.map((sat: OlapData, i: number) => (
-                            <SelectItem key={i} value={String(sat[0])}>
-                              {String(sat[0])}
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+              {/* Satellite */}
+              <div className="space-y-2">
+                <Label
+                  htmlFor="satellite-filter-mobile"
+                  className="text-sm font-medium"
+                >
+                  Satellite
+                </Label>
+                <Select
+                  value={globalFilters.satelite || "all"}
+                  onValueChange={(value) =>
+                    setGlobalFilters({
+                      ...globalFilters,
+                      satelite: value === "all" ? undefined : value,
+                    })
+                  }
+                >
+                  <SelectTrigger
+                    id="satellite-filter-mobile"
+                    className="w-full"
+                  >
+                    <SelectValue placeholder="Semua Satelit" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[9999] bg-popover">
+                    <SelectItem value="all">Semua Satelit</SelectItem>
+                    {dataSatelite &&
+                      dataSatelite.map((sat: OlapData, i: number) => (
+                        <SelectItem key={i} value={String(sat[0])}>
+                          {String(sat[0])}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-                  {/* Filter Periode Waktu */}
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="time-period-filter-mobile"
-                      className="text-sm font-medium flex items-center gap-1"
-                    >
-                      Filter Periode Waktu
-                      <span
-                        className="text-muted-foreground cursor-help text-xs"
-                        data-tooltip-id="time-filter-info"
-                        data-tooltip-content="Pilih periode waktu (tahun, semester, kuartal, bulan, dan minggu) untuk melihat distribusi hotspot pada peta sesuai rentang waktu yang diinginkan."
-                        data-tooltip-place="top"
-                      >
-                        ⓘ
+              {/* Filter Periode Waktu */}
+              <div className="space-y-2">
+                <Label
+                  htmlFor="time-period-filter-mobile"
+                  className="text-sm font-medium flex items-center gap-1"
+                >
+                  Filter Periode Waktu
+                  <span
+                    className="text-muted-foreground cursor-help text-xs"
+                    data-tooltip-id="time-filter-info"
+                    data-tooltip-content="Pilih periode waktu (tahun, semester, kuartal, bulan, dan minggu) untuk melihat distribusi hotspot pada peta sesuai rentang waktu yang diinginkan."
+                    data-tooltip-place="top"
+                  >
+                    ⓘ
+                  </span>
+                </Label>
+                <Button
+                  id="time-period-filter-mobile"
+                  variant="outline"
+                  className="w-full justify-start text-left font-normal"
+                  onClick={() => openModalTime([], globalFilters.time, "pulau")}
+                >
+                  {globalFilters.time.tahun ? (
+                    <div className="flex items-center gap-1.5 text-sm">
+                      <span className="font-semibold">
+                        {globalFilters.time.tahun}
                       </span>
-                    </Label>
-                    <Button
-                      id="time-period-filter-mobile"
-                      variant="outline"
-                      className="w-full justify-start text-left font-normal"
-                      onClick={() => openModalTime([], globalFilters.time, "pulau")}
-                    >
-                      {globalFilters.time.tahun ? (
-                        <div className="flex items-center gap-1.5 text-sm">
-                          <span className="font-semibold">
-                            {globalFilters.time.tahun}
+                      {globalFilters.time.semester && (
+                        <>
+                          <span className="text-muted-foreground mx-0.5">
+                            •
                           </span>
-                          {globalFilters.time.semester && (
-                            <>
-                              <span className="text-muted-foreground mx-0.5">•</span>
-                              <span>S{globalFilters.time.semester}</span>
-                            </>
-                          )}
-                          {globalFilters.time.kuartal && (
-                            <>
-                              <span className="text-muted-foreground mx-0.5">•</span>
-                              <span>{globalFilters.time.kuartal}</span>
-                            </>
-                          )}
-                          {globalFilters.time.bulan && (
-                            <>
-                              <span className="text-muted-foreground mx-0.5">•</span>
-                              <span>{globalFilters.time.bulan}</span>
-                            </>
-                          )}
-                          {globalFilters.time.minggu && (
-                            <>
-                              <span className="text-muted-foreground mx-0.5">•</span>
-                              <span>W{globalFilters.time.minggu}</span>
-                            </>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground">
-                          Pilih Periode Waktu
-                        </span>
+                          <span>S{globalFilters.time.semester}</span>
+                        </>
                       )}
-                    </Button>
-                  </div>
+                      {globalFilters.time.kuartal && (
+                        <>
+                          <span className="text-muted-foreground mx-0.5">
+                            •
+                          </span>
+                          <span>{globalFilters.time.kuartal}</span>
+                        </>
+                      )}
+                      {globalFilters.time.bulan && (
+                        <>
+                          <span className="text-muted-foreground mx-0.5">
+                            •
+                          </span>
+                          <span>{globalFilters.time.bulan}</span>
+                        </>
+                      )}
+                      {globalFilters.time.minggu && (
+                        <>
+                          <span className="text-muted-foreground mx-0.5">
+                            •
+                          </span>
+                          <span>W{globalFilters.time.minggu}</span>
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground">
+                      Pilih Periode Waktu
+                    </span>
+                  )}
+                </Button>
+              </div>
 
-                  {/* Filter Tanggal Spesifik */}
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="date-specific-filter-mobile"
-                      className="text-sm font-medium flex items-center gap-1"
+              {/* Filter Tanggal Spesifik */}
+              <div className="space-y-2">
+                <Label
+                  htmlFor="date-specific-filter-mobile"
+                  className="text-sm font-medium flex items-center gap-1"
+                >
+                  Filter Tanggal Spesifik
+                  <span
+                    className="text-muted-foreground cursor-help text-xs"
+                    data-tooltip-id="date-filter-info"
+                    data-tooltip-content="Pilih tanggal spesifik untuk melihat persebaran jumlah data hotspot pada hari tersebut."
+                    data-tooltip-place="top"
+                  >
+                    ⓘ
+                  </span>
+                </Label>
+                <div className="relative z-50">
+                  <Popover
+                    modal={true}
+                    open={isDatePickerOpenMobile}
+                    onOpenChange={setIsDatePickerOpenMobile}
+                  >
+                    <PopoverTrigger asChild>
+                      <Button
+                        id="date-specific-filter-mobile"
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !globalFilters.selectedDate &&
+                            "text-muted-foreground",
+                        )}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsDatePickerOpenMobile(true);
+                        }}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {globalFilters.selectedDate ? (
+                          format(
+                            new Date(globalFilters.selectedDate),
+                            "d MMMM yyyy",
+                            {
+                              locale: id,
+                            },
+                          )
+                        ) : (
+                          <span>Pilih tanggal</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-auto p-0 z-[99999]"
+                      align="start"
+                      onOpenAutoFocus={(e) => e.preventDefault()}
+                      sideOffset={5}
+                      style={{ pointerEvents: "auto" }}
                     >
-                      Filter Tanggal Spesifik
-                      <span
-                        className="text-muted-foreground cursor-help text-xs"
-                        data-tooltip-id="date-filter-info"
-                        data-tooltip-content="Pilih tanggal spesifik untuk melihat persebaran jumlah data hotspot pada hari tersebut."
-                        data-tooltip-place="top"
+                      <div
+                        className="pointer-events-auto"
+                        style={{ pointerEvents: "auto" }}
                       >
-                        ⓘ
-                      </span>
-                    </Label>
-                    <div className="relative z-50">
-                      <Popover
-                        modal={true}
-                        open={isDatePickerOpenMobile}
-                        onOpenChange={setIsDatePickerOpenMobile}
-                      >
-                        <PopoverTrigger asChild>
-                          <Button
-                            id="date-specific-filter-mobile"
-                            variant="outline"
-                            className={cn(
-                              "w-full justify-start text-left font-normal",
-                              !globalFilters.selectedDate && "text-muted-foreground",
-                            )}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setIsDatePickerOpenMobile(true);
-                            }}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {globalFilters.selectedDate ? (
-                              format(
-                                new Date(globalFilters.selectedDate),
-                                "d MMMM yyyy",
-                                {
-                                  locale: id,
-                                },
-                              )
-                            ) : (
-                              <span>Pilih tanggal</span>
-                            )}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent
-                          className="w-auto p-0 z-[99999]"
-                          align="start"
-                          onOpenAutoFocus={(e) => e.preventDefault()}
-                          sideOffset={5}
-                          style={{ pointerEvents: 'auto' }}
-                        >
-                          <div className="pointer-events-auto" style={{ pointerEvents: 'auto' }}>
-                            <Calendar
-                              mode="single"
-                              selected={
-                                globalFilters.selectedDate
-                                  ? new Date(globalFilters.selectedDate)
-                                  : undefined
-                              }
-                              onSelect={(date) => {
-                                const dateString = date
-                                  ? format(date, "yyyy-MM-dd")
-                                  : undefined;
-                                setGlobalFilters({
-                                  ...globalFilters,
-                                  selectedDate: dateString,
-                                  filterMode: dateString ? "date" : undefined,
-                                  time: dateString ? {} : globalFilters.time,
-                                });
-                                setHotspotCountQuery((prev) => ({
-                                  ...prev,
-                                  selectedDate: dateString,
-                                  filterMode: dateString ? "date" : undefined,
-                                }));
-                                setIsDatePickerOpenMobile(false);
-                              }}
-                              disabled={(date) => date > new Date()}
-                              initialFocus
-                              className="pointer-events-auto"
-                            />
-                          </div>
-                        </PopoverContent>
-                      </Popover>
-                      {globalFilters.selectedDate && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
-                          onClick={() => {
+                        <Calendar
+                          mode="single"
+                          selected={
+                            globalFilters.selectedDate
+                              ? new Date(globalFilters.selectedDate)
+                              : undefined
+                          }
+                          onSelect={(date) => {
+                            const dateString = date
+                              ? format(date, "yyyy-MM-dd")
+                              : undefined;
                             setGlobalFilters({
                               ...globalFilters,
-                              selectedDate: undefined,
-                              filterMode: undefined,
+                              selectedDate: dateString,
+                              filterMode: dateString ? "date" : undefined,
+                              time: dateString ? {} : globalFilters.time,
                             });
                             setHotspotCountQuery((prev) => ({
                               ...prev,
-                              selectedDate: undefined,
-                              filterMode: undefined,
+                              selectedDate: dateString,
+                              filterMode: dateString ? "date" : undefined,
                             }));
+                            setIsDatePickerOpenMobile(false);
                           }}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                    {globalFilters.selectedDate && (
-                      <p className="text-xs text-primary font-medium">
-                        Filter aktif:{" "}
-                        {new Date(globalFilters.selectedDate).toLocaleDateString(
-                          "id-ID",
-                          {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          },
-                        )}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Reset Button */}
-                  <Button
-                    variant="secondary"
-                    className="w-full"
-                    onClick={resetAllFilters}
-                  >
-                    Reset Semua Filter
-                  </Button>
-                </div>
-
-                {/* Location List - Mobile */}
-                <div className="px-4 py-3 border-b border-border bg-muted/30">
-                  <Label className="text-base font-bold text-foreground flex items-center gap-1">
-                    Location
-                    <span
-                      className="text-muted-foreground cursor-help text-xs font-normal"
-                      data-tooltip-id="location-info"
-                      data-tooltip-content="Klik nama lokasi untuk melihat detail (drill down) dan klik nama lokasi level sebelumnya untuk kembali ke level sebelumnya (roll up)."
-                      data-tooltip-place="top"
-                    >
-                      ⓘ
-                    </span>
-                  </Label>
-                </div>
-                <div className="px-3 py-2">
-                  {isLoading ? (
-                    <div className="flex flex-col justify-center items-center h-32">
-                      <FontAwesomeIcon
-                        icon={faSpinner}
-                        spin
-                        size="2x"
-                        className="text-gray-600 dark:text-gray-400 mb-2"
-                      />
-                    </div>
-                  ) : data && data.length > 0 ? (
-                    data.map((item, i) => (
-                      <div key={i} id={`location-item-mobile-${i}`} className="mb-3">
-                        {/* Pulau */}
-                        <div className="bg-card border-l-4 border-blue-500 p-3 rounded-lg shadow-xs hover:shadow-sm transition-shadow">
-                          <div className="flex justify-between items-center">
-                            <span
-                              className="font-semibold text-sm text-foreground cursor-pointer hover:text-blue-600 transition"
-                              onClick={() => handleSelect(item, [i], "provinsi")}
-                            >
-                              {item.data}{" "}
-                              <FontAwesomeIcon
-                                icon={item.isOpen ? faChevronUp : faChevronDown}
-                                className="ml-1 text-xs"
-                              />
-                            </span>
-                          </div>
-                          <div className="mt-2 flex items-center justify-end">
-                            <span className="text-muted-foreground text-xs font-medium bg-muted px-2 py-0.5 rounded">
-                              Total: {formatNumber(item.total)}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Provinsi */}
-                        {item.isOpen &&
-                          item.child &&
-                          item.child.map((provinsi, j) => (
-                            <div
-                              key={j}
-                              id={`location-item-mobile-${i}-${j}`}
-                              className="mt-2 ml-4"
-                            >
-                              <div className="bg-card rounded-lg shadow-xs p-3 border-l-4 border-green-500 hover:shadow-sm transition">
-                                <div className="flex justify-between items-center">
-                                  <span
-                                    className="font-semibold text-foreground text-sm cursor-pointer hover:text-blue-600 transition"
-                                    onClick={() =>
-                                      handleSelect(provinsi, [i, j], "kota")
-                                    }
-                                  >
-                                    {provinsi.data}{" "}
-                                    <FontAwesomeIcon
-                                      icon={
-                                        provinsi.isOpen ? faChevronUp : faChevronDown
-                                      }
-                                      className="ml-1 text-xs"
-                                    />
-                                  </span>
-                                </div>
-                                <div className="mt-1 text-xs text-muted-foreground truncate">
-                                  Pulau: {item.data}
-                                </div>
-                                <div className="mt-2 flex items-center justify-end">
-                                  <span className="text-foreground text-xs font-medium bg-muted px-2 py-0.5 rounded">
-                                    Total: {formatNumber(provinsi.total)}
-                                  </span>
-                                </div>
-                              </div>
-
-                              {/* Kota */}
-                              {provinsi.isOpen &&
-                                provinsi.child &&
-                                provinsi.child.map((kota, k) => (
-                                  <div
-                                    key={k}
-                                    id={`location-item-mobile-${i}-${j}-${k}`}
-                                    className="mt-2 ml-4"
-                                  >
-                                    <div className="bg-card rounded-lg shadow-xs p-3 border-l-4 border-yellow-500 hover:shadow-sm transition">
-                                      <div className="flex justify-between items-center">
-                                        <span
-                                          className="font-semibold text-foreground text-sm cursor-pointer hover:text-blue-600 transition"
-                                          onClick={() =>
-                                            handleSelect(kota, [i, j, k], "kecamatan")
-                                          }
-                                        >
-                                          {kota.data}{" "}
-                                          <FontAwesomeIcon
-                                            icon={
-                                              kota.isOpen
-                                                ? faChevronUp
-                                                : faChevronDown
-                                            }
-                                            className="ml-1 text-xs"
-                                          />
-                                        </span>
-                                      </div>
-                                      <div className="mt-1 text-xs text-muted-foreground truncate">
-                                        Pulau: {item.data} | Provinsi: {provinsi.data}
-                                      </div>
-                                      <div className="mt-2 flex items-center justify-end">
-                                        <span className="text-foreground text-xs font-medium bg-muted px-2 py-0.5 rounded">
-                                          Total: {formatNumber(kota.total)}
-                                        </span>
-                                      </div>
-                                    </div>
-
-                                    {/* Kecamatan */}
-                                    {kota.isOpen &&
-                                      kota.child &&
-                                      kota.child.map((kecamatan, l) => (
-                                        <div
-                                          key={l}
-                                          id={`location-item-mobile-${i}-${j}-${k}-${l}`}
-                                          className="mt-2 ml-4"
-                                        >
-                                          <div className="bg-card rounded-lg shadow-xs p-3 border-l-4 border-purple-500 hover:shadow-sm transition">
-                                            <div className="flex justify-between items-center">
-                                              <span
-                                                className="font-semibold text-foreground text-sm cursor-pointer hover:text-blue-600 transition"
-                                                onClick={() =>
-                                                  handleSelect(
-                                                    kecamatan,
-                                                    [i, j, k, l],
-                                                    "desa",
-                                                  )
-                                                }
-                                              >
-                                                {kecamatan.data}{" "}
-                                                <FontAwesomeIcon
-                                                  icon={
-                                                    kecamatan.isOpen
-                                                      ? faChevronUp
-                                                      : faChevronDown
-                                                  }
-                                                  className="ml-1 text-xs"
-                                                />
-                                              </span>
-                                            </div>
-                                            <div className="mt-1 text-xs text-muted-foreground truncate">
-                                              Pulau: {item.data} | Provinsi:{" "}
-                                              {provinsi.data} | Kota: {kota.data}
-                                            </div>
-                                            <div className="mt-2 flex items-center justify-end">
-                                              <span className="text-foreground text-xs font-medium bg-muted px-2 py-0.5 rounded">
-                                                Total: {formatNumber(kecamatan.total)}
-                                              </span>
-                                            </div>
-                                          </div>
-
-                                          {/* Desa */}
-                                          {kecamatan.isOpen &&
-                                            kecamatan.child &&
-                                            kecamatan.child.map((desa, m) => (
-                                              <div
-                                                key={m}
-                                                id={`location-item-mobile-${i}-${j}-${k}-${l}-${m}`}
-                                                className="mt-2 ml-4"
-                                              >
-                                                <div className="bg-card rounded-lg shadow-xs p-3 border-l-4 border-red-500 hover:shadow-sm transition">
-                                                  <div className="flex justify-between items-center">
-                                                    <span
-                                                      className="font-semibold text-foreground text-sm cursor-pointer hover:text-blue-600 transition"
-                                                      onClick={() => {
-                                                        if (window.innerWidth < 768) {
-                                                          setIsSidebarOpen(false);
-                                                        }
-
-                                                        handleSelection({
-                                                          wilayah: desa.data,
-                                                          lat: desa.query.lat,
-                                                          lng: desa.query.lng,
-                                                        });
-                                                        setChart({
-                                                          labels: [
-                                                            desa.data.toString(),
-                                                          ],
-                                                          values: [desa.total],
-                                                        });
-                                                        setOlapData({
-                                                          query: desa.query,
-                                                        });
-                                                        setDrillDownLevel("desa");
-                                                      }}
-                                                    >
-                                                      {desa.data}{" "}
-                                                    </span>
-                                                  </div>
-                                                  <div className="mt-1 text-xs text-muted-foreground truncate">
-                                                    Pulau: {item.data} | Provinsi:{" "}
-                                                    {provinsi.data} | Kota:{" "}
-                                                    {kota.data} | Kecamatan:{" "}
-                                                    {kecamatan.data}
-                                                  </div>
-                                                  <div className="mt-2 flex items-center justify-end">
-                                                    <span className="text-foreground text-xs font-medium bg-muted px-2 py-0.5 rounded">
-                                                      Total:{" "}
-                                                      {formatNumber(desa.total)}
-                                                    </span>
-                                                  </div>
-                                                </div>
-                                              </div>
-                                            ))}
-                                        </div>
-                                      ))}
-                                  </div>
-                                ))}
-                            </div>
-                          ))}
+                          disabled={(date) => date > new Date()}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
                       </div>
-                    ))
-                  ) : (
-                    <div className="flex flex-col justify-center items-center h-32">
-                      <p className="text-muted-foreground text-md">Tidak ada data</p>
-                    </div>
+                    </PopoverContent>
+                  </Popover>
+                  {globalFilters.selectedDate && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                      onClick={() => {
+                        setGlobalFilters({
+                          ...globalFilters,
+                          selectedDate: undefined,
+                          filterMode: undefined,
+                        });
+                        setHotspotCountQuery((prev) => ({
+                          ...prev,
+                          selectedDate: undefined,
+                          filterMode: undefined,
+                        }));
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                   )}
                 </div>
+                {globalFilters.selectedDate && (
+                  <p className="text-xs text-primary font-medium">
+                    Filter aktif:{" "}
+                    {new Date(globalFilters.selectedDate).toLocaleDateString(
+                      "id-ID",
+                      {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      },
+                    )}
+                  </p>
+                )}
+              </div>
+
+              {/* Reset Button */}
+              <Button
+                variant="secondary"
+                className="w-full"
+                onClick={resetAllFilters}
+              >
+                Reset Semua Filter
+              </Button>
+            </div>
+
+            {/* Location List - Mobile */}
+            <div className="px-4 py-3 border-b border-border bg-muted/30">
+              <Label className="text-base font-bold text-foreground flex items-center gap-1">
+                Location
+                <span
+                  className="text-muted-foreground cursor-help text-xs font-normal"
+                  data-tooltip-id="location-info"
+                  data-tooltip-content="Klik nama lokasi untuk melihat detail (drill down) dan klik nama lokasi level sebelumnya untuk kembali ke level sebelumnya (roll up)."
+                  data-tooltip-place="top"
+                >
+                  ⓘ
+                </span>
+              </Label>
+            </div>
+            <div className="px-3 py-2">
+              {isLoading ? (
+                <div className="flex flex-col justify-center items-center h-32">
+                  <FontAwesomeIcon
+                    icon={faSpinner}
+                    spin
+                    size="2x"
+                    className="text-gray-600 dark:text-gray-400 mb-2"
+                  />
+                </div>
+              ) : data && data.length > 0 ? (
+                data.map((item, i) => (
+                  <div
+                    key={i}
+                    id={`location-item-mobile-${i}`}
+                    className="mb-3"
+                  >
+                    {/* Pulau */}
+                    <div className="bg-card border-l-4 border-blue-500 p-3 rounded-lg shadow-xs hover:shadow-sm transition-shadow">
+                      <div className="flex justify-between items-center">
+                        <span
+                          className="font-semibold text-sm text-foreground cursor-pointer hover:text-blue-600 transition"
+                          onClick={() => handleSelect(item, [i], "provinsi")}
+                        >
+                          {item.data}{" "}
+                          <FontAwesomeIcon
+                            icon={item.isOpen ? faChevronUp : faChevronDown}
+                            className="ml-1 text-xs"
+                          />
+                        </span>
+                      </div>
+                      <div className="mt-2 flex items-center justify-end">
+                        <span className="text-muted-foreground text-xs font-medium bg-muted px-2 py-0.5 rounded">
+                          Total: {formatNumber(item.total)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Provinsi */}
+                    {item.isOpen &&
+                      item.child &&
+                      item.child.map((provinsi, j) => (
+                        <div
+                          key={j}
+                          id={`location-item-mobile-${i}-${j}`}
+                          className="mt-2 ml-4"
+                        >
+                          <div className="bg-card rounded-lg shadow-xs p-3 border-l-4 border-green-500 hover:shadow-sm transition">
+                            <div className="flex justify-between items-center">
+                              <span
+                                className="font-semibold text-foreground text-sm cursor-pointer hover:text-blue-600 transition"
+                                onClick={() =>
+                                  handleSelect(provinsi, [i, j], "kota")
+                                }
+                              >
+                                {provinsi.data}{" "}
+                                <FontAwesomeIcon
+                                  icon={
+                                    provinsi.isOpen
+                                      ? faChevronUp
+                                      : faChevronDown
+                                  }
+                                  className="ml-1 text-xs"
+                                />
+                              </span>
+                            </div>
+                            <div className="mt-1 text-xs text-muted-foreground truncate">
+                              Pulau: {item.data}
+                            </div>
+                            <div className="mt-2 flex items-center justify-end">
+                              <span className="text-foreground text-xs font-medium bg-muted px-2 py-0.5 rounded">
+                                Total: {formatNumber(provinsi.total)}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Kota */}
+                          {provinsi.isOpen &&
+                            provinsi.child &&
+                            provinsi.child.map((kota, k) => (
+                              <div
+                                key={k}
+                                id={`location-item-mobile-${i}-${j}-${k}`}
+                                className="mt-2 ml-4"
+                              >
+                                <div className="bg-card rounded-lg shadow-xs p-3 border-l-4 border-yellow-500 hover:shadow-sm transition">
+                                  <div className="flex justify-between items-center">
+                                    <span
+                                      className="font-semibold text-foreground text-sm cursor-pointer hover:text-blue-600 transition"
+                                      onClick={() =>
+                                        handleSelect(
+                                          kota,
+                                          [i, j, k],
+                                          "kecamatan",
+                                        )
+                                      }
+                                    >
+                                      {kota.data}{" "}
+                                      <FontAwesomeIcon
+                                        icon={
+                                          kota.isOpen
+                                            ? faChevronUp
+                                            : faChevronDown
+                                        }
+                                        className="ml-1 text-xs"
+                                      />
+                                    </span>
+                                  </div>
+                                  <div className="mt-1 text-xs text-muted-foreground truncate">
+                                    Pulau: {item.data} | Provinsi:{" "}
+                                    {provinsi.data}
+                                  </div>
+                                  <div className="mt-2 flex items-center justify-end">
+                                    <span className="text-foreground text-xs font-medium bg-muted px-2 py-0.5 rounded">
+                                      Total: {formatNumber(kota.total)}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* Kecamatan */}
+                                {kota.isOpen &&
+                                  kota.child &&
+                                  kota.child.map((kecamatan, l) => (
+                                    <div
+                                      key={l}
+                                      id={`location-item-mobile-${i}-${j}-${k}-${l}`}
+                                      className="mt-2 ml-4"
+                                    >
+                                      <div className="bg-card rounded-lg shadow-xs p-3 border-l-4 border-purple-500 hover:shadow-sm transition">
+                                        <div className="flex justify-between items-center">
+                                          <span
+                                            className="font-semibold text-foreground text-sm cursor-pointer hover:text-blue-600 transition"
+                                            onClick={() =>
+                                              handleSelect(
+                                                kecamatan,
+                                                [i, j, k, l],
+                                                "desa",
+                                              )
+                                            }
+                                          >
+                                            {kecamatan.data}{" "}
+                                            <FontAwesomeIcon
+                                              icon={
+                                                kecamatan.isOpen
+                                                  ? faChevronUp
+                                                  : faChevronDown
+                                              }
+                                              className="ml-1 text-xs"
+                                            />
+                                          </span>
+                                        </div>
+                                        <div className="mt-1 text-xs text-muted-foreground truncate">
+                                          Pulau: {item.data} | Provinsi:{" "}
+                                          {provinsi.data} | Kota: {kota.data}
+                                        </div>
+                                        <div className="mt-2 flex items-center justify-end">
+                                          <span className="text-foreground text-xs font-medium bg-muted px-2 py-0.5 rounded">
+                                            Total:{" "}
+                                            {formatNumber(kecamatan.total)}
+                                          </span>
+                                        </div>
+                                      </div>
+
+                                      {/* Desa */}
+                                      {kecamatan.isOpen &&
+                                        kecamatan.child &&
+                                        kecamatan.child.map((desa, m) => (
+                                          <div
+                                            key={m}
+                                            id={`location-item-mobile-${i}-${j}-${k}-${l}-${m}`}
+                                            className="mt-2 ml-4"
+                                          >
+                                            <div className="bg-card rounded-lg shadow-xs p-3 border-l-4 border-red-500 hover:shadow-sm transition">
+                                              <div className="flex justify-between items-center">
+                                                <span
+                                                  className="font-semibold text-foreground text-sm cursor-pointer hover:text-blue-600 transition"
+                                                  onClick={() => {
+                                                    if (
+                                                      window.innerWidth < 768
+                                                    ) {
+                                                      setIsSidebarOpen(false);
+                                                    }
+
+                                                    handleSelection({
+                                                      wilayah: desa.data,
+                                                      lat: desa.query.lat,
+                                                      lng: desa.query.lng,
+                                                    });
+                                                    setChart({
+                                                      labels: [
+                                                        desa.data.toString(),
+                                                      ],
+                                                      values: [desa.total],
+                                                    });
+                                                    setOlapData({
+                                                      query: desa.query,
+                                                    });
+                                                    setDrillDownLevel("desa");
+                                                  }}
+                                                >
+                                                  {desa.data}{" "}
+                                                </span>
+                                              </div>
+                                              <div className="mt-1 text-xs text-muted-foreground truncate">
+                                                Pulau: {item.data} | Provinsi:{" "}
+                                                {provinsi.data} | Kota:{" "}
+                                                {kota.data} | Kecamatan:{" "}
+                                                {kecamatan.data}
+                                              </div>
+                                              <div className="mt-2 flex items-center justify-end">
+                                                <span className="text-foreground text-xs font-medium bg-muted px-2 py-0.5 rounded">
+                                                  Total:{" "}
+                                                  {formatNumber(desa.total)}
+                                                </span>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        ))}
+                                    </div>
+                                  ))}
+                              </div>
+                            ))}
+                        </div>
+                      ))}
+                  </div>
+                ))
+              ) : (
+                <div className="flex flex-col justify-center items-center h-32">
+                  <p className="text-muted-foreground text-md">
+                    Tidak ada data
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

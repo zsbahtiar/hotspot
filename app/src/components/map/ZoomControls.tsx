@@ -6,11 +6,15 @@ import L from "leaflet";
 interface MapZoomControlsProps {
   initialCenter?: L.LatLngExpression;
   initialZoom?: number;
+  isMobile?: boolean;
+  isFullscreen?: boolean;
 }
 
 export default function MapZoomControls({
   initialCenter = [-2.5, 118],
   initialZoom = 5,
+  isMobile = false,
+  isFullscreen = false,
 }: MapZoomControlsProps) {
   const map = useMap();
   const controlRef = useRef<HTMLDivElement>(null);
@@ -43,8 +47,8 @@ export default function MapZoomControls({
       className="leaflet-top leaflet-left"
       style={{
         position: "absolute",
-        top: "120px",
-        left: "10px",
+        top: isFullscreen ? "4.5rem" : isMobile ? "0.5rem" : "2rem",
+        left: "0.5rem",
         zIndex: 1000,
       }}
     >

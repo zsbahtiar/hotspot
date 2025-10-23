@@ -203,6 +203,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
   filters = {},
   onLayerChange,
   locationData,
+  defaultZoom = 5,
 }) => {
   const mapRef = useRef<Map | null>(null);
   const geoJsonRef = useRef<LeafletGeoJSON | null>(null);
@@ -804,7 +805,8 @@ const MapComponent: React.FC<MapComponentProps> = ({
   ]);
 
   // More lenient loading condition - only show loading if actively fetching
-  const loading = (isGeoJsonLoading || isHotspotLoading) && !geoData[drillDownLevel];
+  const loading =
+    (isGeoJsonLoading || isHotspotLoading) && !geoData[drillDownLevel];
   const error = hotspotError;
 
   return (
@@ -853,7 +855,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
         <MapContainer
           bounds={bounds}
           center={[-2.5, 118]}
-          zoom={5}
+          zoom={defaultZoom}
           className="h-full w-full rounded-lg"
           style={mapStyle}
           ref={mapRef}
@@ -863,10 +865,15 @@ const MapComponent: React.FC<MapComponentProps> = ({
           <TileLayer
             url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-            subdomains='abcd'
+            subdomains="abcd"
             maxZoom={20}
           />
-          <MapZoomControls initialCenter={[-2.5, 118]} initialZoom={5} />
+          <MapZoomControls
+            initialCenter={[-2.5, 118]}
+            initialZoom={defaultZoom}
+            isMobile={isMobile}
+            isFullscreen={isFullscreen}
+          />
 
           {showLokasiHotspot && (
             <CustomAttributionControl
@@ -876,14 +883,18 @@ const MapComponent: React.FC<MapComponentProps> = ({
             />
           )}
 
-          {showJumlahHotspot && getFilteredGeoFeatures.length === 0 && !isHotspotLoading && geoData[drillDownLevel] ? (
+          {showJumlahHotspot &&
+          getFilteredGeoFeatures.length === 0 &&
+          !isHotspotLoading &&
+          geoData[drillDownLevel] ? (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800 bg-opacity-80 dark:bg-opacity-80 z-10">
               <p className="text-gray-700 dark:text-gray-300 text-lg font-semibold">
                 Tidak ada data
               </p>
             </div>
           ) : (
-            showJumlahHotspot && geoData[drillDownLevel] && (
+            showJumlahHotspot &&
+            geoData[drillDownLevel] && (
               <GeoJSON
                 ref={geoJsonRef}
                 key={`geojson-${drillDownLevel}-${JSON.stringify(olapData?.query || {})}-${getHotspotData}`}
@@ -1053,7 +1064,9 @@ const MapComponent: React.FC<MapComponentProps> = ({
                                   <span className="text-gray-500 dark:text-gray-400 block">
                                     Waktu
                                   </span>
-                                  <span className="font-medium dark:text-gray-200">{time}</span>
+                                  <span className="font-medium dark:text-gray-200">
+                                    {time}
+                                  </span>
                                 </div>
                                 <div>
                                   <span className="text-gray-500 dark:text-gray-400 block">
@@ -1116,7 +1129,9 @@ const MapComponent: React.FC<MapComponentProps> = ({
                                   </strong>
                                 </li>
                                 <li className="flex justify-between">
-                                  <span className="text-gray-500 dark:text-gray-400">Pulau:</span>
+                                  <span className="text-gray-500 dark:text-gray-400">
+                                    Pulau:
+                                  </span>
                                   <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
                                     {feature.properties?.location?.pulau ||
                                       "N/A"}
