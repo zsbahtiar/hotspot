@@ -1,234 +1,276 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import NavbarWithTheme from '@/components/NavbarWithTheme';
-import BreadcrumbWrapper from '@/components/layout/BreadcrumbWrapper';
-import Footer from '@/components/layout/Footer';
-import OfflineBanner from '@/components/layout/OfflineBanner';
+import StaticNavbar from '@/components/layout/StaticNavbar.astro';
+import StaticFooter from '@/components/layout/StaticFooter.astro';
 ---
 
 <BaseLayout
   title="Tentang OLAP Hotspot - Sistem Analisis Data Karhutla"
   description="Informasi lengkap tentang sistem OLAP Hotspot untuk analisis data historikal kebakaran hutan dan lahan dengan teknologi Spatial Online Analytical Processing."
 >
-  <OfflineBanner client:idle />
-  <NavbarWithTheme client:load />
-  <main class="min-h-screen flex flex-col bg-background pt-16">
-    <div class="border-b border-border py-3 bg-background">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <BreadcrumbWrapper client:load items={[{ label: 'Tentang' }]} />
+  <StaticNavbar />
+  <main class="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 pt-16">
+    <div class="border-b border-gray-200/60 dark:border-gray-700/60 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm sticky top-16 z-10">
+      <div class="max-w-7xl mx-auto px-6 py-4">
+        <div class="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+          <a href="/" class="hover:text-gray-900 dark:hover:text-gray-200 transition-colors">Beranda</a>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M9 5l7 7-7 7" />
+          </svg>
+          <span class="text-gray-900 dark:text-gray-100 font-medium">Tentang</span>
+        </div>
       </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 class="text-3xl font-bold mb-6 text-foreground">Tentang</h1>
-      <section class="mb-8">
-      <h2 class="text-2xl font-semibold text-foreground mb-4">Apa itu OLAP <em>Hotspot</em>?</h2>
-      <div class="bg-card p-6 rounded-lg shadow-md border border-border">
-        <p class="mb-4 text-card-foreground">
-          OLAP (<em>Online Analytical Processing</em>) adalah teknologi yang digunakan untuk mengelola data secara multidimensi dan mendukung analisis data yang kompleks. Sistem OLAP dirancang untuk membantu menganalisis data dari berbagai perspektif.
-        </p>
-        <p class="mb-4 text-card-foreground">
-          OLAP <em>Hotspot</em> adalah sistem untuk analisis data historikal <em>hotspot</em> kebakaran hutan dan lahan (karhutla) berdasarkan dimensi lokasi, waktu, <em>confidence</em>, dan satelit.
-          Data <em>hotspot</em> yang dianalisis dalam sistem ini berasal dari <em>website</em>{" "}
-          <a
-            href="https://sipongi.menlhk.go.id/"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-primary hover:underline font-medium"
-          >
-            SiPongi+
-          </a>
-          , yang dikelola dalam data <em>warehouse</em> dengan skema bintang.
-          Pengguna dapat memperoleh data historikal <em>hotspot</em> melalui operasi <em>drill-down</em> dan <em>roll-up</em>.
-        </p>
-        <p class="text-card-foreground">
-          Hasil operasi tersebut ditampilkan dalam bentuk <em>cross table</em>, grafik, dan peta.
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div class="text-center mb-16">
+        <h1 class="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white mb-6 tracking-tight">Tentang Sistem</h1>
+        <p class="text-lg sm:text-xl text-gray-600 dark:text-gray-400 leading-relaxed max-w-3xl mx-auto">
+          Platform analisis data hotspot kebakaran hutan dengan teknologi Spatial Online Analytical Processing untuk monitoring di seluruh Indonesia.
         </p>
       </div>
-      </section>
+      <section class="mb-16">
+        <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700 p-8">
+          <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-6">Apa itu OLAP Hotspot?</h2>
 
-      <section class="mb-8">
-      <h2 class="text-2xl font-semibold text-foreground mb-4">Fitur Website</h2>
-      <div class="bg-card p-6 rounded-lg shadow-md border border-border">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="border-l-4 border-primary pl-4 py-2">
-            <h3 class="font-semibold text-card-foreground text-lg">Dashboard Interaktif</h3>
-            <p class="text-muted-foreground">
-              Visualisasi data <em>hotspot</em> dengan operasi OLAP (<em>drill-down</em>, <em>roll-up</em>, <em>slice</em>, <em>dice</em>) untuk analisis mendalam.
+          <div class="space-y-6 text-gray-700 dark:text-gray-300 leading-relaxed">
+            <p class="text-base sm:text-lg">
+              <strong>OLAP (Online Analytical Processing)</strong> adalah teknologi untuk mengelola data secara multidimensi dan mendukung analisis data kompleks dari berbagai perspektif.
             </p>
-          </div>
 
-          <div class="border-l-4 border-primary pl-4 py-2">
-            <h3 class="font-semibold text-card-foreground text-lg">Visualisasi Geografis</h3>
-            <p class="text-muted-foreground">
-              Pemetaan <em>hotspot</em> dengan Leaflet.js yang menampilkan distribusi titik panas berdasarkan lokasi dengan kemampuan <em>clustering</em> dan <em>zoom</em>.
-            </p>
-          </div>
+            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-2xl p-6 border border-gray-200 dark:border-gray-600">
+              <p class="text-base sm:text-lg">
+                <strong>OLAP Hotspot</strong> adalah sistem analisis data historikal kebakaran hutan dan lahan berdasarkan dimensi lokasi, waktu, confidence, dan satelit.
+                Data hotspot bersumber dari{" "}
+                <a
+                  href="https://firms.modaps.eosdis.nasa.gov/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-semibold underline decoration-2 underline-offset-2"
+                >
+                  NASA FIRMS
+                </a>
+                {" "}dan{" "}
+                <a
+                  href="https://www.visualcrossing.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-semibold underline decoration-2 underline-offset-2"
+                >
+                  Visual Crossing
+                </a>
+                , yang dikelola dalam data warehouse dengan skema bintang.
+              </p>
+            </div>
 
-          <div class="border-l-4 border-primary pl-4 py-2">
-            <h3 class="font-semibold text-card-foreground text-lg">Multi-Filter Dinamis</h3>
-            <p class="text-muted-foreground">
-              Pemfilteran data berdasarkan dimensi lokasi, waktu, <em>confidence</em>, dan satelit untuk analisis yang fleksibel.
-            </p>
-          </div>
-
-          <div class="border-l-4 border-primary pl-4 py-2">
-            <h3 class="font-semibold text-card-foreground text-lg">Ekspor Data</h3>
-            <p class="text-muted-foreground">
-              Unduh data <em>hotspot</em> dalam format Excel (.xlsx) dan CSV dengan tampilan detail atau akumulasi.
-            </p>
-          </div>
-
-          <div class="border-l-4 border-primary pl-4 py-2">
-            <h3 class="font-semibold text-card-foreground text-lg">Tampilan Tabel Data</h3>
-            <p class="text-muted-foreground">
-              Lihat data dalam format tabel dengan dua mode: detail (setiap titik <em>hotspot</em>) dan akumulasi (data teragregasi) dengan kemampuan <em>sorting</em> dan berbagai <em>filter</em>  multidimensi.
-            </p>
-          </div>
-
-          <div class="border-l-4 border-primary pl-4 py-2">
-            <h3 class="font-semibold text-card-foreground text-lg">Visualisasi Grafik</h3>
-            <p class="text-muted-foreground">
-              Representasi data dalam grafik untuk memahami tren dan pola sebaran <em>hotspot</em>.
-            </p>
-          </div>
-
-          <div class="border-l-4 border-primary pl-4 py-2">
-            <h3 class="font-semibold text-card-foreground text-lg">Update Data Berkala</h3>
-            <p class="text-muted-foreground">
-              Data <em>hotspot</em> diperbarui secara otomatis setiap 3 jam dari sumber data Sipongi+ untuk analisis yang selalu terkini.
+            <p class="text-base sm:text-lg">
+              Hasil analisis ditampilkan dalam bentuk tabel, grafik interaktif, dan peta visualisasi geografis untuk analisis mendalam.
             </p>
           </div>
         </div>
-      </div>
       </section>
 
-      <section class="mb-8">
-      <h2 class="text-2xl font-semibold text-foreground mb-4">Operasi OLAP</h2>
-      <div class="bg-card p-6 rounded-lg shadow-md border border-border">
-        <div class="grid md:grid-cols-2 gap-4">
-          <div class="relative group border border-border p-4 rounded hover:bg-accent transition cursor-pointer">
-            <h3 class="font-medium text-card-foreground mb-1"><em>Drill-down</em></h3>
-            <p class="text-sm text-muted-foreground">Navigasi dari data umum ke lebih data yang detail.</p>
-            <div class="absolute z-10 left-0 top-full mt-2 w-64 p-3 bg-popover text-sm text-popover-foreground border border-border rounded shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
-              <span class="block font-semibold text-popover-foreground mb-1">Penerapan:</span>
-              Digunakan untuk menelusuri titik panas dari pulau &rarr; provinsi &rarr; kabupaten/kota &rarr; kecamatan &rarr; desa.
-            </div>
-          </div>
+      <section class="mb-16">
+        <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700 p-8">
+          <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-8">Fitur Unggulan</h2>
 
-          <div class="relative group border border-border p-4 rounded hover:bg-accent transition cursor-pointer">
-            <h3 class="font-medium text-card-foreground mb-1"><em>Roll-up</em></h3>
-            <p class="text-sm text-muted-foreground">Mengagregasi data dari detail ke ringkasan.</p>
-            <div class="absolute z-10 left-0 top-full mt-2 w-64 p-3 bg-popover text-sm text-popover-foreground border border-border rounded shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
-              <span class="block font-semibold text-popover-foreground mb-1">Penerapan:</span>
-              Digunakan untuk agregasi data dari desa &rarr; kecamatan &rarr; kabupaten/kota &rarr; provinsi &rarr; pulau.
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-2xl p-6 border border-gray-200 dark:border-gray-600 hover:shadow-lg transition-all duration-300">
+              <h3 class="font-bold text-gray-900 dark:text-white text-lg mb-3">Dashboard Interaktif</h3>
+              <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+                Visualisasi data hotspot dengan operasi OLAP untuk analisis mendalam.
+              </p>
             </div>
-          </div>
 
-          <div class="relative group border border-border p-4 rounded hover:bg-accent transition cursor-pointer">
-            <h3 class="font-medium text-card-foreground mb-1"><em>Slice</em></h3>
-            <p class="text-sm text-muted-foreground">Memilih satu dimensi dari <em>cube</em> untuk membuat subset data.</p>
-            <div class="absolute z-10 left-0 top-full mt-2 w-64 p-3 bg-popover text-sm text-popover-foreground border border-border rounded shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
-              <span class="block font-semibold text-popover-foreground mb-1">Penerapan:</span>
-              Digunakan untuk <em>filtering</em> satu dimensi yaitu <em>confidence</em>.
+            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-2xl p-6 border border-gray-200 dark:border-gray-600 hover:shadow-lg transition-all duration-300">
+              <h3 class="font-bold text-gray-900 dark:text-white text-lg mb-3">Peta Interaktif</h3>
+              <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+                Pemetaan geografis hotspot dengan clustering dan visualisasi distribusi titik panas.
+              </p>
             </div>
-          </div>
 
-          <div class="relative group border border-border p-4 rounded hover:bg-accent transition cursor-pointer">
-            <h3 class="font-medium text-card-foreground mb-1"><em>Dice</em></h3>
-            <p class="text-sm text-muted-foreground">Memilih subset data dengan beberapa nilai pada berbagai dimensi.</p>
-            <div class="absolute z-10 left-0 top-full mt-2 w-64 p-3 bg-popover text-sm text-popover-foreground border border-border rounded shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
-              <span class="block font-semibold text-popover-foreground mb-1">Penerapan:</span>
-              Digunakan untuk <em>filtering</em> dua dimensi (<em>confidence</em> dan satelit) dan tiga dimensi (<em>confidence</em>, satelit, dan <em>waktu</em>).
+            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-2xl p-6 border border-gray-200 dark:border-gray-600 hover:shadow-lg transition-all duration-300">
+              <h3 class="font-bold text-gray-900 dark:text-white text-lg mb-3">Filter Dinamis</h3>
+              <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+                Pemfilteran multidimensi berdasarkan lokasi, waktu, confidence, dan satelit.
+              </p>
+            </div>
+
+            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-2xl p-6 border border-gray-200 dark:border-gray-600 hover:shadow-lg transition-all duration-300">
+              <h3 class="font-bold text-gray-900 dark:text-white text-lg mb-3">Ekspor Data</h3>
+              <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+                Unduh data hotspot dalam format Excel dan CSV dengan tampilan detail atau akumulasi.
+              </p>
+            </div>
+
+            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-2xl p-6 border border-gray-200 dark:border-gray-600 hover:shadow-lg transition-all duration-300">
+              <h3 class="font-bold text-gray-900 dark:text-white text-lg mb-3">Tabel Data</h3>
+              <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+                Tampilan tabel dengan mode detail dan akumulasi, sorting, dan filter multidimensi.
+              </p>
+            </div>
+
+            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-2xl p-6 border border-gray-200 dark:border-gray-600 hover:shadow-lg transition-all duration-300">
+              <h3 class="font-bold text-gray-900 dark:text-white text-lg mb-3">Update Berkala</h3>
+              <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+                Data hotspot diperbarui secara berkala dari NASA FIRMS untuk analisis terkini.
+              </p>
             </div>
           </div>
         </div>
-      </div>
       </section>
 
       <section class="mb-8">
-      <h2 class="text-2xl font-semibold text-foreground mb-4">Struktur Data</h2>
-      <div class="bg-card p-6 rounded-lg shadow-md border border-border">
-        <p class="mb-4 text-card-foreground">
-          Struktur data ini menggunakan pendekatan skema bintang dengan tabel fakta utama dan beberapa tabel dimensi:
-        </p>
+        <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700 p-8">
+          <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6">Operasi OLAP</h2>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="border border-gray-200 dark:border-gray-600 p-4 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+              <h3 class="font-medium text-gray-900 dark:text-white mb-2">Drill-down</h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400">Navigasi dari data umum ke data yang lebih detail. Contoh: pulau → provinsi → kabupaten/kota → kecamatan → desa.</p>
+            </div>
 
-        <div class="space-y-4">
-          <div class="border-l-4 border-primary pl-4">
-            <h3 class="font-semibold text-card-foreground">Tabel Fakta Hotspot</h3>
-            <p class="text-muted-foreground">
-              Menyimpan catatan kejadian <em>hotspot</em> dengan atribut utama seperti jumlah titik, tingkat <em>confidence</em>, serta referensi ke dimensi terkait.
-            </p>
-          </div>
+            <div class="border border-gray-200 dark:border-gray-600 p-4 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+              <h3 class="font-medium text-gray-900 dark:text-white mb-2">Roll-up</h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400">Mengagregasi data dari detail ke ringkasan. Contoh: desa → kecamatan → kabupaten/kota → provinsi → pulau.</p>
+            </div>
 
-          <div class="border-l-4 border-primary pl-4">
-            <h3 class="font-semibold text-card-foreground">Dimensi Lokasi</h3>
-            <p class="text-muted-foreground">
-              Meliputi pulau, provinsi, kabupaten/kota, kecamatan, dan desa.
-            </p>
-          </div>
+            <div class="border border-gray-200 dark:border-gray-600 p-4 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+              <h3 class="font-medium text-gray-900 dark:text-white mb-2">Slice</h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400">Memilih satu dimensi dari cube untuk membuat subset data. Contoh: filtering berdasarkan confidence.</p>
+            </div>
 
-          <div class="border-l-4 border-primary pl-4">
-            <h3 class="font-semibold text-card-foreground">Dimensi Waktu</h3>
-            <p class="text-muted-foreground">
-              Meliputi tahun, semester, kuartal, bulan, minggu, dan hari.
-            </p>
-          </div>
-
-          <div class="border-l-4 border-primary pl-4">
-            <h3 class="font-semibold text-card-foreground">Dimensi Confidence</h3>
-            <p class="text-muted-foreground">
-              Mendefinisikan tingkat kepercayaan (<em>confidence level</em>) dari masing-masing data <em>hotspot</em>.
-            </p>
-            <p class="text-muted-foreground mt-2">
-              Rentang nilai <em>confidence</em> ini mengacu pada Peraturan Menteri Lingkungan Hidup dan Kehutanan Nomor 8 Tahun 2018 tentang Prosedur Tetap Pengecekan Lapangan Informasi Titik Panas dan/atau Informasi Kebakaran Hutan dan Lahan:
-            </p>
-            <ul class="list-disc list-inside ml-4 mt-2">
-              <li class="text-muted-foreground"><em>Low</em> (Rendah): 0 – 29</li>
-              <li class="text-muted-foreground"><em>Medium</em> (Sedang): 30 – 79</li>
-              <li class="text-muted-foreground"><em>High</em> (Tinggi): 80 – 100</li>
-            </ul>
-          </div>
-
-          <div class="border-l-4 border-primary pl-4">
-            <h3 class="font-semibold text-card-foreground">Dimensi Satelit</h3>
-            <p class="text-muted-foreground">
-              Mendefinisikan sumber data satelit (NASA-SNPP, NASA-MODIS, NASA-NOAA20).
-            </p>
+            <div class="border border-gray-200 dark:border-gray-600 p-4 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+              <h3 class="font-medium text-gray-900 dark:text-white mb-2">Dice</h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400">Memilih subset data dengan beberapa nilai pada berbagai dimensi. Contoh: filtering berdasarkan confidence dan satelit.</p>
+            </div>
           </div>
         </div>
-      </div>
       </section>
 
       <section class="mb-8">
-      <h2 class="text-2xl font-semibold text-foreground mb-4">Tim Pengembang</h2>
-      <div class="bg-card p-6 rounded-lg shadow-md border border-border">
-        <div class="grid grid-cols-1 gap-6">
-          <div class="border border-border rounded-lg p-6 hover:shadow-lg transition-shadow text-center bg-card">
-            <div class="text-xl font-semibold text-card-foreground">Prof. Dr. Imas Sukaesih Sitanggang, S.Si., M.Kom.</div>
-          </div>
+        <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700 p-8">
+          <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6">Struktur Data</h2>
+          <p class="mb-6 text-gray-700 dark:text-gray-300">
+            Struktur data menggunakan pendekatan skema bintang dengan tabel fakta utama dan beberapa tabel dimensi:
+          </p>
 
-          <div class="border border-border rounded-lg p-6 hover:shadow-lg transition-shadow text-center bg-card">
-            <div class="text-xl font-semibold text-card-foreground">Dr. Hendra Rahmawan, S.Kom., M.T.</div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="border border-border rounded-lg p-6 hover:shadow-lg transition-shadow text-center bg-card">
-              <div class="text-xl font-semibold text-card-foreground">Lee Roy Akbar, S.Kom.</div>
-              <div class="text-muted-foreground mt-3">Pengembang <em>Back-end</em></div>
+          <div class="space-y-4">
+            <div class="border-l-4 border-blue-500 dark:border-blue-400 pl-4 py-2">
+              <h3 class="font-semibold text-gray-900 dark:text-white">Tabel Fakta Hotspot</h3>
+              <p class="text-gray-600 dark:text-gray-400 text-sm">
+                Menyimpan catatan kejadian hotspot dengan atribut utama seperti jumlah titik, tingkat confidence, serta referensi ke dimensi terkait.
+              </p>
             </div>
 
-            <div class="border border-border rounded-lg p-6 hover:shadow-lg transition-shadow text-center bg-card">
-              <div class="text-xl font-semibold text-card-foreground">Nechita Samantha</div>
-              <div class="text-muted-foreground mt-3">Pengembang <em>Front-end</em></div>
+            <div class="border-l-4 border-blue-500 dark:border-blue-400 pl-4 py-2">
+              <h3 class="font-semibold text-gray-900 dark:text-white">Dimensi Lokasi</h3>
+              <p class="text-gray-600 dark:text-gray-400 text-sm">
+                Meliputi pulau, provinsi, kabupaten/kota, kecamatan, dan desa.
+              </p>
+            </div>
+
+            <div class="border-l-4 border-blue-500 dark:border-blue-400 pl-4 py-2">
+              <h3 class="font-semibold text-gray-900 dark:text-white">Dimensi Waktu</h3>
+              <p class="text-gray-600 dark:text-gray-400 text-sm">
+                Meliputi tahun, semester, kuartal, bulan, minggu, dan hari.
+              </p>
+            </div>
+
+            <div class="border-l-4 border-blue-500 dark:border-blue-400 pl-4 py-2">
+              <h3 class="font-semibold text-gray-900 dark:text-white">Dimensi Confidence</h3>
+              <p class="text-gray-600 dark:text-gray-400 text-sm">
+                Tingkat kepercayaan (confidence level) dari data hotspot berdasarkan Peraturan Menteri LHK No. 8 Tahun 2018:
+              </p>
+              <ul class="list-disc list-inside ml-4 mt-2 text-sm">
+                <li class="text-gray-600 dark:text-gray-400">Low (Rendah): 0 – 29</li>
+                <li class="text-gray-600 dark:text-gray-400">Medium (Sedang): 30 – 79</li>
+                <li class="text-gray-600 dark:text-gray-400">High (Tinggi): 80 – 100</li>
+              </ul>
+            </div>
+
+            <div class="border-l-4 border-blue-500 dark:border-blue-400 pl-4 py-2">
+              <h3 class="font-semibold text-gray-900 dark:text-white">Dimensi Satelit</h3>
+              <p class="text-gray-600 dark:text-gray-400 text-sm">
+                Sumber data satelit (NASA-SNPP, NASA-MODIS, NASA-NOAA20).
+              </p>
             </div>
           </div>
         </div>
-      </div>
+      </section>
+
+      <section class="mb-8">
+        <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700 p-8">
+          <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-6">Tim Pengembang</h2>
+
+          <div class="space-y-8">
+            <!-- Pengembang Awal -->
+            <div>
+              <div class="flex items-center mb-4">
+                <div class="w-3 h-3 bg-gray-400 dark:bg-gray-500 rounded-full"></div>
+                <div class="ml-3 text-sm font-medium text-gray-500 dark:text-gray-400">Pengembang Awal</div>
+              </div>
+              <div class="ml-6 pl-6 border-l-2 border-gray-300 dark:border-gray-600 space-y-4">
+                <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                  <div class="font-semibold text-gray-900 dark:text-white">Prof. Dr. Imas Sukaesih Sitanggang, S.Si., M.Kom.</div>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                  <div class="font-semibold text-gray-900 dark:text-white">Dr. Hendra Rahmawan, S.Kom., M.T.</div>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                  <div class="font-semibold text-gray-900 dark:text-white">Lee Roy Akbar, S.Kom.</div>
+                  <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">Pengembang Back-end</div>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                  <div class="font-semibold text-gray-900 dark:text-white">Nechita Samantha</div>
+                  <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">Pengembang Front-end</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Arrow/Transition -->
+            <div class="flex items-center pl-6">
+              <svg class="w-6 h-6 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+              </svg>
+              <div class="ml-3 text-sm text-gray-500 dark:text-gray-400">Dilanjutkan oleh</div>
+            </div>
+
+            <!-- Pengembang Saat Ini -->
+            <div>
+              <div class="flex items-center mb-4">
+                <div class="w-3 h-3 bg-blue-500 dark:bg-blue-400 rounded-full"></div>
+                <div class="ml-3 text-sm font-medium text-blue-600 dark:text-blue-400">Pengembang Saat Ini</div>
+              </div>
+              <div class="ml-6 pl-6 border-l-2 border-blue-300 dark:border-blue-600 space-y-4">
+                <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-700">
+                  <div class="font-semibold text-gray-900 dark:text-white">Prof. Dr. Imas Sukaesih Sitanggang, S.Si., M.Kom.</div>
+                </div>
+                <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-700">
+                  <div class="font-semibold text-gray-900 dark:text-white">Dr. Eng. Annisa, M.Kom</div>
+                </div>
+                <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-700">
+                  <div class="flex items-center justify-between">
+                    <div class="font-semibold text-gray-900 dark:text-white">Zam Zam Saeful Bahtiar</div>
+                    <a
+                      href="https://github.com/zsbahtiar/hotspot"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                      title="View on GitHub"
+                    >
+                      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd" />
+                      </svg>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
     </div>
   </main>
-  <footer>
-    <Footer client:load />
-  </footer>
+
+  <StaticFooter />
 </BaseLayout>

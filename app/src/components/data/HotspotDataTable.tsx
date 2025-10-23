@@ -30,62 +30,70 @@ import type { AccumulatedData } from "@/core/models/hotspot";
 
 const USE_MOCK_DATA = true;
 
-const MOCK_HOTSPOT_DATA: HotspotFeature[] = [
-  {
-    type: "Feature",
-    geometry: { type: "Point", coordinates: [95.3238, 5.5483] },
+const MOCK_HOTSPOT_DATA: HotspotFeature[] = Array.from({ length: 100 }, (_, i) => {
+  const provinces = [
+    { pulau: "Sumatera", provinsi: "Aceh", kab_kota: "Banda Aceh", kecamatan: "Kuta Alam", desa: "Mulia", coords: [95.3238, 5.5483] },
+    { pulau: "Sumatera", provinsi: "Sumatera Utara", kab_kota: "Medan", kecamatan: "Medan Kota", desa: "Pasar Baru", coords: [98.6722, 3.5952] },
+    { pulau: "Sumatera", provinsi: "Sumatera Barat", kab_kota: "Padang", kecamatan: "Padang Utara", desa: "Lolong Belanti", coords: [100.3543, -0.9471] },
+    { pulau: "Sumatera", provinsi: "Riau", kab_kota: "Pekanbaru", kecamatan: "Tampan", desa: "Sidomulyo Barat", coords: [101.4478, 0.5071] },
+    { pulau: "Sumatera", provinsi: "Jambi", kab_kota: "Jambi", kecamatan: "Jambi Selatan", desa: "Legok", coords: [103.6102, -1.6102] },
+    { pulau: "Sumatera", provinsi: "Sumatera Selatan", kab_kota: "Palembang", kecamatan: "Ilir Timur I", desa: "Bukit Baru", coords: [104.7754, -2.9761] },
+    { pulau: "Sumatera", provinsi: "Bengkulu", kab_kota: "Bengkulu", kecamatan: "Teluk Segara", desa: "Pasar Bengkulu", coords: [102.2656, -3.7928] },
+    { pulau: "Sumatera", provinsi: "Lampung", kab_kota: "Bandar Lampung", kecamatan: "Tanjung Karang", desa: "Enggal", coords: [105.2663, -5.4286] },
+    { pulau: "Jawa", provinsi: "Banten", kab_kota: "Tangerang", kecamatan: "Cipondoh", desa: "Poris Plawad", coords: [106.6894, -6.1162] },
+    { pulau: "Jawa", provinsi: "DKI Jakarta", kab_kota: "Jakarta Pusat", kecamatan: "Menteng", desa: "Gondangdia", coords: [106.8271, -6.1751] },
+    { pulau: "Jawa", provinsi: "Jawa Barat", kab_kota: "Bandung", kecamatan: "Coblong", desa: "Dago", coords: [107.6191, -6.9175] },
+    { pulau: "Jawa", provinsi: "Jawa Tengah", kab_kota: "Semarang", kecamatan: "Semarang Tengah", desa: "Pandansari", coords: [110.4203, -6.9734] },
+    { pulau: "Jawa", provinsi: "DI Yogyakarta", kab_kota: "Sleman", kecamatan: "Mlati", desa: "Sendangadi", coords: [110.3695, -7.7972] },
+    { pulau: "Jawa", provinsi: "Jawa Timur", kab_kota: "Surabaya", kecamatan: "Sukolilo", desa: "Keputih", coords: [112.7508, -7.2575] },
+    { pulau: "Kalimantan", provinsi: "Kalimantan Barat", kab_kota: "Pontianak", kecamatan: "Pontianak Kota", desa: "Sungai Bangkong", coords: [109.3425, -0.0263] },
+    { pulau: "Kalimantan", provinsi: "Kalimantan Tengah", kab_kota: "Palangka Raya", kecamatan: "Jekan Raya", desa: "Menteng", coords: [113.9213, -0.7893] },
+    { pulau: "Kalimantan", provinsi: "Kalimantan Selatan", kab_kota: "Banjarmasin", kecamatan: "Banjarmasin Tengah", desa: "Kelayan Timur", coords: [114.5906, -3.3186] },
+    { pulau: "Kalimantan", provinsi: "Kalimantan Timur", kab_kota: "Samarinda", kecamatan: "Samarinda Ulu", desa: "Air Hitam", coords: [117.1436, -0.5022] },
+    { pulau: "Kalimantan", provinsi: "Kalimantan Utara", kab_kota: "Tarakan", kecamatan: "Tarakan Tengah", desa: "Karang Balik", coords: [117.6333, 3.3] },
+    { pulau: "Sulawesi", provinsi: "Sulawesi Utara", kab_kota: "Manado", kecamatan: "Wenang", desa: "Calaca", coords: [124.8405, 1.4748] },
+    { pulau: "Sulawesi", provinsi: "Sulawesi Tengah", kab_kota: "Palu", kecamatan: "Palu Barat", desa: "Pantoloan", coords: [119.8707, -0.8999] },
+    { pulau: "Sulawesi", provinsi: "Sulawesi Selatan", kab_kota: "Makassar", kecamatan: "Tamalate", desa: "Jongaya", coords: [119.4327, -5.1477] },
+    { pulau: "Sulawesi", provinsi: "Sulawesi Tenggara", kab_kota: "Kendari", kecamatan: "Mandonga", desa: "Anduonohu", coords: [122.4991, -3.9689] },
+    { pulau: "Bali", provinsi: "Bali", kab_kota: "Denpasar", kecamatan: "Denpasar Selatan", desa: "Sanur", coords: [115.2126, -8.6705] },
+    { pulau: "Nusa Tenggara", provinsi: "Nusa Tenggara Barat", kab_kota: "Mataram", kecamatan: "Mataram", desa: "Cakranegara", coords: [116.1169, -8.5833] },
+    { pulau: "Nusa Tenggara", provinsi: "Nusa Tenggara Timur", kab_kota: "Kupang", kecamatan: "Oebobo", desa: "Fontein", coords: [123.5889, -10.1718] },
+    { pulau: "Maluku", provinsi: "Maluku", kab_kota: "Ambon", kecamatan: "Sirimau", desa: "Uritetu", coords: [128.1808, -3.6954] },
+    { pulau: "Papua", provinsi: "Papua", kab_kota: "Jayapura", kecamatan: "Jayapura Utara", desa: "Gurabesi", coords: [140.6719, -2.5924] },
+  ];
+
+  const satellites = ["VIIRS", "MODIS", "Terra", "Aqua", "SNPP"];
+  const confidences = ["high", "medium", "low"];
+
+  const loc = provinces[i % provinces.length];
+  const date = new Date(2025, 0, 1);
+  date.setDate(date.getDate() - Math.floor(i / 2));
+
+  const hour = 8 + (i % 12);
+  const minute = (i * 15) % 60;
+
+  return {
+    type: "Feature" as const,
+    geometry: {
+      type: "Point" as const,
+      coordinates: [loc.coords[0] + (Math.random() - 0.5) * 0.1, loc.coords[1] + (Math.random() - 0.5) * 0.1]
+    },
     properties: {
-      time: new Date("2025-01-15").toISOString().split("T")[0],
-      hotspot_time: "2025-01-15T08:30:00",
-      hotspot_count: 5,
-      satellite: "Terra",
-      confidence: "high",
+      time: date.toISOString().split("T")[0],
+      hotspot_time: `${date.toISOString().split("T")[0]}T${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}:00`,
+      hotspot_count: Math.floor(Math.random() * 10) + 1,
+      satellite: satellites[i % satellites.length],
+      confidence: confidences[i % confidences.length],
       location: {
-        pulau: "Sumatera",
-        provinsi: "Aceh",
-        kab_kota: "Banda Aceh",
-        kecamatan: "Kuta Alam",
-        desa: "Mulia",
+        pulau: loc.pulau,
+        provinsi: loc.provinsi,
+        kab_kota: loc.kab_kota,
+        kecamatan: loc.kecamatan,
+        desa: loc.desa,
       },
     },
-  },
-  {
-    type: "Feature",
-    geometry: { type: "Point", coordinates: [98.6722, 3.5952] },
-    properties: {
-      time: new Date("2025-01-15").toISOString().split("T")[0],
-      hotspot_time: "2025-01-15T09:15:00",
-      hotspot_count: 3,
-      satellite: "Aqua",
-      confidence: "medium",
-      location: {
-        pulau: "Sumatera",
-        provinsi: "Sumatera Utara",
-        kab_kota: "Medan",
-        kecamatan: "Medan Kota",
-        desa: "Pasar Baru",
-      },
-    },
-  },
-  {
-    type: "Feature",
-    geometry: { type: "Point", coordinates: [109.3425, -0.0263] },
-    properties: {
-      time: new Date("2025-01-15").toISOString().split("T")[0],
-      hotspot_time: "2025-01-15T10:00:00",
-      hotspot_count: 8,
-      satellite: "SNPP",
-      confidence: "high",
-      location: {
-        pulau: "Kalimantan",
-        provinsi: "Kalimantan Barat",
-        kab_kota: "Pontianak",
-        kecamatan: "Pontianak Kota",
-        desa: "Sungai Bangkong",
-      },
-    },
-  },
-];
+  };
+});
 
 export default function HotspotTable() {
   const [data, setData] = useState<HotspotFeature[]>([]);
@@ -97,7 +105,7 @@ export default function HotspotTable() {
   const [exportFormat, setExportFormat] = useState<"xlsx" | "csv">("xlsx");
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState<"detail" | "akumulasi">("akumulasi");
-  const itemsPerPage = 10;
+  const itemsPerPage = 15;
   const [sortBy, setSortBy] = useState<string>("properties.hotspot_time");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
@@ -315,14 +323,14 @@ export default function HotspotTable() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col justify-center items-center bg-gray-50">
+      <div className="min-h-screen flex flex-col justify-center items-center bg-gray-50 dark:bg-gray-900">
         <FontAwesomeIcon
           icon={faSpinner}
           spin
           size="3x"
-          className="text-gray-600 mb-4"
+          className="text-gray-600 dark:text-gray-400 mb-4"
         />
-        <p className="text-gray-700 text-lg">
+        <p className="text-gray-700 dark:text-gray-300 text-lg">
           Memuat data hotspot, mohon tunggu...
         </p>
       </div>
@@ -332,7 +340,7 @@ export default function HotspotTable() {
   function sortHeader(label: string, col: string) {
     return (
       <th
-        className="px-4 py-2 text-left cursor-pointer select-none"
+        className="px-4 py-3 text-left cursor-pointer select-none"
         onClick={() => {
           if (sortBy === col)
             setSortOrder(sortOrder === "asc" ? "desc" : "asc");
@@ -347,12 +355,12 @@ export default function HotspotTable() {
           <span className="inline-block ml-1 text-xs">
             {sortBy === col ? (
               sortOrder === "asc" ? (
-                <span className="text-blue-600">▲</span>
+                <span className="text-blue-600 dark:text-blue-400">▲</span>
               ) : (
-                <span className="text-blue-600">▼</span>
+                <span className="text-blue-600 dark:text-blue-400">▼</span>
               )
             ) : (
-              <span className="text-gray-300 text-[15px]">⬍</span>
+              <span className="text-gray-300 dark:text-gray-600 text-[15px]">⬍</span>
             )}
           </span>
         </div>
@@ -361,7 +369,7 @@ export default function HotspotTable() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col flex-grow w-full max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8">
+    <div className="min-h-screen flex flex-col flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
       <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-4 sm:mb-6">
         Data Hotspot
       </h1>
@@ -523,7 +531,7 @@ export default function HotspotTable() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="px-4 py-2 text-left">No</TableHead>
+                  <TableHead className="px-4 py-3 text-left">No</TableHead>
                   {viewMode === "detail" ? (
                     <>
                       {sortHeader("Tanggal", "properties.time")}
@@ -557,48 +565,48 @@ export default function HotspotTable() {
                 {currentItems.length > 0 ? (
                   currentItems.map((item, index) => (
                     <TableRow key={index}>
-                      <TableCell className="px-4 py-2">
+                      <TableCell className="px-4 py-3">
                         {(currentPage - 1) * itemsPerPage + index + 1}
                       </TableCell>
 
                       {viewMode === "detail" ? (
                         <>
-                          <TableCell className="px-4 py-2">
+                          <TableCell className="px-4 py-3">
                             {(item as HotspotFeature).properties.time}
                           </TableCell>
-                          <TableCell className="px-4 py-2">
+                          <TableCell className="px-4 py-3">
                             {extractTime(
                               (item as HotspotFeature).properties.hotspot_time,
                             )}
                           </TableCell>
-                          <TableCell className="px-4 py-2">
+                          <TableCell className="px-4 py-3">
                             {(item as HotspotFeature).properties.location.pulau}
                           </TableCell>
-                          <TableCell className="px-4 py-2">
+                          <TableCell className="px-4 py-3">
                             {
                               (item as HotspotFeature).properties.location
                                 .provinsi
                             }
                           </TableCell>
-                          <TableCell className="px-4 py-2">
+                          <TableCell className="px-4 py-3">
                             {
                               (item as HotspotFeature).properties.location
                                 .kab_kota
                             }
                           </TableCell>
-                          <TableCell className="px-4 py-2">
+                          <TableCell className="px-4 py-3">
                             {
                               (item as HotspotFeature).properties.location
                                 .kecamatan
                             }
                           </TableCell>
-                          <TableCell className="px-4 py-2">
+                          <TableCell className="px-4 py-3">
                             {(item as HotspotFeature).properties.location.desa}
                           </TableCell>
-                          <TableCell className="px-4 py-2">
+                          <TableCell className="px-4 py-3">
                             {(item as HotspotFeature).properties.satellite}
                           </TableCell>
-                          <TableCell className="px-4 py-2">
+                          <TableCell className="px-4 py-3">
                             <Badge
                               variant={
                                 (item as HotspotFeature).properties
@@ -613,23 +621,23 @@ export default function HotspotTable() {
                               {(item as HotspotFeature).properties.confidence}
                             </Badge>
                           </TableCell>
-                          <TableCell className="px-4 py-2">
+                          <TableCell className="px-4 py-3">
                             {(item as HotspotFeature).properties.hotspot_count}
                           </TableCell>
-                          <TableCell className="px-4 py-2">
+                          <TableCell className="px-4 py-3">
                             {(item as HotspotFeature).geometry.coordinates[1]},{" "}
                             {(item as HotspotFeature).geometry.coordinates[0]}
                           </TableCell>
                         </>
                       ) : (
                         <>
-                          <TableCell className="px-4 py-2">
+                          <TableCell className="px-4 py-3">
                             {(item as AccumulatedData).tanggal}
                           </TableCell>
-                          <TableCell className="px-4 py-2">
+                          <TableCell className="px-4 py-3">
                             {(item as AccumulatedData).satelit}
                           </TableCell>
-                          <TableCell className="px-4 py-2">
+                          <TableCell className="px-4 py-3">
                             <Badge
                               variant={
                                 (item as AccumulatedData).confidence === "high"
@@ -643,13 +651,13 @@ export default function HotspotTable() {
                               {(item as AccumulatedData).confidence}
                             </Badge>
                           </TableCell>
-                          <TableCell className="px-4 py-2">
+                          <TableCell className="px-4 py-3">
                             {(item as AccumulatedData).provinsi}
                           </TableCell>
-                          <TableCell className="px-4 py-2">
+                          <TableCell className="px-4 py-3">
                             {(item as AccumulatedData).kota}
                           </TableCell>
-                          <TableCell className="px-4 py-2">
+                          <TableCell className="px-4 py-3">
                             {(item as AccumulatedData).jumlah}
                           </TableCell>
                         </>
@@ -660,7 +668,7 @@ export default function HotspotTable() {
                   <TableRow>
                     <TableCell
                       colSpan={viewMode === "detail" ? 12 : 7}
-                      className="px-4 py-6 text-center text-gray-500"
+                      className="px-4 py-6 text-center text-gray-500 dark:text-gray-400"
                     >
                       Tidak ada data yang ditemukan
                     </TableCell>

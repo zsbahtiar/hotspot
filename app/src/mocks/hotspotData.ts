@@ -3,6 +3,7 @@ const today = new Date().toISOString().split('T')[0];
 export const mockHotspotData = {
   query: {},
   features: [
+    // 2025 - Tahun Ini
     {
       type: "Feature",
       geometry: {
@@ -33,8 +34,8 @@ export const mockHotspotData = {
       properties: {
         confidence: "medium",
         satellite: "MODIS",
-        time: `${today}T11:45:00Z`,
-        hotspot_time: `${today}T11:45:00Z`,
+        time: "2025-09-15T11:45:00Z",
+        hotspot_time: "2025-09-15T11:45:00Z",
         hotspot_count: 1,
         location: {
           pulau: "JAWA",
@@ -54,8 +55,8 @@ export const mockHotspotData = {
       properties: {
         confidence: "high",
         satellite: "VIIRS",
-        time: `${today}T09:20:00Z`,
-        hotspot_time: `${today}T09:20:00Z`,
+        time: "2025-08-20T09:20:00Z",
+        hotspot_time: "2025-08-20T09:20:00Z",
         hotspot_count: 1,
         location: {
           pulau: "JAWA",
@@ -66,6 +67,7 @@ export const mockHotspotData = {
         }
       }
     },
+    // 2024
     {
       type: "Feature",
       geometry: {
@@ -75,8 +77,8 @@ export const mockHotspotData = {
       properties: {
         confidence: "high",
         satellite: "VIIRS",
-        time: `${today}T08:15:00Z`,
-        hotspot_time: `${today}T08:15:00Z`,
+        time: "2024-12-10T08:15:00Z",
+        hotspot_time: "2024-12-10T08:15:00Z",
         hotspot_count: 1,
         location: {
           pulau: "SUMATERA",
@@ -96,8 +98,8 @@ export const mockHotspotData = {
       properties: {
         confidence: "medium",
         satellite: "MODIS",
-        time: `${today}T12:00:00Z`,
-        hotspot_time: `${today}T12:00:00Z`,
+        time: "2024-11-05T12:00:00Z",
+        hotspot_time: "2024-11-05T12:00:00Z",
         hotspot_count: 1,
         location: {
           pulau: "KALIMANTAN",
@@ -105,6 +107,304 @@ export const mockHotspotData = {
           kab_kota: "SAMARINDA",
           kecamatan: "SAMARINDA ULU",
           desa: "AIR HITAM"
+        }
+      }
+    },
+    {
+      type: "Feature",
+      geometry: {
+        type: "Point",
+        coordinates: [119.4327, -5.1477]
+      },
+      properties: {
+        confidence: "high",
+        satellite: "VIIRS",
+        time: "2024-09-25T14:30:00Z",
+        hotspot_time: "2024-09-25T14:30:00Z",
+        hotspot_count: 1,
+        location: {
+          pulau: "SULAWESI",
+          provinsi: "SULAWESI SELATAN",
+          kab_kota: "MAKASSAR",
+          kecamatan: "TAMALATE",
+          desa: "JONGAYA"
+        }
+      }
+    },
+    {
+      type: "Feature",
+      geometry: {
+        type: "Point",
+        coordinates: [140.6719, -2.5924]
+      },
+      properties: {
+        confidence: "medium",
+        satellite: "MODIS",
+        time: "2024-07-18T10:00:00Z",
+        hotspot_time: "2024-07-18T10:00:00Z",
+        hotspot_count: 1,
+        location: {
+          pulau: "PAPUA",
+          provinsi: "PAPUA",
+          kab_kota: "JAYAPURA",
+          kecamatan: "JAYAPURA UTARA",
+          desa: "GURABESI"
+        }
+      }
+    },
+    // 2023
+    {
+      type: "Feature",
+      geometry: {
+        type: "Point",
+        coordinates: [106.8271, -6.1751]
+      },
+      properties: {
+        confidence: "high",
+        satellite: "VIIRS",
+        time: "2023-10-12T13:20:00Z",
+        hotspot_time: "2023-10-12T13:20:00Z",
+        hotspot_count: 1,
+        location: {
+          pulau: "JAWA",
+          provinsi: "DKI JAKARTA",
+          kab_kota: "JAKARTA PUSAT",
+          kecamatan: "MENTENG",
+          desa: "GONDANGDIA"
+        }
+      }
+    },
+    {
+      type: "Feature",
+      geometry: {
+        type: "Point",
+        coordinates: [107.6191, -6.9175]
+      },
+      properties: {
+        confidence: "medium",
+        satellite: "MODIS",
+        time: "2023-08-05T09:45:00Z",
+        hotspot_time: "2023-08-05T09:45:00Z",
+        hotspot_count: 1,
+        location: {
+          pulau: "JAWA",
+          provinsi: "JAWA BARAT",
+          kab_kota: "BANDUNG",
+          kecamatan: "COBLONG",
+          desa: "DAGO"
+        }
+      }
+    },
+    {
+      type: "Feature",
+      geometry: {
+        type: "Point",
+        coordinates: [113.9213, -0.7893]
+      },
+      properties: {
+        confidence: "high",
+        satellite: "VIIRS",
+        time: "2023-06-20T11:30:00Z",
+        hotspot_time: "2023-06-20T11:30:00Z",
+        hotspot_count: 1,
+        location: {
+          pulau: "KALIMANTAN",
+          provinsi: "KALIMANTAN TENGAH",
+          kab_kota: "PALANGKA RAYA",
+          kecamatan: "JEKAN RAYA",
+          desa: "MENTENG"
+        }
+      }
+    },
+    // 2022
+    {
+      type: "Feature",
+      geometry: {
+        type: "Point",
+        coordinates: [98.6722, 3.5952]
+      },
+      properties: {
+        confidence: "high",
+        satellite: "VIIRS",
+        time: "2022-11-30T08:00:00Z",
+        hotspot_time: "2022-11-30T08:00:00Z",
+        hotspot_count: 1,
+        location: {
+          pulau: "SUMATERA",
+          provinsi: "SUMATERA UTARA",
+          kab_kota: "MEDAN",
+          kecamatan: "MEDAN BARU",
+          desa: "BABURA"
+        }
+      }
+    },
+    {
+      type: "Feature",
+      geometry: {
+        type: "Point",
+        coordinates: [115.2126, -8.6705]
+      },
+      properties: {
+        confidence: "medium",
+        satellite: "MODIS",
+        time: "2022-09-14T12:15:00Z",
+        hotspot_time: "2022-09-14T12:15:00Z",
+        hotspot_count: 1,
+        location: {
+          pulau: "BALI",
+          provinsi: "BALI",
+          kab_kota: "DENPASAR",
+          kecamatan: "DENPASAR SELATAN",
+          desa: "SANUR"
+        }
+      }
+    },
+    {
+      type: "Feature",
+      geometry: {
+        type: "Point",
+        coordinates: [120.3085, -2.2180]
+      },
+      properties: {
+        confidence: "high",
+        satellite: "VIIRS",
+        time: "2022-07-22T10:45:00Z",
+        hotspot_time: "2022-07-22T10:45:00Z",
+        hotspot_count: 1,
+        location: {
+          pulau: "SULAWESI",
+          provinsi: "SULAWESI TENGAH",
+          kab_kota: "PALU",
+          kecamatan: "PALU BARAT",
+          desa: "PANTOLOAN"
+        }
+      }
+    },
+    // 2021
+    {
+      type: "Feature",
+      geometry: {
+        type: "Point",
+        coordinates: [104.7754, -2.9761]
+      },
+      properties: {
+        confidence: "high",
+        satellite: "VIIRS",
+        time: "2021-12-08T14:00:00Z",
+        hotspot_time: "2021-12-08T14:00:00Z",
+        hotspot_count: 1,
+        location: {
+          pulau: "SUMATERA",
+          provinsi: "SUMATERA SELATAN",
+          kab_kota: "PALEMBANG",
+          kecamatan: "ILIR TIMUR I",
+          desa: "BUKIT BARU"
+        }
+      }
+    },
+    {
+      type: "Feature",
+      geometry: {
+        type: "Point",
+        coordinates: [117.1436, -0.5022]
+      },
+      properties: {
+        confidence: "medium",
+        satellite: "MODIS",
+        time: "2021-10-17T09:30:00Z",
+        hotspot_time: "2021-10-17T09:30:00Z",
+        hotspot_count: 1,
+        location: {
+          pulau: "KALIMANTAN",
+          provinsi: "KALIMANTAN TIMUR",
+          kab_kota: "BALIKPAPAN",
+          kecamatan: "BALIKPAPAN UTARA",
+          desa: "GUNUNG BAHAGIA"
+        }
+      }
+    },
+    {
+      type: "Feature",
+      geometry: {
+        type: "Point",
+        coordinates: [109.1403, -6.8818]
+      },
+      properties: {
+        confidence: "high",
+        satellite: "VIIRS",
+        time: "2021-08-29T11:00:00Z",
+        hotspot_time: "2021-08-29T11:00:00Z",
+        hotspot_count: 1,
+        location: {
+          pulau: "JAWA",
+          provinsi: "JAWA TENGAH",
+          kab_kota: "TEGAL",
+          kecamatan: "TEGAL SELATAN",
+          desa: "PANGGUNG"
+        }
+      }
+    },
+    // 2020
+    {
+      type: "Feature",
+      geometry: {
+        type: "Point",
+        coordinates: [106.6894, -6.1162]
+      },
+      properties: {
+        confidence: "high",
+        satellite: "VIIRS",
+        time: "2020-11-25T13:45:00Z",
+        hotspot_time: "2020-11-25T13:45:00Z",
+        hotspot_count: 1,
+        location: {
+          pulau: "JAWA",
+          provinsi: "BANTEN",
+          kab_kota: "TANGERANG",
+          kecamatan: "CIPONDOH",
+          desa: "PORIS PLAWAD"
+        }
+      }
+    },
+    {
+      type: "Feature",
+      geometry: {
+        type: "Point",
+        coordinates: [124.8405, 1.4748]
+      },
+      properties: {
+        confidence: "medium",
+        satellite: "MODIS",
+        time: "2020-09-03T10:20:00Z",
+        hotspot_time: "2020-09-03T10:20:00Z",
+        hotspot_count: 1,
+        location: {
+          pulau: "SULAWESI",
+          provinsi: "SULAWESI UTARA",
+          kab_kota: "MANADO",
+          kecamatan: "WENANG",
+          desa: "CALACA"
+        }
+      }
+    },
+    {
+      type: "Feature",
+      geometry: {
+        type: "Point",
+        coordinates: [100.3543, -0.9471]
+      },
+      properties: {
+        confidence: "high",
+        satellite: "VIIRS",
+        time: "2020-07-11T08:30:00Z",
+        hotspot_time: "2020-07-11T08:30:00Z",
+        hotspot_count: 1,
+        location: {
+          pulau: "SUMATERA",
+          provinsi: "SUMATERA BARAT",
+          kab_kota: "PADANG",
+          kecamatan: "PADANG UTARA",
+          desa: "LOLONG BELANTI"
         }
       }
     }

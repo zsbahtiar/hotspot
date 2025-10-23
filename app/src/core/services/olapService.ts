@@ -8,6 +8,8 @@ if (typeof window !== "undefined") {
   (window as any).Buffer = Buffer;
 }
 
+const USE_MOCK_DATA = true;
+
 type MappedHotspotData = QueryData & { lat: number; lng: number };
 type ResponseItem = {
   geom_desa?: string;
@@ -19,8 +21,65 @@ type ResponseItem = {
   hotspot_count?: number;
 };
 
+// Mock time data generator
+const getMockTimeData = (query?: QueryData): unknown[] => {
+  const { tahun, semester, kuartal, bulan } = query || {};
+
+  // Return tahun (years)
+  if (!tahun) {
+    return [
+      ["2020"],
+      ["2021"],
+      ["2022"],
+      ["2023"],
+      ["2024"],
+      ["2025"],
+    ];
+  }
+
+  // Return semester (1, 2)
+  if (tahun && !semester) {
+    return [
+      ["1"],
+      ["2"],
+    ];
+  }
+
+  // Return kuartal (Q1, Q2, Q3, Q4)
+  if (tahun && semester && !kuartal) {
+    if (semester === "1") {
+      return [["Q1"], ["Q2"]];
+    } else {
+      return [["Q3"], ["Q4"]];
+    }
+  }
+
+  // Return bulan (month names)
+  if (tahun && semester && kuartal && !bulan) {
+    const monthMap: Record<string, string[][]> = {
+      Q1: [["Januari"], ["Februari"], ["Maret"]],
+      Q2: [["April"], ["Mei"], ["Juni"]],
+      Q3: [["Juli"], ["Agustus"], ["September"]],
+      Q4: [["Oktober"], ["November"], ["Desember"]],
+    };
+    return monthMap[kuartal] || [];
+  }
+
+  // Return minggu (weeks 1-4)
+  if (tahun && semester && kuartal && bulan) {
+    return [["1"], ["2"], ["3"], ["4"]];
+  }
+
+  return [];
+};
+
 export const OlapService = {
   query: async (dimension: string, query?: QueryData): Promise<unknown[]> => {
+    // Return mock data for time dimension in mock mode
+    if (USE_MOCK_DATA && dimension === "time") {
+      await new Promise((resolve) => setTimeout(resolve, 300)); // Simulate API delay
+      return getMockTimeData(query);
+    }
     try {
       const baseUrl = import.meta.env.PUBLIC_API_URL;
       if (!baseUrl) {
@@ -60,9 +119,7 @@ export const OlapService = {
 
       return data;
     } catch (error: unknown) {
-      throw new Error(
-        `Failed to fetch ${dimension} data: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      throw new Error(`Failed to fetch ${dimension} data`);
     }
   },
 

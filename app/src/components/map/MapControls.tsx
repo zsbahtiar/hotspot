@@ -55,7 +55,7 @@ export default function MapControlPanel({
       <div
         style={{
           position: "absolute",
-          top: isMobile ? "1rem" : "1rem",
+          top: isMobile ? "7rem" : "1rem",
           right: isMobile ? "0.5rem" : "1rem",
           zIndex: 1000,
           width: isControlPanelCollapsed 

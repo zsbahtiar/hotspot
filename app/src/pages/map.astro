@@ -1,73 +1,21 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import NavbarWithTheme from '@/components/NavbarWithTheme';
-import BreadcrumbWrapper from '@/components/layout/BreadcrumbWrapper';
-import Footer from '@/components/layout/Footer';
-import OfflineBanner from '@/components/layout/OfflineBanner';
+import StaticNavbar from '@/components/layout/StaticNavbar.astro';
+import StaticFooter from '@/components/layout/StaticFooter.astro';
+import OlapPage from '@/components/olap/OlapPage';
 ---
 
 <BaseLayout
   title="Peta Hotspot Karhutla - Visualisasi Geografis Real-time"
   description="Peta interaktif hotspot kebakaran hutan dan lahan Indonesia dengan operasi OLAP (drill-down, roll-up) untuk analisis mendalam berdasarkan lokasi, waktu, confidence, dan satelit."
 >
-  <link rel="dns-prefetch" href="//sipongi.menlhk.go.id" />
+  <link rel="dns-prefetch" href="//tile.openstreetmap.fr" />
+  <link rel="preconnect" href="//tile.openstreetmap.fr" crossorigin />
+  <link rel="dns-prefetch" href="//raw.githubusercontent.com" />
 
-<NavbarWithTheme client:load />
-  <main class="min-h-screen flex flex-col bg-background">
-    <div id="olaps-container" class="min-h-screen flex items-center justify-center bg-muted">
-      <div class="text-center">
-        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
-        <p class="text-muted-foreground text-lg">Memuat peta hotspot...</p>
-      </div>
-    </div>
-  </main>
-  <footer>
-    <Footer client:idle />
-  </footer>
+  <StaticNavbar />
 
-  <script>
-    let rootInstance = null;
-    let isLoading = false;
-
-    const loadOlapComponent = () => {
-      if (isLoading || rootInstance) return;
-      isLoading = true;
-
-      Promise.all([
-        import('react'),
-        import('react-dom/client')
-      ]).then(([React, ReactDOM]) => {
-        import('@/components/olap/OlapPage.tsx').then(module => {
-          const OlapsComponent = module.default;
-          const container = document.getElementById('olaps-container');
-          if (container && !rootInstance) {
-            rootInstance = ReactDOM.createRoot(container);
-            rootInstance.render(React.createElement(OlapsComponent));
-          }
-        }).catch(err => {
-          const container = document.getElementById('olaps-container');
-          if (container) {
-            container.innerHTML = `
-              <div class="text-center p-8">
-                <p class="text-red-600">Gagal memuat peta. Silakan refresh halaman.</p>
-              </div>
-            `;
-          }
-          isLoading = false;
-        });
-      });
-    };
-
-    // Progressive loading strategy
-    if ('requestIdleCallback' in window) {
-      requestIdleCallback(loadOlapComponent, { timeout: 2000 });
-    } else {
-      setTimeout(loadOlapComponent, 500);
-    }
-
-    // Fallback: load if user interacts
-    ['click', 'touch', 'scroll', 'keydown'].forEach(event => {
-      document.addEventListener(event, loadOlapComponent, { once: true });
-    });
-  </script>
+  <div class="min-h-screen pt-16">
+    <OlapPage client:only="react" />
+  </div>
 </BaseLayout>

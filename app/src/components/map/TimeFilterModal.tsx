@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { OlapService } from "@/core/services/olapService";
 import { RefreshCw, X } from "lucide-react";
@@ -42,7 +42,15 @@ export default function ModalTime({
   onSelect,
   onClose,
 }: ModalTimeProps) {
-  const { handleSubmit, setValue, watch } = useForm<QueryData>();
+  const { handleSubmit, setValue, watch, reset } = useForm<QueryData>({
+    defaultValues: {
+      tahun: query.tahun || "",
+      semester: query.semester || "",
+      kuartal: query.kuartal || "",
+      bulan: query.bulan || "",
+      minggu: query.minggu || "",
+    },
+  });
   const [dataTahun, setDataTahun] = useState<FormattedDataItem[]>([]);
   const [dataSemester, setDataSemester] = useState<FormattedDataItem[]>([]);
   const [datakuartal, setDatakuartal] = useState<FormattedDataItem[]>([]);
@@ -282,33 +290,29 @@ export default function ModalTime({
     ],
   );
 
+  // Load initial data on mount
   useEffect(() => {
-    getTimeData("tahun");
+    const loadInitialData = async () => {
+      await getTimeData("tahun");
 
-    if (query.tahun) {
-      setValue("tahun", query.tahun);
-    }
-    if (query.semester) {
-      setValue("semester", query.semester);
-    }
-    if (query.kuartal) {
-      setValue("kuartal", query.kuartal);
-    }
-    if (query.bulan) {
-      setValue("bulan", query.bulan);
-    }
-    if (query.minggu) {
-      setValue("minggu", query.minggu);
-    }
-  }, [
-    getTimeData,
-    query.tahun,
-    query.semester,
-    query.kuartal,
-    query.bulan,
-    query.minggu,
-    setValue,
-  ]);
+      // Load dependent data if query values exist
+      if (query.tahun) {
+        await getTimeData("semester");
+      }
+      if (query.semester) {
+        await getTimeData("kuartal");
+      }
+      if (query.kuartal) {
+        await getTimeData("bulan");
+      }
+      if (query.bulan) {
+        await getTimeData("minggu");
+      }
+    };
+
+    loadInitialData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   useEffect(() => {
     if (tahunValue) {
@@ -361,11 +365,13 @@ export default function ModalTime({
 
 
   const resetTimeFilters = () => {
-    setValue("tahun", "");
-    setValue("semester", "");
-    setValue("kuartal", "");
-    setValue("bulan", "");
-    setValue("minggu", "");
+    reset({
+      tahun: "",
+      semester: "",
+      kuartal: "",
+      bulan: "",
+      minggu: "",
+    });
     setTahunError(null);
 
     setDataTahun([]);
@@ -378,10 +384,17 @@ export default function ModalTime({
   };
 
   const onSubmit = (formData: QueryData) => {
-    if (!formData.tahun) {
+    // Check if all fields are empty (clear filter scenario)
+    const allEmpty = !formData.tahun && !formData.semester && !formData.kuartal && !formData.bulan && !formData.minggu;
+
+    // Check if any child field is filled but tahun is empty
+    const hasChildWithoutParent = !formData.tahun && (formData.semester || formData.kuartal || formData.bulan || formData.minggu);
+
+    if (hasChildWithoutParent) {
       setTahunError("Tahun harus dipilih.");
       return;
     }
+
     setTahunError(null);
     const updatedQuery = {
       ...query,
@@ -422,7 +435,7 @@ export default function ModalTime({
           <Select
             value={currentValue || ""}
             onValueChange={(value) => {
-              setValue(type, value);
+              setValue(type, value || "");
               if (type === "tahun") setTahunError(null);
             }}
             disabled={isDisabled}
@@ -445,11 +458,6 @@ export default function ModalTime({
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              {dataList.length > 0 && (
-                <SelectItem value="">
-                  Semua {placeholder.replace("Pilih ", "")}
-                </SelectItem>
-              )}
               {dataList.length > 0 ? (
                 dataList.map((item) => (
                   <SelectItem key={item.value} value={item.value}>
@@ -466,9 +474,63 @@ export default function ModalTime({
           {currentValue && !loading[type] && (
             <button
               type="button"
-              onClick={() => {
-                setValue(type, "");
-                if (type === "tahun") setTahunError(null);
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                // Reset dependent fields
+                if (type === "tahun") {
+                  setTahunError(null);
+                  reset({
+                    tahun: "",
+                    semester: "",
+                    kuartal: "",
+                    bulan: "",
+                    minggu: "",
+                  });
+                  setDataSemester([]);
+                  setDatakuartal([]);
+                  setDataBulan([]);
+                  setDataMinggu([]);
+                } else if (type === "semester") {
+                  reset({
+                    tahun: tahunValue,
+                    semester: "",
+                    kuartal: "",
+                    bulan: "",
+                    minggu: "",
+                  });
+                  setDatakuartal([]);
+                  setDataBulan([]);
+                  setDataMinggu([]);
+                } else if (type === "kuartal") {
+                  reset({
+                    tahun: tahunValue,
+                    semester: semesterValue,
+                    kuartal: "",
+                    bulan: "",
+                    minggu: "",
+                  });
+                  setDataBulan([]);
+                  setDataMinggu([]);
+                } else if (type === "bulan") {
+                  reset({
+                    tahun: tahunValue,
+                    semester: semesterValue,
+                    kuartal: kuartalValue,
+                    bulan: "",
+                    minggu: "",
+                  });
+                  setDataMinggu([]);
+                } else if (type === "minggu") {
+                  reset({
+                    tahun: tahunValue,
+                    semester: semesterValue,
+                    kuartal: kuartalValue,
+                    bulan: bulanValue,
+                    minggu: "",
+                  });
+                }
               }}
               className="p-2 hover:bg-muted rounded-md transition-colors shrink-0"
               aria-label={`Reset ${placeholder.replace("Pilih ", "")}`}

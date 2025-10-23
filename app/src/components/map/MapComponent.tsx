@@ -221,6 +221,10 @@ const MapComponent: React.FC<MapComponentProps> = ({
     fetchAndCacheGeoJson,
   } = useGeoJsonCache();
 
+  // Prevent infinite loop by tracking if initial fetch has been attempted
+  const hasFetchedInitialGeoJson = useRef(false);
+  const fetchedLevels = useRef<Set<string>>(new Set());
+
   const swrRetryConfig = {
     revalidateOnFocus: false,
     errorRetryCount: 3,
@@ -251,9 +255,12 @@ const MapComponent: React.FC<MapComponentProps> = ({
   );
 
   useEffect(() => {
-    if (!geoJsonCacheData) {
+    if (!geoJsonCacheData && !hasFetchedInitialGeoJson.current) {
+      hasFetchedInitialGeoJson.current = true;
       fetchAndCacheGeoJson().catch((error) => {
         console.error("Failed to fetch GeoJSON data:", error);
+        // Reset on error so it can retry
+        hasFetchedInitialGeoJson.current = false;
       });
     }
   }, [geoJsonCacheData, fetchAndCacheGeoJson]);
@@ -272,9 +279,16 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
     const currentLevel = levelMap[drillDownLevel];
 
-    if (geoJsonCacheData && !geoJsonCacheData[currentLevel]) {
+    if (
+      geoJsonCacheData &&
+      !geoJsonCacheData[currentLevel] &&
+      !fetchedLevels.current.has(currentLevel)
+    ) {
+      fetchedLevels.current.add(currentLevel);
       fetchAndCacheGeoJson(currentLevel).catch((error) => {
         console.error(`Failed to fetch ${currentLevel} GeoJSON data:`, error);
+        // Reset on error so it can retry
+        fetchedLevels.current.delete(currentLevel);
       });
     }
   }, [drillDownLevel, geoJsonCacheData, fetchAndCacheGeoJson]);
@@ -656,7 +670,8 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
   const mapStyle = useMemo(
     () => ({
-      minHeight: "600px",
+      height: "100%",
+      width: "100%",
       zIndex: 1,
     }),
     [],
@@ -759,12 +774,27 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
   useEffect(() => {
     if (mapRef.current) {
-      const timer = setTimeout(() => {
-        if (mapRef.current) {
-          mapRef.current.invalidateSize(true);
-        }
-      }, 300);
-      return () => clearTimeout(timer);
+      // Multiple recalculations to ensure proper sizing after layout changes
+      const timers = [
+        setTimeout(() => {
+          if (mapRef.current) {
+            mapRef.current.invalidateSize(true);
+          }
+        }, 100),
+        setTimeout(() => {
+          if (mapRef.current) {
+            mapRef.current.invalidateSize(true);
+          }
+        }, 300),
+        setTimeout(() => {
+          if (mapRef.current) {
+            mapRef.current.invalidateSize(true);
+          }
+        }, 600),
+      ];
+      return () => {
+        timers.forEach((timer) => clearTimeout(timer));
+      };
     }
   }, [
     isFullscreen,
@@ -773,14 +803,13 @@ const MapComponent: React.FC<MapComponentProps> = ({
     showJumlahHotspot,
   ]);
 
-  const loading = isGeoJsonLoading || isHotspotLoading;
+  // More lenient loading condition - only show loading if actively fetching
+  const loading = (isGeoJsonLoading || isHotspotLoading) && !geoData[drillDownLevel];
   const error = hotspotError;
 
   return (
     <div
-      className={`relative ${className} ${
-        isFullscreen ? "fixed inset-0 z-[9999]" : ""
-      }`}
+      className={`${isFullscreen ? "fixed inset-0 z-[9999]" : "relative"} ${className}`}
       style={style}
     >
       <MapControlPanel
@@ -800,16 +829,16 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
       {loading ? (
         <div
-          className="flex flex-col items-center justify-center h-full w-full bg-gray-100 rounded-lg"
+          className="flex flex-col items-center justify-center h-full w-full bg-gray-100 dark:bg-gray-800 rounded-lg"
           style={{ minHeight: "600px" }}
         >
           <RefreshCw
             width="48"
             height="48"
-            className="text-gray-600 mb-4"
+            className="text-gray-600 dark:text-gray-400 mb-4"
             style={{ animation: "spin 1s linear infinite" }}
           />
-          <p className="text-gray-700">Memuat peta...</p>
+          <p className="text-gray-700 dark:text-gray-300">Memuat peta...</p>
         </div>
       ) : error ? (
         <div
@@ -831,26 +860,30 @@ const MapComponent: React.FC<MapComponentProps> = ({
           attributionControl={false}
           zoomControl={false}
         >
-          <TileLayer url="https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png" />
+          <TileLayer
+            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+            subdomains='abcd'
+            maxZoom={20}
+          />
           <MapZoomControls initialCenter={[-2.5, 118]} initialZoom={5} />
 
           {showLokasiHotspot && (
             <CustomAttributionControl
               position="bottomright"
-              attributionText="&copy; OpenStreetMap contributors, Tiles style by Humanitarian OpenStreetMap Team hosted by OpenStreetMap France"
+              attributionText="&copy; OpenStreetMap contributors &copy; CARTO"
               className="attribution-lokasi-hotspot"
             />
           )}
 
-          {showJumlahHotspot && getFilteredGeoFeatures.length === 0 ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-80 z-10">
-              <p className="text-gray-700 text-lg font-semibold">
-                Tidak ada datax
+          {showJumlahHotspot && getFilteredGeoFeatures.length === 0 && !isHotspotLoading && geoData[drillDownLevel] ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800 bg-opacity-80 dark:bg-opacity-80 z-10">
+              <p className="text-gray-700 dark:text-gray-300 text-lg font-semibold">
+                Tidak ada data
               </p>
             </div>
           ) : (
-            showJumlahHotspot &&
-            geoData[drillDownLevel] && (
+            showJumlahHotspot && geoData[drillDownLevel] && (
               <GeoJSON
                 ref={geoJsonRef}
                 key={`geojson-${drillDownLevel}-${JSON.stringify(olapData?.query || {})}-${getHotspotData}`}
@@ -909,8 +942,8 @@ const MapComponent: React.FC<MapComponentProps> = ({
           )}
 
           {showLokasiHotspot && filteredHotspots.length === 0 ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-100 bg-opacity-80 z-10">
-              <p className="text-gray-700 text-lg font-semibold">
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800 bg-opacity-80 dark:bg-opacity-80 z-10">
+              <p className="text-gray-700 dark:text-gray-300 text-lg font-semibold">
                 Tidak ada data
               </p>
             </div>
@@ -964,13 +997,13 @@ const MapComponent: React.FC<MapComponentProps> = ({
                           style={{ maxWidth: 320, minWidth: 280 }}
                         >
                           <div className="p-2">
-                            <div className="flex items-center gap-2 mb-3 pb-2 border-b">
-                              <div className="w-3 h-3 bg-black rounded-full"></div>
-                              <h4 className="font-semibold text-sm text-gray-800">
+                            <div className="flex items-center gap-2 mb-3 pb-2 border-b dark:border-gray-600">
+                              <div className="w-3 h-3 bg-black dark:bg-white rounded-full"></div>
+                              <h4 className="font-semibold text-sm text-gray-800 dark:text-gray-200">
                                 Detail Hotspot
                               </h4>
                               <div className="ml-auto">
-                                <span className="text-xs text-gray-500 mr-1">
+                                <span className="text-xs text-gray-500 dark:text-gray-400 mr-1">
                                   Confidence:
                                 </span>
                                 <span
@@ -990,18 +1023,18 @@ const MapComponent: React.FC<MapComponentProps> = ({
                             <div className="space-y-2 text-sm">
                               <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                  <span className="text-gray-500 block">
+                                  <span className="text-gray-500 dark:text-gray-400 block">
                                     Satelit
                                   </span>
-                                  <span className="font-medium">
+                                  <span className="font-medium dark:text-gray-200">
                                     {feature.properties?.satellite || "-"}
                                   </span>
                                 </div>
                                 <div>
-                                  <span className="text-gray-600 block">
+                                  <span className="text-gray-600 dark:text-gray-400 block">
                                     Tanggal
                                   </span>
-                                  <span className="font-medium">
+                                  <span className="font-medium dark:text-gray-200">
                                     {new Date(date).toLocaleDateString(
                                       "id-ID",
                                       {
@@ -1017,13 +1050,13 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
                               <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                  <span className="text-gray-500 block">
+                                  <span className="text-gray-500 dark:text-gray-400 block">
                                     Waktu
                                   </span>
-                                  <span className="font-medium">{time}</span>
+                                  <span className="font-medium dark:text-gray-200">{time}</span>
                                 </div>
                                 <div>
-                                  <span className="text-gray-500 block">
+                                  <span className="text-gray-500 dark:text-gray-400 block">
                                     Koordinat
                                   </span>
                                   <a
@@ -1040,51 +1073,51 @@ const MapComponent: React.FC<MapComponentProps> = ({
                             </div>
 
                             {/* Detail Lokasi */}
-                            <div className="mt-3 pt-3 border-t border-gray-200">
-                              <h4 className="font-bold text-gray-700 mb-2 flex items-center">
-                                <Loader2 className="text-black mr-2" />
+                            <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                              <h4 className="font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+                                <Loader2 className="text-black dark:text-white mr-2" />
                                 Lokasi
                               </h4>
                               <ul className="space-y-1.5 text-sm">
                                 <li className="flex justify-between">
-                                  <span className="text-gray-500">
+                                  <span className="text-gray-500 dark:text-gray-400">
                                     Desa/Kel:
                                   </span>
-                                  <strong className="text-gray-800 text-right font-medium">
+                                  <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
                                     {feature.properties?.location?.desa ||
                                       "N/A"}
                                   </strong>
                                 </li>
                                 <li className="flex justify-between">
-                                  <span className="text-gray-500">
+                                  <span className="text-gray-500 dark:text-gray-400">
                                     Kecamatan:
                                   </span>
-                                  <strong className="text-gray-800 text-right font-medium">
+                                  <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
                                     {feature.properties?.location?.kecamatan ||
                                       "N/A"}
                                   </strong>
                                 </li>
                                 <li className="flex justify-between">
-                                  <span className="text-gray-500">
+                                  <span className="text-gray-500 dark:text-gray-400">
                                     Kab/Kota:
                                   </span>
-                                  <strong className="text-gray-800 text-right font-medium">
+                                  <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
                                     {feature.properties?.location?.kab_kota ||
                                       "N/A"}
                                   </strong>
                                 </li>
                                 <li className="flex justify-between">
-                                  <span className="text-gray-500">
+                                  <span className="text-gray-500 dark:text-gray-400">
                                     Provinsi:
                                   </span>
-                                  <strong className="text-gray-800 text-right font-medium">
+                                  <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
                                     {feature.properties?.location?.provinsi ||
                                       "N/A"}
                                   </strong>
                                 </li>
                                 <li className="flex justify-between">
-                                  <span className="text-gray-500">Pulau:</span>
-                                  <strong className="text-gray-800 text-right font-medium">
+                                  <span className="text-gray-500 dark:text-gray-400">Pulau:</span>
+                                  <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
                                     {feature.properties?.location?.pulau ||
                                       "N/A"}
                                   </strong>

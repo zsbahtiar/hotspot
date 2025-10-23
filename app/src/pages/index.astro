@@ -1,87 +1,104 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import NavbarWithTheme from '@/components/NavbarWithTheme';
-import Footer from '@/components/layout/Footer';
-import OfflineBanner from '@/components/layout/OfflineBanner';
+import StaticNavbar from '@/components/layout/StaticNavbar.astro';
+import StaticFooter from '@/components/layout/StaticFooter.astro';
+import StaticMitigationSection from '@/components/layout/StaticMitigationSection.astro';
+import DashboardWithTheme from '@/components/DashboardWithTheme';
 ---
 
 <BaseLayout
   title="OLAP Hotspot - Sistem Pemantauan Titik Panas Karhutla"
   description="Sistem Pemantauan Hotspot Karhutla bersumber dari SIPONGI+ menggunakan teknologi Spatial Online Analytical Processing untuk menganalisis titik panas karhutla di Indonesia."
 >
-  <link rel="preconnect" href="//sipongi.menlhk.go.id" crossorigin />
-  <link rel="dns-prefetch" href="//sipongi.menlhk.go.id" />
-  <link rel="preload" href="/assets/ipb.webp" as="image" fetchpriority="high" />
+  <link rel="preload" href="/assets/kebakaran2.webp" as="image" fetchpriority="high" />
 
-  <OfflineBanner client:idle />
-  <NavbarWithTheme client:load />
+  <StaticNavbar />
 
-  <div id="main-container">
-    <div class="bg-white min-h-screen flex items-center justify-center">
-      <div class="text-center">
-        <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mb-4"></div>
+  <!-- Hero Section - Static HTML (No React Needed) -->
+  <section class="relative w-full min-h-screen flex items-center justify-center">
+    <div class="absolute inset-0">
+      <img
+        src="/assets/kebakaran2.webp"
+        alt="Kebakaran Hutan"
+        class="w-full h-full object-cover object-center"
+        loading="eager"
+        fetchpriority="high"
+      />
+      <div class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent"></div>
+      <div class="absolute inset-0 bg-black/20"></div>
+    </div>
+
+    <div class="relative z-10 max-w-4xl mx-auto px-6 py-16 text-center">
+      <h1 class="text-5xl sm:text-6xl font-bold mb-4 text-white drop-shadow-2xl">
+        <span>Sistem Pemantauan</span>
+        <br />
+        <span>Hotspot Karhutla</span>
+      </h1>
+
+      <p class="text-lg sm:text-xl text-white/95 mb-8 max-w-2xl mx-auto drop-shadow-lg">
+        Situs penyedia titik panas karhutla bersumber dari NASA FIRMS
+        menggunakan teknologi Spatial Online Analytical Processing yang
+        mempermudah pengguna dalam menganalisis titik panas karhutla pada
+        suatu wilayah melalui visualisasi
+      </p>
+
+      <div class="flex flex-col sm:flex-row gap-6 justify-center mb-16">
+        <a
+          href="/map"
+          class="inline-flex items-center justify-center px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-lg shadow-lg hover:bg-white/20 hover:shadow-xl transition-all duration-200 border border-white/20"
+        >
+          <svg
+            class="w-5 h-5 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
+            />
+          </svg>
+          Lihat Peta
+        </a>
+        <a
+          href="/data"
+          class="inline-flex items-center justify-center px-8 py-4 border-2 border-white/60 text-white font-semibold rounded-lg hover:bg-white hover:text-gray-900 transition-all duration-200"
+        >
+          <svg
+            class="w-5 h-5 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 17v1a1 1 0 001 1h4a1 1 0 001-1v-1m3-2V8a2 2 0 00-2-2H8a2 2 0 00-2 2v6m10 0v1a1 1 0 01-1 1H9a1 1 0 01-1-1v-1m4-4V4a1 1 0 00-1-1h-2a1 1 0 00-1 1v4"
+            />
+          </svg>
+          Lihat Data
+        </a>
       </div>
     </div>
-  </div>
+  </section>
 
-  <footer>
-    <Footer client:idle />
-  </footer>
+  <!-- Dashboard Content - React Component (Loaded on idle) -->
+  <DashboardWithTheme client:idle />
+
+  <StaticFooter />
 
   <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(() => {});
-      });
-    }
-
+    // Use requestIdleCallback for non-critical tasks
     const requestIdleCallback = window.requestIdleCallback || ((cb) => setTimeout(cb, 1));
-    let rootInstance = null;
 
-    const loadComponent = () => {
-      const container = document.getElementById('main-container');
-      if (!container || rootInstance) return;
-
-      const loadApp = () => {
-        Promise.all([
-          import('react'),
-          import('react-dom/client')
-        ]).then(([React, ReactDOM]) => {
-          import('@/components/DashboardWithTheme.tsx').then(module => {
-            const DashboardWithTheme = module.default;
-            if (!rootInstance) {
-              rootInstance = ReactDOM.createRoot(container);
-              rootInstance.render(React.createElement(DashboardWithTheme));
-            }
-          }).catch(() => {
-            container.innerHTML = `
-              <div class="bg-white min-h-screen flex items-center justify-center">
-                <div class="text-center p-8">
-                  <p class="text-red-600 font-medium text-lg">Gagal memuat</p>
-                  <p class="text-gray-600 mt-2">Silakan refresh halaman</p>
-                </div>
-              </div>
-            `;
-          });
-        });
-      };
-
-      if ('connection' in navigator) {
-        const conn = navigator.connection;
-        if (conn.saveData || conn.effectiveType === '2g' || conn.effectiveType === 'slow-2g') {
-          requestIdleCallback(loadApp, { timeout: 5000 });
-        } else {
-          requestIdleCallback(loadApp);
-        }
-      } else {
-        requestIdleCallback(loadApp);
+    // Defer Service Worker registration to idle time
+    requestIdleCallback(() => {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
       }
-    };
-
-    if (document.readyState === 'complete') {
-      loadComponent();
-    } else {
-      window.addEventListener('load', loadComponent, { once: true });
-    }
+    });
   </script>
 </BaseLayout>

@@ -43,7 +43,7 @@ export default function MapZoomControls({
       className="leaflet-top leaflet-left"
       style={{
         position: "absolute",
-        top: "10px",
+        top: "120px",
         left: "10px",
         zIndex: 1000,
       }}

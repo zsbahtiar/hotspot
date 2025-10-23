@@ -1,4 +1,7 @@
 import { formatNumber } from "@/core/utils/formatters";
+import { useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 
 interface MapLegendProps {
   showJumlahHotspot: boolean;
@@ -14,15 +17,45 @@ export default function MapLegend({
   threshold1,
   threshold2,
 }: MapLegendProps) {
+  const [isCollapsedJumlah, setIsCollapsedJumlah] = useState(false);
+  const [isCollapsedLokasi, setIsCollapsedLokasi] = useState(false);
+
   return (
     <>
       {showJumlahHotspot && (
         <div
-          className="legend-box absolute bottom-80 left-2 z-[1200] bg-card p-2 rounded-lg shadow-md max-w-[200px] text-xs text-card-foreground
-        md:bottom-40 md:left-5 md:z-[1000] md:p-3 md:max-w-none md:text-xs"
+          className={`legend-box absolute bottom-5 left-2 z-[1200] bg-card rounded-lg shadow-md text-xs text-card-foreground transition-all duration-300
+        md:bottom-40 md:left-5 md:z-[1000] md:text-xs ${
+          isCollapsedJumlah ? 'w-10 h-10' : 'w-[200px] md:w-auto'
+        }`}
         >
-          <strong>Persebaran Jumlah Hotspot</strong>
-          <br />
+          {isCollapsedJumlah ? (
+            <button
+              onClick={() => setIsCollapsedJumlah(false)}
+              className="w-full h-full flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Expand legend"
+            >
+              <FontAwesomeIcon
+                icon={faChevronRight}
+                className="w-3 h-3"
+              />
+            </button>
+          ) : (
+            <>
+              <div className="flex items-center justify-between p-2 md:p-3 border-b border-border">
+                <strong>Persebaran Jumlah Hotspot</strong>
+                <button
+                  onClick={() => setIsCollapsedJumlah(true)}
+                  className="ml-2 text-muted-foreground hover:text-foreground transition-colors p-1"
+                  aria-label="Collapse legend"
+                >
+                  <FontAwesomeIcon
+                    icon={faChevronLeft}
+                    className="w-3 h-3"
+                  />
+                </button>
+              </div>
+              <div className="p-2 md:p-3 pt-2 space-y-1">
           <div>
             <span
               style={{
@@ -63,13 +96,43 @@ export default function MapLegend({
             ></span>
             Tinggi (&gt; {formatNumber(Math.round(threshold2))})
           </div>
+              </div>
+            </>
+          )}
         </div>
       )}
 
       {showLokasiHotspot && (
-        <div className="legend-box absolute bottom-20 left-5 z-[1000] bg-card p-3 rounded-lg shadow-md text-card-foreground">
-          <strong>Level Confidence Hotspot</strong>
-          <br />
+        <div className={`legend-box absolute bottom-5 left-5 z-[1000] bg-card rounded-lg shadow-md text-card-foreground transition-all duration-300 ${
+          isCollapsedLokasi ? 'w-10 h-10' : 'w-auto'
+        }`}>
+          {isCollapsedLokasi ? (
+            <button
+              onClick={() => setIsCollapsedLokasi(false)}
+              className="w-full h-full flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Expand legend"
+            >
+              <FontAwesomeIcon
+                icon={faChevronRight}
+                className="w-3 h-3"
+              />
+            </button>
+          ) : (
+            <>
+              <div className="flex items-center justify-between p-3 border-b border-border">
+                <strong>Level Confidence Hotspot</strong>
+                <button
+                  onClick={() => setIsCollapsedLokasi(true)}
+                  className="ml-2 text-muted-foreground hover:text-foreground transition-colors p-1"
+                  aria-label="Collapse legend"
+                >
+                  <FontAwesomeIcon
+                    icon={faChevronLeft}
+                    className="w-3 h-3"
+                  />
+                </button>
+              </div>
+              <div className="p-3 pt-2 space-y-1">
           <div className="mt-2 text-xs text-muted-foreground">
             <i>
               Klik dan zoom in marker untuk melihat titik hotspot individual
@@ -115,6 +178,9 @@ export default function MapLegend({
             ></span>
             Low
           </div>
+              </div>
+            </>
+          )}
         </div>
       )}
     </>
