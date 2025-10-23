@@ -54,7 +54,7 @@ export default function MapLegend({
                 </button>
               </div>
               <div className="p-2 md:p-3 pt-2 space-y-1">
-                <div>
+                <div className="flex items-center">
                   <span
                     style={{
                       background: "#FFCDD2",
@@ -65,9 +65,9 @@ export default function MapLegend({
                       borderRadius: 4,
                     }}
                   ></span>
-                  Rendah (&lt; {formatNumber(Math.round(threshold1))})
+                  <span>Rendah (&lt; {formatNumber(Math.round(threshold1))})</span>
                 </div>
-                <div>
+                <div className="flex items-center">
                   <span
                     style={{
                       background: "#EF5350",
@@ -78,10 +78,10 @@ export default function MapLegend({
                       borderRadius: 4,
                     }}
                   ></span>
-                  Sedang ({formatNumber(Math.round(threshold1))} -{" "}
-                  {formatNumber(Math.round(threshold2))})
+                  <span>Sedang ({formatNumber(Math.round(threshold1))} -{" "}
+                  {formatNumber(Math.round(threshold2))})</span>
                 </div>
-                <div>
+                <div className="flex items-center">
                   <span
                     style={{
                       background: "#B71C1C",
@@ -92,7 +92,7 @@ export default function MapLegend({
                       borderRadius: 4,
                     }}
                   ></span>
-                  Tinggi (&gt; {formatNumber(Math.round(threshold2))})
+                  <span>Tinggi (&gt; {formatNumber(Math.round(threshold2))})</span>
                 </div>
               </div>
             </>
@@ -134,7 +134,7 @@ export default function MapLegend({
                     individual
                   </i>
                 </div>
-                <div>
+                <div className="flex items-center">
                   <span
                     style={{
                       background: "red",
@@ -145,9 +145,9 @@ export default function MapLegend({
                       borderRadius: 4,
                     }}
                   ></span>
-                  High
+                  <span>High</span>
                 </div>
-                <div>
+                <div className="flex items-center">
                   <span
                     style={{
                       background: "yellow",
@@ -159,9 +159,9 @@ export default function MapLegend({
                       border: "1px solid #aaa",
                     }}
                   ></span>
-                  Medium
+                  <span>Medium</span>
                 </div>
-                <div>
+                <div className="flex items-center">
                   <span
                     style={{
                       background: "green",
@@ -172,7 +172,7 @@ export default function MapLegend({
                       borderRadius: 4,
                     }}
                   ></span>
-                  Low
+                  <span>Low</span>
                 </div>
               </div>
             </>
