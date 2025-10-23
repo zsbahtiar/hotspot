@@ -92,10 +92,20 @@ export function DateRangePicker({
 }: DateRangePickerProps) {
   const [open, setOpen] = React.useState(false);
   const [tempRange, setTempRange] = React.useState<DateRange | undefined>(value);
+  const [isMobile, setIsMobile] = React.useState(false);
 
   React.useEffect(() => {
     setTempRange(value);
   }, [value]);
+
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const handlePresetClick = (preset: PresetOption) => {
     const range = preset.getValue();
@@ -135,17 +145,20 @@ export function DateRangePicker({
             {formatDateRange(value)}
           </Button>
         </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
-        <div className="flex">
+      <PopoverContent className={cn("w-auto p-0", isMobile && "max-w-[calc(100vw-2rem)]")} align="start">
+        <div className={cn("flex", isMobile ? "flex-col" : "flex-row")}>
           {/* Presets Sidebar */}
-          <div className="flex flex-col gap-1 border-r p-3 min-w-[140px]">
+          <div className={cn(
+            "flex gap-1 p-3",
+            isMobile ? "flex-row flex-wrap border-b" : "flex-col border-r min-w-[140px]"
+          )}>
             {presetOptions.map((preset) => (
               <Button
                 key={preset.label}
                 variant="ghost"
                 size="sm"
                 onClick={() => handlePresetClick(preset)}
-                className="justify-start text-sm font-normal"
+                className={cn("text-sm font-normal", isMobile ? "text-xs px-2" : "justify-start")}
               >
                 {preset.label}
               </Button>
@@ -158,19 +171,22 @@ export function DateRangePicker({
               mode="range"
               selected={tempRange}
               onSelect={setTempRange as any}
-              numberOfMonths={2}
+              numberOfMonths={isMobile ? 1 : 2}
               defaultMonth={tempRange?.from}
             />
 
             {/* Date Inputs and Action Buttons */}
-            <div className="flex items-center justify-between gap-2 border-t pt-3 mt-3">
-              <div className="flex items-center gap-2 text-sm">
+            <div className={cn(
+              "flex gap-2 border-t pt-3 mt-3",
+              isMobile ? "flex-col" : "items-center justify-between"
+            )}>
+              <div className={cn("flex items-center gap-2 text-sm", isMobile && "justify-center")}>
                 <input
                   type="text"
                   readOnly
                   value={tempRange?.from ? format(tempRange.from, "MMM dd, yyyy") : ""}
                   placeholder="Start date"
-                  className="w-32 px-2 py-1 border rounded text-center bg-background"
+                  className={cn("px-2 py-1 border rounded text-center bg-background", isMobile ? "w-28 text-xs" : "w-32")}
                 />
                 <span className="text-muted-foreground">-</span>
                 <input
@@ -178,10 +194,10 @@ export function DateRangePicker({
                   readOnly
                   value={tempRange?.to ? format(tempRange.to, "MMM dd, yyyy") : ""}
                   placeholder="End date"
-                  className="w-32 px-2 py-1 border rounded text-center bg-background"
+                  className={cn("px-2 py-1 border rounded text-center bg-background", isMobile ? "w-28 text-xs" : "w-32")}
                 />
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 justify-end">
                 <Button variant="outline" size="sm" onClick={handleCancel}>
                   Cancel
                 </Button>
