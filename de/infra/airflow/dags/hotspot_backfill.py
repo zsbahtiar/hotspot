@@ -74,9 +74,9 @@ def process_month_data(**context):
         query = """
         SELECT month, COUNT(*) as available_records
         FROM hotspot.backfill_state
-        WHERE status = 'pending'
+        WHERE status = 'pending' AND record_count <= 100000
         GROUP BY month
-        ORDER BY month ASC
+        ORDER BY SUM(record_count) ASC
         LIMIT 1
         """
 
@@ -266,8 +266,6 @@ def validate_monthly_processing(**context):
         return False
 
     return True
-
-
 
 
 process_month_task = PythonOperator(
