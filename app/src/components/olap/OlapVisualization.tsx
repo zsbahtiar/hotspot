@@ -261,7 +261,7 @@ const OlapComponent = () => {
     return false;
   });
   const [mapBounds, setMapBounds] = useState<L.LatLngBoundsExpression | null>(
-    null,
+    L.latLngBounds(L.latLng(-11, 94), L.latLng(6, 141)),
   );
   const [selectedLocation, setSelectedLocation] = useState<LocationData>();
   const [drillDownLevel, setDrillDownLevel] = useState<DrillDownLevel>("pulau");
@@ -1692,9 +1692,7 @@ const OlapComponent = () => {
                 }}
                 filters={memoizedFilters}
                 defaultZoom={
-                  isMobile
-                    ? 13
-                    : (activeMapLayer === "hotspot-locations" ? 5 : 4)
+                  isMobile ? 13 : activeMapLayer === "hotspot-locations" ? 5 : 4
                 }
               />
             </div>

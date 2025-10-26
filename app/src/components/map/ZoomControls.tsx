@@ -4,15 +4,11 @@ import { useEffect, useRef } from "react";
 import L from "leaflet";
 
 interface MapZoomControlsProps {
-  initialCenter?: L.LatLngExpression;
-  initialZoom?: number;
   isMobile?: boolean;
   isFullscreen?: boolean;
 }
 
 export default function MapZoomControls({
-  initialCenter = [-2.5, 118],
-  initialZoom = 5,
   isMobile = false,
   isFullscreen = false,
 }: MapZoomControlsProps) {
@@ -35,9 +31,12 @@ export default function MapZoomControls({
   };
 
   const handleReset = () => {
-    map.setView(initialCenter, initialZoom, {
+    const indonesiaBounds = L.latLngBounds(L.latLng(-11, 94), L.latLng(6, 141));
+
+    map.fitBounds(indonesiaBounds, {
       animate: true,
-      duration: 0.5,
+      duration: 0.8,
+      padding: isMobile ? [5, 5] : [10, 10],
     });
   };
 

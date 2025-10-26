@@ -1,36 +1,16 @@
 import { useState, useCallback } from "react";
 import { decompressGzip } from "@/core/utils/formatters";
+import type { FeatureCollection, Feature } from "geojson";
 
-interface GeoJsonProperty {
-  KDPPUM?: string;
-  WADMPR?: string;
-  WADMKK?: string;
-  WADMKC?: string;
-  WADMKD?: string;
-  PULAU?: string;
-  PROVINSI?: string;
-  KAB_KOTA?: string;
-  KECAMATAN?: string;
-  DESA_KELUR?: string;
-}
-
-interface GeoJsonFeature extends GeoJSON.Feature {
-  type: "Feature";
-  properties: GeoJsonProperty;
-  geometry: GeoJSON.MultiPolygon;
-}
-
-interface GeoJsonFeatureCollection extends GeoJSON.FeatureCollection {
-  type: "FeatureCollection";
-  features: GeoJsonFeature[];
-}
+type GeoJsonFeature = Feature;
+type GeoJsonFeatureCollection = FeatureCollection;
 
 export interface CachedGeoJsonData {
-  island: GeoJsonFeatureCollection;
-  province: GeoJsonFeatureCollection;
-  city: GeoJsonFeatureCollection;
-  district: GeoJsonFeatureCollection;
-  subdistrict: GeoJsonFeatureCollection;
+  island: GeoJsonFeatureCollection | null;
+  province: GeoJsonFeatureCollection | null;
+  city: GeoJsonFeatureCollection | null;
+  district: GeoJsonFeatureCollection | null;
+  subdistrict: GeoJsonFeatureCollection | null;
   timestamp: number;
 }
 
@@ -232,7 +212,7 @@ export const useGeoJsonCache = () => {
     return null;
   };
 
-  const saveToCache = async (data: GeoJSON.FeatureCollection[]) => {
+  const saveToCache = async (data: GeoJsonFeatureCollection[]) => {
     try {
       const cacheData: CachedGeoJsonData = {
         island: data[0],
@@ -263,7 +243,7 @@ export const useGeoJsonCache = () => {
 
   const saveSingleToCache = async (
     level: keyof Omit<CachedGeoJsonData, "timestamp">,
-    data: GeoJSON.FeatureCollection,
+    data: GeoJsonFeatureCollection,
   ) => {
     try {
       const existing =
@@ -294,7 +274,7 @@ export const useGeoJsonCache = () => {
   const fetchSingleGeoJson = useCallback(
     async (
       level: keyof Omit<CachedGeoJsonData, "timestamp">,
-    ): Promise<GeoJSON.FeatureCollection> => {
+    ): Promise<GeoJsonFeatureCollection> => {
       try {
         // Use production server directly for both development and production
         const urls: Record<string, string> = {
@@ -338,9 +318,19 @@ export const useGeoJsonCache = () => {
       setIsLoading(true);
       try {
         const cached = await getCachedData();
-        if (cached && (!level || cached[level])) {
-          setCachedData(cached);
-          return cached;
+
+        if (cached) {
+          const cacheAge = Date.now() - cached.timestamp;
+
+          if (!level) {
+            setCachedData(cached);
+            return cached;
+          }
+
+          if (cached[level] !== null && cached[level] !== undefined) {
+            setCachedData(cached);
+            return cached;
+          }
         }
 
         // Load all data if no specific level requested

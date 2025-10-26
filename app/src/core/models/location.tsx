@@ -34,18 +34,18 @@ export interface GeoData {
   desa: FeatureCollection | null;
 }
 
-export interface CustomFeature extends GeoJSON.Feature {
+export interface CustomFeature {
+  type: "Feature";
+  geometry?: GeoJSON.Geometry;
   __layer?: Layer;
-  properties: {
+  properties?: {
     PULAU?: string;
     WADMPR?: string;
     WADMKK?: string;
     WADMKC?: string;
     NAMOBJ?: string;
-    [key: string]: string | undefined;
+    [key: string]: string | undefined | null;
   };
 }
 
-export interface CustomFeatureCollection extends FeatureCollection {
-  features: CustomFeature[];
-}
+export type CustomFeatureCollection = FeatureCollection;

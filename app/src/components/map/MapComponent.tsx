@@ -16,16 +16,12 @@ import L from "leaflet";
 import type { Map, GeoJSON as LeafletGeoJSON, Layer } from "leaflet";
 import { RefreshCw, X, Loader2 } from "lucide-react";
 import type { DrillDownLevel } from "@/core/models/location";
-import type { FeatureCollection } from "geojson";
+import type { FeatureCollection, Feature } from "geojson";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import MarkerClusterGroup from "react-leaflet-markercluster";
 import type { MapComponentProps, MarkerClusterType } from "@/core/models/map";
-import type {
-  CustomFeature,
-  CustomFeatureCollection,
-  GeoData,
-} from "@/core/models/location";
+import type { CustomFeature, GeoData } from "@/core/models/location";
 import type { HotspotFeatureGeo } from "@/core/models/hotspot";
 import { formatNumber, extractTime } from "@/core/utils/formatters";
 import MapControlPanel from "@/components/map/MapControls";
@@ -119,25 +115,61 @@ const customMarker = (confidence: string) => {
   });
 };
 
-const getFeatureName = (
+function getFeatureName(
   feature: CustomFeature,
   level: DrillDownLevel,
-): string | undefined => {
+): string | undefined;
+function getFeatureName(
+  feature: Feature,
+  level: DrillDownLevel,
+): string | undefined;
+function getFeatureName(
+  feature: CustomFeature | Feature,
+  level: DrillDownLevel,
+): string | undefined {
+  const props = feature.properties;
+  if (!props) return undefined;
+
+  if (
+    "PULAU" in props ||
+    "WADMPR" in props ||
+    "WADMKK" in props ||
+    "WADMKC" in props ||
+    "NAMOBJ" in props
+  ) {
+    const customProps = props as CustomFeature["properties"];
+    switch (level) {
+      case "pulau":
+        return customProps?.PULAU;
+      case "provinsi":
+        return customProps?.WADMPR;
+      case "kota":
+        return customProps?.WADMKK;
+      case "kecamatan":
+        return customProps?.WADMKC;
+      case "desa":
+        return customProps?.NAMOBJ;
+      default:
+        return undefined;
+    }
+  }
+
+  const genericProps = props as Record<string, unknown>;
   switch (level) {
     case "pulau":
-      return feature.properties?.PULAU;
+      return genericProps.PULAU?.toString();
     case "provinsi":
-      return feature.properties?.WADMPR;
+      return genericProps.WADMPR?.toString();
     case "kota":
-      return feature.properties?.WADMKK;
+      return genericProps.WADMKK?.toString();
     case "kecamatan":
-      return feature.properties?.WADMKC;
+      return genericProps.WADMKC?.toString();
     case "desa":
-      return feature.properties?.NAMOBJ;
+      return genericProps.NAMOBJ?.toString();
     default:
       return undefined;
   }
-};
+}
 
 function normalizeRegionName(name: string): string {
   if (!name) return "";
@@ -174,10 +206,10 @@ const getParentFieldAndValue = (
 };
 
 function filterGeoJsonFeatures(
-  features: CustomFeature[],
+  features: Feature[],
   drillDownLevel: DrillDownLevel,
   olapData?: MapComponentProps["olapData"],
-): CustomFeature[] {
+): Feature[] {
   if (drillDownLevel === "pulau" || !olapData?.query) return features;
   const parent = getParentFieldAndValue(drillDownLevel, olapData);
   if (!parent || !parent.value) {
@@ -186,7 +218,7 @@ function filterGeoJsonFeatures(
   const { field, value } = parent;
   const parentVal = value.toUpperCase().trim();
   const filtered = features.filter((f) => {
-    const geoVal = f.properties[field]?.toUpperCase().trim() ?? "";
+    const geoVal = f.properties?.[field]?.toString().toUpperCase().trim() ?? "";
     const matches = geoVal === parentVal;
     return matches;
   });
@@ -215,6 +247,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
   const [selectedDate, setSelectedDate] = useState(
     () => new Date().toISOString().split("T")[0],
   );
+  const [loadingLevel, setLoadingLevel] = useState<string | null>(null);
 
   const {
     cachedData: geoJsonCacheData,
@@ -222,7 +255,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
     fetchAndCacheGeoJson,
   } = useGeoJsonCache();
 
-  // Prevent infinite loop by tracking if initial fetch has been attempted
   const hasFetchedInitialGeoJson = useRef(false);
   const fetchedLevels = useRef<Set<string>>(new Set());
 
@@ -256,15 +288,14 @@ const MapComponent: React.FC<MapComponentProps> = ({
   );
 
   useEffect(() => {
-    if (!geoJsonCacheData && !hasFetchedInitialGeoJson.current) {
+    if (!geoJsonCacheData?.island && !hasFetchedInitialGeoJson.current) {
       hasFetchedInitialGeoJson.current = true;
-      fetchAndCacheGeoJson().catch((error) => {
-        console.error("Failed to fetch GeoJSON data:", error);
-        // Reset on error so it can retry
+      fetchAndCacheGeoJson("island").catch((error) => {
+        console.error("Failed to fetch initial GeoJSON data:", error);
         hasFetchedInitialGeoJson.current = false;
       });
     }
-  }, [geoJsonCacheData, fetchAndCacheGeoJson]);
+  }, [geoJsonCacheData?.island, fetchAndCacheGeoJson]);
 
   useEffect(() => {
     const levelMap: Record<
@@ -286,11 +317,23 @@ const MapComponent: React.FC<MapComponentProps> = ({
       !fetchedLevels.current.has(currentLevel)
     ) {
       fetchedLevels.current.add(currentLevel);
-      fetchAndCacheGeoJson(currentLevel).catch((error) => {
-        console.error(`Failed to fetch ${currentLevel} GeoJSON data:`, error);
-        // Reset on error so it can retry
-        fetchedLevels.current.delete(currentLevel);
-      });
+      setLoadingLevel(currentLevel);
+
+      const levelNames = {
+        province: "provinsi",
+        city: "kabupaten/kota",
+        district: "kecamatan",
+        subdistrict: "desa/kelurahan",
+      };
+
+      fetchAndCacheGeoJson(currentLevel)
+        .catch((error) => {
+          console.error(`Failed to fetch ${currentLevel} GeoJSON data:`, error);
+          fetchedLevels.current.delete(currentLevel);
+        })
+        .finally(() => {
+          setLoadingLevel(null);
+        });
     }
   }, [drillDownLevel, geoJsonCacheData, fetchAndCacheGeoJson]);
 
@@ -558,8 +601,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
   const getFilteredGeoFeatures = useMemo(() => {
     if (!geoData[drillDownLevel]) return [];
-    const features =
-      (geoData[drillDownLevel] as CustomFeatureCollection)?.features ?? [];
+    const features = geoData[drillDownLevel]?.features ?? [];
     let filtered = filterGeoJsonFeatures(features, drillDownLevel, olapData);
 
     if (
@@ -747,8 +789,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
       const currentName = getCurrentFeatureName();
 
       if (currentName) {
-        const features =
-          (geoData[drillDownLevel] as CustomFeatureCollection)?.features || [];
+        const features = geoData[drillDownLevel]?.features || [];
         const selectedFeature = features.find((feature) => {
           return getFeatureName(feature, drillDownLevel) === currentName;
         });
@@ -840,7 +881,27 @@ const MapComponent: React.FC<MapComponentProps> = ({
             className="text-gray-600 dark:text-gray-400 mb-4"
             style={{ animation: "spin 1s linear infinite" }}
           />
-          <p className="text-gray-700 dark:text-gray-300">Memuat peta...</p>
+          <p className="text-gray-700 dark:text-gray-300 text-center">
+            Memuat peta Indonesia...
+            <br />
+            <span className="text-sm text-gray-500">
+              {loadingLevel
+                ? `Mengunduh batas ${
+                    loadingLevel === "province"
+                      ? "provinsi"
+                      : loadingLevel === "city"
+                        ? "kabupaten/kota"
+                        : loadingLevel === "district"
+                          ? "kecamatan"
+                          : loadingLevel === "subdistrict"
+                            ? "desa/kelurahan"
+                            : loadingLevel
+                  }...`
+                : isGeoJsonLoading
+                  ? "Mengunduh batas wilayah..."
+                  : "Menginisialisasi peta..."}
+            </span>
+          </p>
         </div>
       ) : error ? (
         <div
@@ -853,9 +914,9 @@ const MapComponent: React.FC<MapComponentProps> = ({
         </div>
       ) : (
         <MapContainer
-          bounds={bounds}
-          center={[-2.5, 118]}
-          zoom={defaultZoom}
+          bounds={bounds || undefined}
+          center={bounds ? undefined : [-2.5, 118]}
+          zoom={bounds ? undefined : defaultZoom}
           className="h-full w-full rounded-lg"
           style={mapStyle}
           ref={mapRef}
@@ -867,13 +928,13 @@ const MapComponent: React.FC<MapComponentProps> = ({
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
             subdomains="abcd"
             maxZoom={20}
+            minZoom={3}
+            keepBuffer={2}
+            updateWhenZooming={false}
+            updateWhenIdle={true}
+            tileSize={256}
           />
-          <MapZoomControls
-            initialCenter={[-2.5, 118]}
-            initialZoom={defaultZoom}
-            isMobile={isMobile}
-            isFullscreen={isFullscreen}
-          />
+          <MapZoomControls isMobile={isMobile} isFullscreen={isFullscreen} />
 
           {showLokasiHotspot && (
             <CustomAttributionControl
