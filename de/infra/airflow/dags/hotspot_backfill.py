@@ -4,6 +4,7 @@ from airflow.operators.python import PythonOperator
 from airflow.operators.bash import BashOperator
 import sys
 import os
+import io
 import asyncio
 import polars as pl
 from ulid import ULID
@@ -107,10 +108,34 @@ def process_month_data(**context):
             logger.warning(f"No data found for month {month}")
             return None
 
-        import io
+        line_count = len(result.split("\n")) if result else 0
+        record_count = max(0, line_count - 1)  # Exclude header
+        logger.info(
+            f"Query response received: {record_count} records, {len(result)} characters"
+        )
 
-        df = pl.read_csv(io.StringIO(result))
+        try:
+            schema_overrides = {
+                "version": pl.Utf8,
+                "confidence": pl.Utf8,
+                "satellite": pl.Utf8,
+                "instrument": pl.Utf8,
+                "daynight": pl.Utf8,
+                "latitude": pl.Utf8,
+                "longitude": pl.Utf8,
+                "acq_date": pl.Utf8,
+                "acq_time": pl.Utf8,
+            }
+
+            df = pl.read_csv(io.StringIO(result), schema_overrides=schema_overrides)
+            logger.info(f"Successfully parsed CSV, DataFrame shape: {df.shape}")
+        except Exception as e:
+            logger.error(f"CSV parsing failed: {e}")
+            logger.error(f"Response preview: {result[:500]}...")
+            raise
+
         batch_id = str(ULID())
+        logger.info(f"Batch ID: {batch_id}")
         ingested_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
         df = df.with_columns(
             [
