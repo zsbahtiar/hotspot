@@ -1,17 +1,45 @@
 import type { LocationInfo } from "@/core/models/location";
 
-export type ConfidenceLevel = "low" | "medium" | "high";
+export type ConfidenceLevel =
+  | "low"
+  | "medium"
+  | "high"
+  | "LOW"
+  | "MEDIUM"
+  | "HIGH"
+  | "NOMINAL";
+
+export interface LocationInfo {
+  province_name?: string;
+  city_name?: string;
+  district_name?: string;
+  subdistrict_name?: string;
+  // Legacy fields for backward compatibility
+  pulau?: string;
+  provinsi?: string;
+  kota?: string;
+  kecamatan?: string;
+  desa?: string;
+  kab_kota?: string;
+}
 
 export interface HotspotFeatureGeo extends GeoJSON.Feature {
   geometry: GeoJSON.Point;
   properties: {
-    minggu: string;
+    id: string;
+    acquired_at: string;
     confidence: ConfidenceLevel;
-    satellite: string;
-    time: string;
+    satellite_name: string;
+    instrument: string;
+    frp: number;
+    brightness: number;
     location: LocationInfo;
-    hotspot_count: number;
-    hotspot_time: string;
+    // Legacy fields for backward compatibility
+    time?: string;
+    satellite?: string;
+    hotspot_count?: number;
+    hotspot_time?: string;
+    minggu?: string;
   };
 }
 
@@ -26,25 +54,83 @@ export type HotspotFeature = {
     coordinates: [number, number];
     type: string;
   };
-  properties: {
+  hotspot: {
+    id: string;
+    acquired_at: string;
     confidence: ConfidenceLevel;
-    satellite: string;
-    time: string;
-    hotspot_time: string;
-    hotspot_count: number;
-    location: {
-      pulau: string;
-      provinsi: string;
-      kecamatan: string;
-      kab_kota: string;
-      desa: string;
-    };
+    satellite_name: string;
+    instrument: string;
+    frp: number;
+    brightness: number;
+    location: LocationInfo;
+    // Legacy fields for backward compatibility
+    time?: string;
+    satellite?: string;
+    hotspot_count?: number;
+    hotspot_time?: string;
   };
 };
 
 export type HotspotData = {
   features: HotspotFeature[];
 };
+
+export interface BackendHotspotData {
+  id: string;
+  latitude: number;
+  longitude: number;
+  acquired_at: string;
+  confidence: ConfidenceLevel;
+  satellite_name: string;
+  instrument: string;
+  frp: number;
+  brightness: number;
+  location: LocationInfo;
+}
+
+export interface BackendHotspotListResponse {
+  message: string;
+  success: boolean;
+  data: {
+    items: BackendHotspotData[];
+    total: number;
+  };
+}
+
+export interface BackendHotspotSummary {
+  total_count: number;
+  date_range: {
+    start_date: string;
+    end_date: string;
+  };
+  top_provinces: Array<{
+    name: string;
+    count: number;
+  }>;
+  top_cities: Array<{
+    name: string;
+    count: number;
+  }>;
+  confidence: Record<string, number>;
+  satellites: Record<string, number>;
+  monthly: Array<{
+    month: string;
+    count: number;
+  }>;
+  daily_avg: number;
+}
+
+export interface BackendHotspotSummaryResponse {
+  message: string;
+  success: boolean;
+  data: BackendHotspotSummary;
+}
+
+export interface BackendGeoJSONResponse {
+  message: string;
+  success: boolean;
+  data: HotspotDataGeo;
+}
 
 export type AccumulatedData = {
   tanggal: string;

@@ -1,6 +1,10 @@
-import { useState, useEffect, useMemo, lazy, Suspense } from "react";
+import { useMemo, lazy, Suspense } from "react";
 import type { HotspotDataGeo } from "@/core/models/hotspot";
 import { formatNumber, extractTime, formatDate } from "@/core/utils/formatters";
+import {
+  useLatestHotspots,
+  useSummary,
+} from "@/core/hooks/useHotspotQueries";
 import { Tooltip } from "react-tooltip";
 import { monthNames } from "@/core/models/time";
 import {
@@ -21,180 +25,128 @@ const ChartComponent = lazy(() => import("@/components/stats/Chart"));
 interface MainProps {
   showHero?: boolean;
   showMitigation?: boolean;
+  currentYear?: number;
 }
 
-const Main = ({ showHero = true, showMitigation = true }: MainProps) => {
-  const [hotspotData, setHotspotData] = useState<HotspotDataGeo>({
-    features: [],
-    type: "FeatureCollection",
+const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps) => {
+  // Use provided year from Astro SSR, or fallback to current year
+  const year = currentYear || new Date().getFullYear();
+
+  // Fetch all dashboard data in single request with concurrent backend queries
+  const { data: summaryRes, isLoading: summaryLoading } = useSummary({
+    province_limit: 10,
+    city_limit: 10,
   });
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data: latestHotspotsRes, isLoading: latestLoading } =
+    useLatestHotspots(5);
 
-  useEffect(() => {
-    // Mock data untuk development dengan data yang lebih beragam
-    const generateMockHotspots = () => {
-      const locations = [
-        {
-          pulau: "Kalimantan",
-          provinsi: "Kalimantan Tengah",
-          kab_kota: "Kabupaten Palangka Raya",
-          kecamatan: "Kecamatan Bukit Batu",
-          desa: "Desa Tahai",
-        },
-        {
-          pulau: "Sumatera",
-          provinsi: "Sumatera Selatan",
-          kab_kota: "Kabupaten Ogan Komering Ilir",
-          kecamatan: "Kecamatan Pedamaran",
-          desa: "Desa Pedamaran I",
-        },
-        {
-          pulau: "Sumatera",
-          provinsi: "Riau",
-          kab_kota: "Kabupaten Bengkalis",
-          kecamatan: "Kecamatan Mandau",
-          desa: "Desa Balik Alam",
-        },
-        {
-          pulau: "Sumatera",
-          provinsi: "Jambi",
-          kab_kota: "Kabupaten Muaro Jambi",
-          kecamatan: "Kecamatan Maro Sebo",
-          desa: "Desa Kasang",
-        },
-        {
-          pulau: "Kalimantan",
-          provinsi: "Kalimantan Barat",
-          kab_kota: "Kabupaten Ketapang",
-          kecamatan: "Kecamatan Sandai",
-          desa: "Desa Sandai",
-        },
-        {
-          pulau: "Papua",
-          provinsi: "Papua",
-          kab_kota: "Kabupaten Merauke",
-          kecamatan: "Kecamatan Muting",
-          desa: "Desa Muting",
-        },
-        {
-          pulau: "Nusa Tenggara",
-          provinsi: "Nusa Tenggara Timur",
-          kab_kota: "Kabupaten Sumba Timur",
-          kecamatan: "Kecamatan Kambera",
-          desa: "Desa Kawangu",
-        },
-        {
-          pulau: "Sulawesi",
-          provinsi: "Sulawesi Selatan",
-          kab_kota: "Kabupaten Bone",
-          kecamatan: "Kecamatan Tellu Siattinge",
-          desa: "Desa Poleonro",
-        },
-      ];
+  const isLoading = summaryLoading || latestLoading;
 
-      const satellites = ["NASA-SNPP", "NASA-MODIS", "NASA-NOAA20"];
-      const confidences = ["high", "medium", "low"];
+  // Transform data to match existing structure
+  const hotspotData: HotspotDataGeo = {
+    type: "FeatureCollection",
+    features: [],
+  };
 
-      const features = [];
-      const startDate = new Date("2024-01-01");
-
-      // Generate 50 mock hotspots sepanjang tahun
-      for (let i = 0; i < 50; i++) {
-        const date = new Date(startDate);
-        date.setDate(date.getDate() + Math.floor(i * 7)); // Setiap minggu
-
-        // Tambahkan beberapa hotspot untuk hari ini (lebih agresif)
-        if (i >= 45) { // 5 hotspot terakhir untuk hari ini
-          const today = new Date();
-          date.setTime(today.getTime() - Math.floor(Math.random() * 2) * 60 * 60 * 1000); // Random dalam 2 jam terakhir
-        }
-
-        const location =
-          locations[Math.floor(Math.random() * locations.length)];
-
-        features.push({
-          type: "Feature",
-          geometry: {
-            type: "Point",
-            coordinates: [
-              95 + Math.random() * 25, // Longitude Indonesia
-              -11 + Math.random() * 13, // Latitude Indonesia
-            ],
-          },
-          properties: {
-            time: date.toISOString(),
-            hotspot_time: date.toISOString(),
-            // Higher confidence untuk hotspot terbaru (lebih agresif)
-            confidence: i >= 45
-              ? Math.random() > 0.3 ? 'high' : 'medium' // 70% high, 30% medium untuk 5 terakhir
-              : confidences[Math.floor(Math.random() * confidences.length)],
-            satellite:
-              satellites[Math.floor(Math.random() * satellites.length)],
-            location: location,
-          },
-        });
-      }
-
-      return { type: "FeatureCollection", features };
-    };
-
-    const mockHotspotData = generateMockHotspots();
-    setHotspotData(mockHotspotData);
-    setIsLoading(false);
-  }, []);
-
-  const todayHotspots = useMemo(
-    () =>
-      hotspotData.features?.filter((f) => {
-        const today = new Date().toISOString().split("T")[0];
-        const hotspotDate = new Date(f.properties.time)
-          .toISOString()
-          .split("T")[0];
-        return hotspotDate === today;
-      }) || [],
-    [hotspotData.features],
-  );
+  const summaryData = {
+    top_provinces: summaryRes?.data?.top_provinces || [],
+    top_cities: summaryRes?.data?.top_cities || [],
+    monthly: summaryRes?.data?.monthly_stats || [],
+    confidence: (summaryRes?.data?.confidence_distribution || []).reduce(
+      (acc, item) => {
+        acc[item.name] = item.count;
+        return acc;
+      },
+      {} as Record<string, number>,
+    ),
+    satellites: (summaryRes?.data?.satellite_distribution || []).reduce(
+      (acc, item) => {
+        acc[item.name] = item.count;
+        return acc;
+      },
+      {} as Record<string, number>,
+    ),
+  };
 
   const monthlyHotspotTrends = useMemo(() => {
-    interface MonthCount {
-      total: number;
-      highConfidence: number;
+    // Use backend summary data when available, fallback to manual calculation
+    if (summaryData?.monthly?.length > 0) {
+      // Backend data format: [{month: "2015-01-01T00:00:00Z", total: 4064, high_confidence: 0}, ...]
+      const monthNames = [
+        "Januari",
+        "Februari",
+        "Maret",
+        "April",
+        "Mei",
+        "Juni",
+        "Juli",
+        "Agustus",
+        "September",
+        "Oktober",
+        "November",
+        "Desember",
+      ];
+
+      return summaryData.monthly.map((item) => {
+        // Parse ISO date string to get month
+        const date = new Date(item.month);
+        const monthIndex = date.getMonth();
+        const displayMonth = monthNames[monthIndex];
+
+        return [
+          displayMonth,
+          {
+            total: item.total,
+            highConfidence: item.high_confidence,
+          },
+        ];
+      });
+    } else {
+      // Fallback to manual calculation from 2025 hotspot data only
+      interface MonthCount {
+        total: number;
+        highConfidence: number;
+      }
+
+      const monthCounts: Record<string, MonthCount> = {};
+
+      hotspotData.features?.forEach((feature) => {
+        if (feature.properties.time) {
+          const date = new Date(feature.properties.time);
+          const featureYear = date.getFullYear();
+
+          // Only process 2025 data
+          if (featureYear === currentYear) {
+            const monthYear = date.toLocaleString("id-ID", {
+              month: "long",
+              year: "numeric",
+            });
+
+            if (!monthCounts[monthYear]) {
+              monthCounts[monthYear] = {
+                total: 0,
+                highConfidence: 0,
+              };
+            }
+            monthCounts[monthYear].total += 1;
+
+            if (feature.properties.confidence === "high") {
+              monthCounts[monthYear].highConfidence += 1;
+            }
+          }
+        }
+      });
+      return Object.entries(monthCounts).sort((a, b) => {
+        const [monthA, yearA] = a[0].split(" ");
+        const [monthB, yearB] = b[0].split(" ");
+
+        if (yearA !== yearB) {
+          return parseInt(yearA) - parseInt(yearB);
+        }
+        return monthNames.indexOf(monthA) - monthNames.indexOf(monthB);
+      });
     }
-
-    const monthCounts: Record<string, MonthCount> = {};
-
-    hotspotData.features?.forEach((feature) => {
-      if (feature.properties.time) {
-        const date = new Date(feature.properties.time);
-        const monthYear = date.toLocaleString("id-ID", {
-          month: "long",
-          year: "numeric",
-        });
-
-        if (!monthCounts[monthYear]) {
-          monthCounts[monthYear] = {
-            total: 0,
-            highConfidence: 0,
-          };
-        }
-        monthCounts[monthYear].total += 1;
-
-        if (feature.properties.confidence === "high") {
-          monthCounts[monthYear].highConfidence += 1;
-        }
-      }
-    });
-    return Object.entries(monthCounts).sort((a, b) => {
-      const [monthA, yearA] = a[0].split(" ");
-      const [monthB, yearB] = b[0].split(" ");
-
-      if (yearA !== yearB) {
-        return parseInt(yearA) - parseInt(yearB);
-      }
-      return monthNames.indexOf(monthA) - monthNames.indexOf(monthB);
-    });
-  }, [hotspotData.features]);
+  }, [hotspotData.features, summaryData]);
 
   const chartData = useMemo(
     () => ({
@@ -231,56 +183,29 @@ const Main = ({ showHero = true, showMitigation = true }: MainProps) => {
     [monthlyHotspotTrends],
   );
 
-  const stats = useMemo(
-    () => ({
-      totalHotspots: hotspotData.features?.length || 0,
-      highConfidence:
-        hotspotData.features?.filter((f) => f.properties.confidence === "high")
-          .length || 0,
-      affectedProvinces: new Set(
-        hotspotData.features
-          ?.map((f) => f.properties.location?.provinsi)
-          .filter(Boolean),
-      ).size,
-      todayHotspots: todayHotspots.length,
-      todayHighConfidence: todayHotspots.filter(
-        (f) => f.properties.confidence === "high",
-      ).length,
-      todayAffectedProvinces: new Set(
-        todayHotspots
-          .map((f) => f.properties.location?.provinsi)
-          .filter(Boolean),
-      ).size,
-      topIsland: hotspotData.features?.reduce(
-        (acc: Record<string, number>, feature) => {
-          const island = feature.properties.location?.pulau || "Unknown";
-          acc[island] = (acc[island] || 0) + 1;
-          return acc;
-        },
-        {},
-      ),
-    }),
-    [hotspotData.features, todayHotspots],
-  );
+  const stats = useMemo(() => {
+    // All data from single summary response
+    const backendStats = summaryRes?.data?.stats;
+    const topProvincesData = summaryData?.top_provinces || [];
+    const todayStats = summaryRes?.data?.today_stats;
 
-  const topIsland = stats.topIsland
-    ? Object.entries(stats.topIsland).sort((a, b) => b[1] - a[1])[0]?.[0]
-    : "N/A";
+    // Get top province as "lokasi tertinggi"
+    const topProvince = topProvincesData[0]?.name || "N/A";
 
-  const latestHotspots = useMemo(() => {
-    return [...(hotspotData.features || [])]
-      .sort((a, b) => {
-        if (!a.properties.hotspot_time && !b.properties.hotspot_time) return 0;
-        if (!a.properties.hotspot_time) return 1;
-        if (!b.properties.hotspot_time) return -1;
+    return {
+      totalHotspots: backendStats?.total_hotspots || 0,
+      highConfidence: backendStats?.high_confidence || 0,
+      affectedProvinces: backendStats?.affected_provinces || 0,
+      topLocation: topProvince,
+      todayHotspots: todayStats?.today_hotspots || 0,
+      todayHighConfidence: todayStats?.today_high_confidence || 0,
+      todayAffectedProvinces: todayStats?.today_affected_provinces || 0,
+    };
+  }, [summaryData, summaryRes]);
 
-        return (
-          new Date(b.properties.hotspot_time).getTime() -
-          new Date(a.properties.hotspot_time).getTime()
-        );
-      })
-      .slice(0, 5);
-  }, [hotspotData.features]);
+
+  // Get latest hotspots from API
+  const latestHotspots = latestHotspotsRes?.data?.hotspots || [];
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900">
@@ -405,7 +330,9 @@ const Main = ({ showHero = true, showMitigation = true }: MainProps) => {
                 <CardTitle className="dark:text-white text-gray-900 text-lg font-semibold">
                   Data Terbaru
                 </CardTitle>
-                <p className="dark:text-gray-400 text-sm text-gray-500">Update terkini</p>
+                <p className="dark:text-gray-400 text-sm text-gray-500">
+                  Update terkini
+                </p>
               </CardHeader>
 
               <CardContent className="p-6">
@@ -430,7 +357,7 @@ const Main = ({ showHero = true, showMitigation = true }: MainProps) => {
                             Tanggal
                           </span>
                           <span className="dark:text-white text-gray-900 font-medium">
-                            {formatDate(hotspot.properties.time)}
+                            {formatDate(hotspot.acquired_at)}
                           </span>
                         </div>
                         <div className="flex justify-between items-center mb-3">
@@ -438,7 +365,7 @@ const Main = ({ showHero = true, showMitigation = true }: MainProps) => {
                             Waktu
                           </span>
                           <span className="dark:text-white text-gray-900 font-medium">
-                            {extractTime(hotspot.properties.hotspot_time)}
+                            {extractTime(hotspot.acquired_at)}
                           </span>
                         </div>
                         <div className="flex justify-between items-center mb-3">
@@ -446,7 +373,7 @@ const Main = ({ showHero = true, showMitigation = true }: MainProps) => {
                             Sumber
                           </span>
                           <span className="dark:text-white text-gray-900 font-medium">
-                            {hotspot.properties.satellite || "NASA-Modis"}
+                            {hotspot.satellite_name || "N/A"}
                           </span>
                         </div>
                         <div className="mb-4">
@@ -454,29 +381,74 @@ const Main = ({ showHero = true, showMitigation = true }: MainProps) => {
                             Lokasi
                           </span>
                           <span className="dark:text-white text-gray-900 text-sm leading-relaxed block">
-                            {hotspot.properties.location?.desa || "N/A"},{" "}
-                            {hotspot.properties.location?.kecamatan || "N/A"}
+                            {hotspot.subdistrict_name || "N/A"},{" "}
+                            {hotspot.district_name || "N/A"}
                           </span>
                           <span className="dark:text-white text-gray-900 text-sm leading-relaxed block">
-                            {hotspot.properties.location?.kab_kota || "N/A"},{" "}
-                            {hotspot.properties.location?.provinsi || "N/A"}
+                            {hotspot.city_name || "N/A"},{" "}
+                            {hotspot.province_name || "N/A"}
                           </span>
                         </div>
-                        <div className="flex justify-between items-center">
+                        <div className="flex justify-between items-center mb-3">
                           <span className="dark:text-gray-300 font-medium text-gray-700 text-sm uppercase tracking-wide">
                             Confidence
                           </span>
                           <Badge
                             variant={
-                              hotspot.properties.confidence === "high"
+                              hotspot.confidence_class === "HIGH"
                                 ? "destructive"
                                 : "secondary"
                             }
                           >
-                            {hotspot.properties.confidence?.toUpperCase() ||
-                              "MEDIUM"}
+                            {hotspot.confidence_class || "NOMINAL"}
                           </Badge>
                         </div>
+                        {hotspot.weather_conditions && (
+                          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="dark:text-gray-300 font-medium text-gray-700 text-sm uppercase tracking-wide">
+                                Cuaca
+                              </span>
+                              <span className="dark:text-white text-gray-900 text-sm">
+                                {hotspot.weather_conditions}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                              <div>
+                                <span className="dark:text-gray-400 text-gray-600">
+                                  Suhu:
+                                </span>
+                                <span className="dark:text-white text-gray-900 ml-1">
+                                  {hotspot.temperature}°C
+                                </span>
+                              </div>
+                              <div>
+                                <span className="dark:text-gray-400 text-gray-600">
+                                  Kelembaban:
+                                </span>
+                                <span className="dark:text-white text-gray-900 ml-1">
+                                  {hotspot.humidity}%
+                                </span>
+                              </div>
+                              <div>
+                                <span className="dark:text-gray-400 text-gray-600">
+                                  Angin:
+                                </span>
+                                <span className="dark:text-white text-gray-900 ml-1">
+                                  {hotspot.wind_speed} km/h
+                                </span>
+                              </div>
+                              <div>
+                                <span className="dark:text-gray-400 text-gray-600">
+                                  Hujan:
+                                </span>
+                                <span className="dark:text-white text-gray-900 ml-1">
+                                  {hotspot.precipitation} mm
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -511,7 +483,9 @@ const Main = ({ showHero = true, showMitigation = true }: MainProps) => {
                 <CardTitle className="dark:text-white text-gray-900 text-lg font-semibold">
                   Statistik Hotspot
                 </CardTitle>
-                <p className="dark:text-gray-400 text-sm text-gray-500">Analitik data hotspot</p>
+                <p className="dark:text-gray-400 text-sm text-gray-500" suppressHydrationWarning>
+                  Analitik data hotspot Tahun {year}
+                </p>
               </CardHeader>
 
               <CardContent className="p-6">
@@ -533,27 +507,22 @@ const Main = ({ showHero = true, showMitigation = true }: MainProps) => {
                     </h5>
                     <div className="space-y-1">
                       {(() => {
-                        const provinceCounts: Record<string, number> = {};
-                        hotspotData.features?.forEach((f) => {
-                          const prov = f.properties.location?.provinsi;
-                          if (prov)
-                            provinceCounts[prov] =
-                              (provinceCounts[prov] || 0) + 1;
-                        });
-                        return Object.entries(provinceCounts)
-                          .sort((a, b) => b[1] - a[1])
-                          .slice(0, 3)
-                          .map(([prov, count]) => (
+                        // Use backend summary data when available, fallback to manual calculation
+                        if (summaryData?.top_provinces?.length > 0) {
+                          return summaryData.top_provinces.map((province) => (
                             <div
-                              key={prov}
+                              key={province.name}
                               className="flex justify-between text-xs"
                             >
-                              <span className="dark:text-gray-300 text-gray-600">{prov}</span>
+                              <span className="dark:text-gray-300 text-gray-600">
+                                {province.name}
+                              </span>
                               <span className="dark:text-white font-medium text-gray-900">
-                                {count}
+                                {province.count}
                               </span>
                             </div>
                           ));
+                        }
                       })()}
                     </div>
                   </div>
@@ -563,25 +532,22 @@ const Main = ({ showHero = true, showMitigation = true }: MainProps) => {
                     </h5>
                     <div className="space-y-1">
                       {(() => {
-                        const kabCounts: Record<string, number> = {};
-                        hotspotData.features?.forEach((f) => {
-                          const kab = f.properties.location?.kab_kota;
-                          if (kab) kabCounts[kab] = (kabCounts[kab] || 0) + 1;
-                        });
-                        return Object.entries(kabCounts)
-                          .sort((a, b) => b[1] - a[1])
-                          .slice(0, 3)
-                          .map(([kab, count]) => (
+                        // Use backend summary data when available
+                        if (summaryData?.top_cities?.length > 0) {
+                          return summaryData.top_cities.map((city) => (
                             <div
-                              key={kab}
+                              key={city.name}
                               className="flex justify-between text-xs"
                             >
-                              <span className="dark:text-gray-300 text-gray-600">{kab}</span>
+                              <span className="dark:text-gray-300 text-gray-600">
+                                {city.name}
+                              </span>
                               <span className="dark:text-white font-medium text-gray-900">
-                                {count}
+                                {city.count}
                               </span>
                             </div>
                           ));
+                        }
                       })()}
                     </div>
                   </div>
@@ -599,20 +565,30 @@ const Main = ({ showHero = true, showMitigation = true }: MainProps) => {
                       </div>
                       <div className="dark:text-gray-300 text-xs text-gray-600">
                         {(() => {
-                          if (
-                            hotspotData.features &&
-                            hotspotData.features.length > 0
-                          ) {
-                            const dates = hotspotData.features.map(
-                              (f) => new Date(f.properties.time),
+                          if (summaryData?.monthly?.length > 0) {
+                            // Get first and last month from monthly stats
+                            const firstMonth = new Date(
+                              summaryData.monthly[0].month,
                             );
-                            const minDate = new Date(
-                              Math.min(...dates.map((d) => d.getTime())),
+                            const lastMonth = new Date(
+                              summaryData.monthly[
+                                summaryData.monthly.length - 1
+                              ].month,
                             );
-                            const maxDate = new Date(
-                              Math.max(...dates.map((d) => d.getTime())),
+
+                            // Set to first day of first month and last day of last month
+                            const startDate = new Date(
+                              firstMonth.getFullYear(),
+                              firstMonth.getMonth(),
+                              1,
                             );
-                            return `${minDate.toLocaleDateString("id-ID")} - ${maxDate.toLocaleDateString("id-ID")}`;
+                            const endDate = new Date(
+                              lastMonth.getFullYear(),
+                              lastMonth.getMonth() + 1,
+                              0,
+                            ); // Last day of month
+
+                            return `${startDate.toLocaleDateString("id-ID")} - ${endDate.toLocaleDateString("id-ID")}`;
                           }
                           return "Tidak ada data";
                         })()}
@@ -622,19 +598,38 @@ const Main = ({ showHero = true, showMitigation = true }: MainProps) => {
                       <div className="dark:text-white text-sm font-medium text-gray-900 mb-1">
                         Rata-rata per Hari
                       </div>
-                      <div className="text-xs text-gray-600">
+                      <div className="dark:text-gray-300 text-xs text-gray-600">
                         {(() => {
-                          if (
-                            hotspotData.features &&
-                            hotspotData.features.length > 0
-                          ) {
-                            const dates = hotspotData.features.map((f) =>
-                              new Date(f.properties.time).toDateString(),
+                          if (summaryData?.monthly?.length > 0) {
+                            // Calculate total hotspots
+                            const totalHotspots = summaryData.monthly.reduce(
+                              (sum, month) => sum + month.total,
+                              0,
                             );
-                            const uniqueDays = new Set(dates).size;
-                            return Math.round(
-                              hotspotData.features.length / uniqueDays,
+
+                            // Calculate total days from first to last month
+                            const firstMonth = new Date(
+                              summaryData.monthly[0].month,
                             );
+                            const lastMonth = new Date(
+                              summaryData.monthly[
+                                summaryData.monthly.length - 1
+                              ].month,
+                            );
+
+                            const startDate = new Date(
+                              firstMonth.getFullYear(),
+                              firstMonth.getMonth(),
+                              1,
+                            );
+                            const endDate = new Date(); // Today
+
+                            const daysDiff = Math.ceil(
+                              (endDate.getTime() - startDate.getTime()) /
+                                (1000 * 60 * 60 * 24),
+                            );
+
+                            return Math.round(totalHotspots / daysDiff);
                           }
                           return 0;
                         })()}{" "}
@@ -651,42 +646,93 @@ const Main = ({ showHero = true, showMitigation = true }: MainProps) => {
                   </h5>
                   <div className="grid grid-cols-3 gap-2 text-center">
                     {(() => {
-                      const monthCounts: Record<string, number> = {};
-                      hotspotData.features?.forEach((f) => {
-                        const month = new Date(
-                          f.properties.time,
-                        ).toLocaleDateString("id-ID", { month: "short" });
-                        monthCounts[month] = (monthCounts[month] || 0) + 1;
-                      });
-                      return Object.entries(monthCounts)
-                        .sort((a, b) => {
-                          const months = [
-                            "Jan",
-                            "Feb",
-                            "Mar",
-                            "Apr",
-                            "May",
-                            "Jun",
-                            "Jul",
-                            "Aug",
-                            "Sep",
-                            "Oct",
-                            "Nov",
-                            "Dec",
-                          ];
-                          return months.indexOf(a[0]) - months.indexOf(b[0]);
-                        })
-                        .map(([month, count]) => (
-                          <div
-                            key={month}
-                            className="dark:bg-gray-800 dark:border-gray-600 bg-white p-2 rounded border border-gray-200"
-                          >
-                            <div className="dark:text-gray-300 text-xs text-gray-600">{month}</div>
-                            <div className="dark:text-white text-sm font-medium text-gray-900">
-                              {count}
+                      // Use backend summary data when available, fallback to manual calculation
+                      if (summaryData?.monthly?.length > 0) {
+                        // Month names in Indonesian
+                        const monthNames = [
+                          "Januari",
+                          "Februari",
+                          "Maret",
+                          "April",
+                          "Mei",
+                          "Juni",
+                          "Juli",
+                          "Agustus",
+                          "September",
+                          "Oktober",
+                          "November",
+                          "Desember",
+                        ];
+
+                        return summaryData.monthly.map((monthData) => {
+                          // Parse ISO datetime to get month index
+                          const date = new Date(monthData.month);
+                          const monthIndex = date.getMonth();
+                          const displayMonth = monthNames[monthIndex];
+
+                          return (
+                            <div
+                              key={monthData.month}
+                              className="dark:bg-gray-800 dark:border-gray-600 bg-white p-2 rounded border border-gray-200"
+                            >
+                              <div className="dark:text-gray-300 text-xs text-gray-600">
+                                {displayMonth}
+                              </div>
+                              <div className="dark:text-white text-sm font-medium text-gray-900">
+                                {monthData.total}
+                              </div>
                             </div>
-                          </div>
-                        ));
+                          );
+                        });
+                      } else {
+                        // Fallback to manual calculation - only use 2025 data
+                        const monthCounts: Record<string, number> = {};
+                        const currentYear = new Date().getFullYear();
+
+                        hotspotData.features?.forEach((f) => {
+                          const date = new Date(f.properties.time);
+                          const featureYear = date.getFullYear();
+
+                          // Only process 2025 data
+                          if (featureYear === currentYear) {
+                            const month = date.toLocaleDateString("id-ID", {
+                              month: "short",
+                            });
+                            monthCounts[month] = (monthCounts[month] || 0) + 1;
+                          }
+                        });
+                        return Object.entries(monthCounts)
+                          .sort((a, b) => {
+                            const months = [
+                              "Jan",
+                              "Feb",
+                              "Mar",
+                              "Apr",
+                              "May",
+                              "Jun",
+                              "Jul",
+                              "Aug",
+                              "Sep",
+                              "Oct",
+                              "Nov",
+                              "Dec",
+                            ];
+                            return months.indexOf(a[0]) - months.indexOf(b[0]);
+                          })
+                          .map(([month, count]) => (
+                            <div
+                              key={month}
+                              className="dark:bg-gray-800 dark:border-gray-600 bg-white p-2 rounded border border-gray-200"
+                            >
+                              <div className="dark:text-gray-300 text-xs text-gray-600">
+                                {month}
+                              </div>
+                              <div className="dark:text-white text-sm font-medium text-gray-900">
+                                {count}
+                              </div>
+                            </div>
+                          ));
+                      }
                     })()}
                   </div>
                 </div>
@@ -698,7 +744,9 @@ const Main = ({ showHero = true, showMitigation = true }: MainProps) => {
                         ? formatNumber(stats.totalHotspots)
                         : "-"}
                     </div>
-                    <div className="dark:text-gray-300 text-sm text-gray-600">Jumlah Hotspot</div>
+                    <div className="dark:text-gray-300 text-sm text-gray-600">
+                      Jumlah Hotspot
+                    </div>
                   </div>
                   <div className="dark:bg-gray-700 dark:border-gray-600 bg-gray-50 rounded-lg p-4 border border-gray-200 text-center">
                     <div className="dark:text-white text-2xl font-bold text-gray-900">
@@ -712,7 +760,7 @@ const Main = ({ showHero = true, showMitigation = true }: MainProps) => {
                   </div>
                   <div className="dark:bg-gray-700 dark:border-gray-600 bg-gray-50 rounded-lg p-4 border border-gray-200 text-center">
                     <div className="dark:text-white text-2xl font-bold text-gray-900">
-                      {topIsland ? topIsland : "-"}
+                      {stats.topLocation ? stats.topLocation : "-"}
                     </div>
                     <div className="dark:text-gray-300 text-sm text-gray-600">
                       Lokasi Tertinggi
@@ -757,20 +805,40 @@ const Main = ({ showHero = true, showMitigation = true }: MainProps) => {
                         confidence: "low",
                       },
                     ].map((item) => {
+                      // Use backend summary data when available, fallback to manual calculation
                       const count =
+                        summaryData?.confidence?.[
+                          item.confidence.toUpperCase()
+                        ] ||
                         hotspotData.features?.filter(
                           (f) => f.properties.confidence === item.confidence,
-                        ).length || 0;
-                      const maxCount = Math.max(
+                        ).length ||
+                        0;
+
+                      const confidenceData = summaryData?.confidence || {};
+                      const backendHigh =
+                        (confidenceData.HIGH || 0) +
+                        (confidenceData.NOMINAL || 0);
+                      const backendMedium = confidenceData.MEDIUM || 0;
+                      const backendLow = confidenceData.LOW || 0;
+
+                      const manualHigh =
                         hotspotData.features?.filter(
                           (f) => f.properties.confidence === "high",
-                        ).length || 0,
+                        ).length || 0;
+                      const manualMedium =
                         hotspotData.features?.filter(
                           (f) => f.properties.confidence === "medium",
-                        ).length || 0,
+                        ).length || 0;
+                      const manualLow =
                         hotspotData.features?.filter(
                           (f) => f.properties.confidence === "low",
-                        ).length || 0,
+                        ).length || 0;
+
+                      const maxCount = Math.max(
+                        summaryData
+                          ? Math.max(backendHigh, backendMedium, backendLow)
+                          : Math.max(manualHigh, manualMedium, manualLow),
                       );
                       const lineWidth =
                         maxCount > 0 ? (count / maxCount) * 100 : 0;
@@ -814,159 +882,71 @@ const Main = ({ showHero = true, showMitigation = true }: MainProps) => {
                     Sumber Satelit
                   </h4>
                   <div className="space-y-2">
-                    {[
-                      {
-                        name: "SNPP",
-                        bgColor: "#3b82f6",
-                        dotClass: "bg-blue-500",
-                      },
-                      {
-                        name: "MODIS",
-                        bgColor: "#8b5cf6",
-                        dotClass: "bg-purple-500",
-                      },
-                      {
-                        name: "NOAA20",
-                        bgColor: "#06b6d4",
-                        dotClass: "bg-cyan-500",
-                      },
-                    ].map((satellite) => {
-                      const count =
-                        hotspotData.features?.filter((f) =>
-                          f.properties.satellite?.includes(satellite.name),
-                        ).length || 0;
+                    {(() => {
+                      // Define color mapping for satellites
+                      const satelliteColors: Record<
+                        string,
+                        { bgColor: string; dotClass: string }
+                      > = {
+                        N: { bgColor: "#3b82f6", dotClass: "bg-blue-500" },
+                        N20: { bgColor: "#06b6d4", dotClass: "bg-cyan-500" },
+                        N21: { bgColor: "#10b981", dotClass: "bg-emerald-500" },
+                        Aqua: { bgColor: "#8b5cf6", dotClass: "bg-purple-500" },
+                        Terra: { bgColor: "#f59e0b", dotClass: "bg-amber-500" },
+                      };
+
+                      const satellitesData = summaryData?.satellites || {};
+                      const satelliteEntries = Object.entries(satellitesData);
+
+                      if (satelliteEntries.length === 0) {
+                        return (
+                          <div className="text-center py-4 text-gray-500 text-sm">
+                            Tidak ada data satelit
+                          </div>
+                        );
+                      }
+
                       const maxCount = Math.max(
-                        hotspotData.features?.filter((f) =>
-                          f.properties.satellite?.includes("SNPP"),
-                        ).length || 0,
-                        hotspotData.features?.filter((f) =>
-                          f.properties.satellite?.includes("MODIS"),
-                        ).length || 0,
-                        hotspotData.features?.filter((f) =>
-                          f.properties.satellite?.includes("NOAA20"),
-                        ).length || 0,
+                        ...satelliteEntries.map(([, count]) => count),
                       );
-                      const lineWidth =
-                        maxCount > 0 ? (count / maxCount) * 100 : 0;
 
-                      return (
-                        <div key={satellite.name} className="flex items-center">
-                          <div className="flex items-center space-x-2 min-w-0 flex-1">
-                            <div
-                              className={`w-3 h-3 rounded-full flex-shrink-0 ${satellite.dotClass}`}
-                            ></div>
-                            <span className="dark:text-gray-300 text-sm text-gray-600 truncate">
-                              {satellite.name}
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <div className="w-64 dark:bg-gray-600 bg-gray-200 rounded-full h-3 overflow-hidden">
+                      return satelliteEntries.map(([name, count]) => {
+                        const colors =
+                          satelliteColors[name] || {
+                            bgColor: "#6b7280",
+                            dotClass: "bg-gray-500",
+                          };
+                        const lineWidth =
+                          maxCount > 0 ? (count / maxCount) * 100 : 0;
+
+                        return (
+                          <div key={name} className="flex items-center">
+                            <div className="flex items-center space-x-2 min-w-0 flex-1">
                               <div
-                                className="h-full rounded-full transition-all duration-500 ease-out"
-                                style={{
-                                  width: `${lineWidth}%`,
-                                  backgroundColor: satellite.bgColor,
-                                }}
+                                className={`w-3 h-3 rounded-full flex-shrink-0 ${colors.dotClass}`}
                               ></div>
+                              <span className="dark:text-gray-300 text-sm text-gray-600 truncate">
+                                {name}
+                              </span>
                             </div>
-                            <span className="dark:text-white text-sm font-medium text-gray-900 min-w-[3ch] text-right">
-                              {count}
-                            </span>
+                            <div className="flex items-center space-x-1">
+                              <div className="w-64 dark:bg-gray-600 bg-gray-200 rounded-full h-3 overflow-hidden">
+                                <div
+                                  className="h-full rounded-full transition-all duration-500 ease-out"
+                                  style={{
+                                    width: `${lineWidth}%`,
+                                    backgroundColor: colors.bgColor,
+                                  }}
+                                ></div>
+                              </div>
+                              <span className="dark:text-white text-sm font-medium text-gray-900 min-w-[3ch] text-right">
+                                {count}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Spatial Analysis */}
-                <div className="mt-6 p-4 dark:bg-gray-700 dark:border-gray-600 bg-gray-50 rounded-lg border border-gray-200">
-                  <h5 className="dark:text-white text-sm font-medium text-gray-700 mb-3">
-                    Analisis Spasial
-                  </h5>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <div className="dark:text-white text-sm font-medium text-gray-900 mb-1">
-                        Pulau Terdampak
-                      </div>
-                      <div className="dark:text-gray-300 text-xs text-gray-600">
-                        {(() => {
-                          const islands = new Set(
-                            hotspotData.features
-                              ?.map((f) => f.properties.location?.pulau)
-                              .filter(Boolean),
-                          );
-                          return `${islands.size} pulau`;
-                        })()}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="dark:text-white text-sm font-medium text-gray-900 mb-1">
-                        Konsentrasi Tertinggi
-                      </div>
-                      <div className="dark:text-gray-300 text-xs text-gray-600">
-                        {(() => {
-                          const provCounts: Record<string, number> = {};
-                          hotspotData.features?.forEach((f) => {
-                            const prov = f.properties.location?.provinsi;
-                            if (prov)
-                              provCounts[prov] = (provCounts[prov] || 0) + 1;
-                          });
-                          const topProv = Object.entries(provCounts).sort(
-                            (a, b) => b[1] - a[1],
-                          )[0];
-                          return topProv
-                            ? `${topProv[0]} (${Math.round((topProv[1] / (hotspotData.features?.length || 1)) * 100)}%)`
-                            : "N/A";
-                        })()}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Data Summary */}
-                <div className="mt-6 p-4 dark:bg-gray-700 dark:border-gray-600 bg-gray-50 rounded-lg border border-gray-200">
-                  <h5 className="dark:text-white text-sm font-medium text-gray-700 mb-3">
-                    Ringkasan Data
-                  </h5>
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    <div>
-                      <div className="dark:text-white text-lg font-bold text-gray-900">
-                        {(() => {
-                          const today = new Date().toISOString().split('T')[0];
-                          return hotspotData.features?.filter(f =>
-                            f.properties.time.startsWith(today)
-                          ).length || 0;
-                        })()}
-                      </div>
-                      <div className="dark:text-gray-300 text-xs text-gray-600">Hari Ini</div>
-                    </div>
-                    <div>
-                      <div className="dark:text-white text-lg font-bold text-gray-900">
-                        {(() => {
-                          const uniqueDates = new Set(
-                            hotspotData.features?.map(f =>
-                              f.properties.time.split('T')[0]
-                            )
-                          );
-                          return uniqueDates.size;
-                        })()}
-                      </div>
-                      <div className="dark:text-gray-300 text-xs text-gray-600">Hari Aktif</div>
-                    </div>
-                    <div>
-                      <div className="dark:text-white text-lg font-bold text-gray-900">
-                        {(() => {
-                          const uniqueKabs = new Set(
-                            hotspotData.features?.map(f =>
-                              f.properties.location?.kab_kota
-                            ).filter(Boolean)
-                          );
-                          return uniqueKabs.size;
-                        })()}
-                      </div>
-                      <div className="dark:text-gray-300 text-xs text-gray-600">Kabupaten</div>
-                    </div>
+                        );
+                      });
+                    })()}
                   </div>
                 </div>
               </CardContent>

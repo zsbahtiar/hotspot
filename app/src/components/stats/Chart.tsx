@@ -52,8 +52,8 @@ const ChartComponent = ({ chartData, isLoading }: ChartComponentProps) => {
       maintainAspectRatio: false,
       layout: {
         padding: {
-          top: 35,
-          bottom: 15,
+          top: 25,
+          bottom: 5,
         },
       },
       scales: {
@@ -62,7 +62,7 @@ const ChartComponent = ({ chartData, isLoading }: ChartComponentProps) => {
             maxRotation: 45,
             minRotation: 0,
             font: {
-              size: 10,
+              size: 12,
             },
           },
         },
@@ -82,7 +82,7 @@ const ChartComponent = ({ chartData, isLoading }: ChartComponentProps) => {
           position: "bottom" as const,
           labels: {
             boxWidth: 12,
-            padding: 10,
+            padding: 5,
           },
         },
         tooltip: {
@@ -100,11 +100,11 @@ const ChartComponent = ({ chartData, isLoading }: ChartComponentProps) => {
           },
           anchor: "end" as const,
           align: "top" as const,
-          offset: 5,
+          offset: 8,
           formatter: (value: number) => formatNumber(value),
           font: {
             weight: "bold" as const,
-            size: 10,
+            size: 11,
           },
           clamp: true,
         },

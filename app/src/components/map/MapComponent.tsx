@@ -1,4 +1,4 @@
-import useSWR from "swr";
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useGeoJsonCache } from "@/hooks/useGeoJsonCache";
 import type { CachedGeoJsonData } from "@/hooks/useGeoJsonCache";
@@ -29,28 +29,68 @@ import MapLegend from "@/components/map/MapLegend";
 import MapZoomControls from "@/components/map/ZoomControls";
 import { monthNames } from "@/core/models/time";
 import { mockHotspotData } from "@/mocks/hotspotData";
+import { hotspotService } from "@/core/services/hotspotService";
 
-const USE_MOCK_DATA = true;
+const USE_MOCK_DATA = false;
 
-const fetcher = async (url: string) => {
+const fetchHotspotData = async (filters?: {
+  confidence?: string | null;
+  satellite?: string | null;
+  year?: number;
+  semester?: number;
+  quarter?: number;
+  month?: number;
+  week?: number;
+  start_date?: string;
+  end_date?: string;
+}) => {
   if (USE_MOCK_DATA) {
     await new Promise((resolve) => setTimeout(resolve, 500));
-    if (url.includes("/api/hotspot")) {
-      return mockHotspotData;
-    }
-    return {};
+    return mockHotspotData;
   }
 
-  if (!url || url.startsWith("undefined")) {
-    throw new Error("Invalid API URL: PUBLIC_API_URL is not configured");
+  // Build filter parameters for API call
+  const apiFilters: any = {};
+
+  if (filters?.confidence) {
+    apiFilters.confidence = filters.confidence.toUpperCase();
   }
 
-  return fetch(url).then((res) => {
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-    }
-    return res.json();
-  });
+  if (filters?.satellite) {
+    apiFilters.satellite = filters.satellite;
+  }
+
+  if (filters?.year) {
+    apiFilters.year = filters.year;
+  }
+
+  if (filters?.semester) {
+    apiFilters.semester = filters.semester;
+  }
+
+  if (filters?.quarter) {
+    apiFilters.quarter = filters.quarter;
+  }
+
+  if (filters?.month) {
+    apiFilters.month = filters.month;
+  }
+
+  if (filters?.week) {
+    apiFilters.week = filters.week;
+  }
+
+  if (filters?.start_date) {
+    apiFilters.start_date = filters.start_date;
+  }
+
+  if (filters?.end_date) {
+    apiFilters.end_date = filters.end_date;
+  }
+
+  // Use backend GeoJSON endpoint with filters
+  const response = await hotspotService.getHotspotsGeoJSON(apiFilters);
+  return response.data;
 };
 
 interface CustomAttributionControlProps {
@@ -339,10 +379,10 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
   const getHotspotData = useMemo(() => {
     if (USE_MOCK_DATA) {
-      return "/api/hotspot";
+      return "/hotspot";
     }
 
-    const baseUrl = `${import.meta.env.PUBLIC_API_URL || ""}/api/hotspot`;
+    const baseUrl = `${import.meta.env.PUBLIC_API_URL || ""}/hotspot`;
     const queryParams = new URLSearchParams();
 
     if (showLokasiHotspot) {
@@ -409,11 +449,61 @@ const MapComponent: React.FC<MapComponentProps> = ({
       : baseUrl;
   }, [filters, olapData, showJumlahHotspot, showLokasiHotspot, selectedDate]);
 
+  // Build filter params for API query
+  const apiFilterParams = useMemo(() => {
+    const params: any = {};
+
+    if (filters?.confidence) {
+      params.confidence = filters.confidence;
+    }
+
+    if (filters?.satelite) {
+      params.satellite = filters.satelite;
+    }
+
+    // Time period filters
+    if (filters?.filterMode === "period" && filters?.time) {
+      if (filters.time.tahun) {
+        params.year = parseInt(filters.time.tahun);
+      }
+      if (filters.time.semester) {
+        params.semester = parseInt(filters.time.semester);
+      }
+      if (filters.time.kuartal) {
+        params.quarter = parseInt(filters.time.kuartal);
+      }
+      if (filters.time.bulan) {
+        params.month = parseInt(filters.time.bulan);
+      }
+      if (filters.time.minggu) {
+        params.week = parseInt(filters.time.minggu);
+      }
+    }
+
+    // Specific date filter
+    if (filters?.filterMode === "date" && filters?.selectedDate) {
+      // Convert YYYY-MM-DD to RFC3339 format for start and end of day
+      const date = new Date(filters.selectedDate);
+      const startOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0);
+      const endOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59);
+
+      params.start_date = startOfDay.toISOString();
+      params.end_date = endOfDay.toISOString();
+    }
+
+    return params;
+  }, [filters]);
+
   const {
     data: hotspotApiResponse,
     error: hotspotError,
     isLoading: isHotspotLoading,
-  } = useSWR(getHotspotData, fetcher, swrRetryConfig);
+  } = useQuery({
+    queryKey: ["map-hotspots", apiFilterParams],
+    queryFn: () => fetchHotspotData(apiFilterParams),
+    retry: 1,
+    refetchOnWindowFocus: false,
+  });
 
   const hotspotData: HotspotFeatureGeo[] = useMemo(() => {
     return hotspotApiResponse?.features || [];

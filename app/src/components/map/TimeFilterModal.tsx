@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useForm } from "react-hook-form";
-import { OlapService } from "@/core/services/olapService";
+import { hotspotService } from "@/core/services/hotspotService";
 import { RefreshCw, X } from "lucide-react";
 import type { QueryData } from "@/core/models/query";
 import type { Time } from "@/core/models/time";
@@ -119,42 +119,62 @@ export default function ModalTime({
       setLoading((prev) => ({ ...prev, [type]: true }));
       setError((prev) => ({ ...prev, [type]: null }));
       try {
-        const params = buildQueryParams(type);
-        const response = await OlapService.query("time", params);
+        const params: { year?: number; semester?: number; quarter?: number; month?: number } = {};
 
-        if (response && Array.isArray(response)) {
-          let formattedData: FormattedDataItem[] = response
-            .map((item) => {
-              if (Array.isArray(item) && item.length > 0) {
-                const val = String(item[0]).trim();
-                return val ? { value: val, label: val } : null;
-              } else if (typeof item === "object" && item !== null) {
-                const typedItem = item as FormattedDataItem;
-                const val = String(
-                  typedItem.value ?? typedItem.id ?? "",
-                ).trim();
-                const lbl = String(
-                  typedItem.label ?? typedItem.name ?? "",
-                ).trim();
-                return val && lbl ? { value: val, label: lbl } : null;
-              } else if (item !== undefined && item !== null) {
-                const val = String(item).trim();
-                return val ? { value: val, label: val } : null;
-              }
-              return null;
-            })
-            .filter(
-              (item: FormattedDataItem | null): item is FormattedDataItem =>
-                item !== null && item.value !== "" && item.label !== "",
-            );
+        // Build params based on current selections
+        if (type === "semester" && tahunValue) {
+          params.year = parseInt(tahunValue);
+        } else if (type === "kuartal" && tahunValue && semesterValue) {
+          params.year = parseInt(tahunValue);
+          params.semester = parseInt(semesterValue);
+        } else if (type === "bulan" && tahunValue && semesterValue && kuartalValue) {
+          params.year = parseInt(tahunValue);
+          params.semester = parseInt(semesterValue);
+          // Extract quarter number from "Q1", "Q2", etc.
+          const quarterMatch = kuartalValue.match(/\d+/);
+          if (quarterMatch) {
+            params.quarter = parseInt(quarterMatch[0]);
+          }
+        } else if (type === "minggu" && tahunValue && semesterValue && kuartalValue && bulanValue) {
+          params.year = parseInt(tahunValue);
+          params.semester = parseInt(semesterValue);
+          const quarterMatch = kuartalValue.match(/\d+/);
+          if (quarterMatch) {
+            params.quarter = parseInt(quarterMatch[0]);
+          }
+          // Get month value (1-12) from month name
+          params.month = monthNames.indexOf(bulanValue) + 1;
+        }
 
-          if (formattedData.length === 0) {
+        const response = await hotspotService.getPeriods(type === "tahun" ? undefined : params);
+
+        let formattedData: FormattedDataItem[] = [];
+
+        if (response?.data) {
+          // Map response based on type
+          switch (type) {
+            case "tahun":
+              formattedData = response.data.years || [];
+              break;
+            case "semester":
+              formattedData = response.data.semesters || [];
+              break;
+            case "kuartal":
+              formattedData = response.data.quarters || [];
+              break;
+            case "bulan":
+              formattedData = response.data.months || [];
+              break;
+            case "minggu":
+              formattedData = response.data.weeks || [];
+              break;
           }
 
+          // Sort data
           switch (type) {
             case "tahun":
               formattedData = formattedData.sort(
-                (a, b) => Number(a.value) - Number(b.value),
+                (a, b) => Number(b.value) - Number(a.value),
               );
               break;
             case "semester":
@@ -183,6 +203,7 @@ export default function ModalTime({
               break;
           }
 
+          // Set data to state
           switch (type) {
             case "tahun":
               setDataTahun(formattedData);
@@ -230,35 +251,12 @@ export default function ModalTime({
               }
               break;
           }
-        } else {
-          switch (type) {
-            case "tahun":
-              setDataTahun([]);
-              setValue("tahun", "");
-              break;
-            case "semester":
-              setDataSemester([]);
-              setValue("semester", "");
-              break;
-            case "kuartal":
-              setDatakuartal([]);
-              setValue("kuartal", "");
-              break;
-            case "bulan":
-              setDataBulan([]);
-              setValue("bulan", "");
-              break;
-            case "minggu":
-              setDataMinggu([]);
-              setValue("minggu", "");
-              break;
-          }
         }
       } catch (error: unknown) {
         console.error(`Error fetching ${type} data:`, error);
         const errorMessage = error instanceof Error ? error.message : "Gagal memuat data. Periksa koneksi Anda.";
         setError((prev) => ({ ...prev, [type]: errorMessage }));
-        
+
         switch (type) {
           case "tahun":
             setDataTahun([]);
@@ -281,12 +279,12 @@ export default function ModalTime({
       }
     },
     [
-      buildQueryParams,
-      setValue,
+      tahunValue,
       semesterValue,
       kuartalValue,
       bulanValue,
       mingguValue,
+      setValue,
     ],
   );
 

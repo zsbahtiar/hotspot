@@ -5,7 +5,8 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import type { IChart, QueryData } from "@/core/models/query";
 import type { DrillDownLevel, LocationData } from "@/core/models/location";
 import { OlapService } from "@/core/services/olapService";
-import useSWR from "swr";
+import { hotspotService } from "@/core/services/hotspotService";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -214,7 +215,7 @@ const MOCK_ALL_LOCATIONS: LocationData[] = [
 
 const fetcher = async (url: string) => {
   if (USE_MOCK_DATA) {
-    if (url.includes("/api/location")) {
+    if (url.includes("/location")) {
       return MOCK_ALL_LOCATIONS;
     }
     return {};
@@ -298,47 +299,34 @@ const OlapComponent = () => {
   const [isDatePickerOpenMobile, setIsDatePickerOpenMobile] = useState(false);
   const [isChartCollapsed, setIsChartCollapsed] = useState(false);
 
-  const { data: olapApiData } = useSWR(
-    `${import.meta.env.PUBLIC_API_URL}/api/hotspot`,
-    fetcher,
-    { revalidateOnFocus: false },
-  );
+  const { data: olapApiData } = useQuery({
+    queryKey: ["olap-hotspot"],
+    queryFn: () => fetcher(`${import.meta.env.PUBLIC_API_URL}/hotspot`),
+    refetchOnWindowFocus: false,
+  });
 
-  const { data: locationApiData } = useSWR(
-    `${import.meta.env.PUBLIC_API_URL}/api/location`,
-    fetcher,
-    { revalidateOnFocus: false },
-  );
+  const { data: locationApiData } = useQuery({
+    queryKey: ["olap-location"],
+    queryFn: () => fetcher(`${import.meta.env.PUBLIC_API_URL}/location`),
+    refetchOnWindowFocus: false,
+  });
 
   const locationQueryParams = useMemo(() => {
     return { dimension: "location" };
   }, []);
 
-  const { data: locationQueryData, isLoading: isLocationLoading } = useSWR(
-    hasFetched.current ? null : ["location", locationQueryParams],
-    olapFetcher,
-    { revalidateOnFocus: false },
-  );
+  const { data: locationQueryData, isLoading: isLocationLoading } = useQuery({
+    queryKey: ["location", locationQueryParams],
+    queryFn: () => olapFetcher(["location", locationQueryParams]),
+    enabled: !hasFetched.current,
+    refetchOnWindowFocus: false,
+  });
 
-  const confidenceQueryParams = useMemo(() => {
-    return { dimension: "confidence" };
-  }, []);
-
-  const { data: confidenceQueryData } = useSWR(
-    ["confidence", confidenceQueryParams],
-    olapFetcher,
-    { revalidateOnFocus: false },
-  );
-
-  const satelliteQueryParams = useMemo(() => {
-    return { dimension: "satelite" };
-  }, []);
-
-  const { data: satelliteQueryData } = useSWR(
-    ["satelite", satelliteQueryParams],
-    olapFetcher,
-    { revalidateOnFocus: false },
-  );
+  const { data: filterOptionsData } = useQuery({
+    queryKey: ["filter-options"],
+    queryFn: () => hotspotService.getFilterOptions(),
+    refetchOnWindowFocus: false,
+  });
 
   const filteredQueryParams = useMemo(() => {
     let timeParams = {};
@@ -376,19 +364,19 @@ const OlapComponent = () => {
     globalFilters.selectedDate,
   ]);
 
-  const { data: filteredData, isLoading: isFilteredLoading } = useSWR(
-    hasFetched.current || Object.keys(olapData.query || {}).length > 0
-      ? ["location", filteredQueryParams]
-      : null,
-    olapFetcher,
-    { revalidateOnFocus: false },
-  );
+  const { data: filteredData, isLoading: isFilteredLoading } = useQuery({
+    queryKey: ["location", filteredQueryParams],
+    queryFn: () => olapFetcher(["location", filteredQueryParams]),
+    enabled: hasFetched.current || Object.keys(olapData.query || {}).length > 0,
+    refetchOnWindowFocus: false,
+  });
 
-  const { data: drillDownData, isLoading: isDrillDownLoading } = useSWR(
-    drillDownQuery ? ["location", drillDownQuery] : null,
-    olapFetcher,
-    { revalidateOnFocus: false },
-  );
+  const { data: drillDownData, isLoading: isDrillDownLoading } = useQuery({
+    queryKey: ["location", drillDownQuery],
+    queryFn: () => olapFetcher(["location", drillDownQuery]),
+    enabled: !!drillDownQuery,
+    refetchOnWindowFocus: false,
+  });
 
   const calculateThresholds = useCallback((values: number[]) => {
     const filteredValues = values.filter((val) => val > 0);
@@ -495,16 +483,18 @@ const OlapComponent = () => {
   }, [locationQueryData, setChart]);
 
   useEffect(() => {
-    if (confidenceQueryData) {
-      setDataConfidence(confidenceQueryData as OlapData[]);
+    if (filterOptionsData?.data) {
+      // Transform filter options to OlapData format [name, 0]
+      const confidenceData: OlapData[] = filterOptionsData.data.confidence.map(
+        (conf) => [conf.name, 0]
+      );
+      const satelliteData: OlapData[] = filterOptionsData.data.satellites.map(
+        (sat) => [sat.name, 0]
+      );
+      setDataConfidence(confidenceData);
+      setDataSatelite(satelliteData);
     }
-  }, [confidenceQueryData]);
-
-  useEffect(() => {
-    if (satelliteQueryData) {
-      setDataSatelite(satelliteQueryData as OlapData[]);
-    }
-  }, [satelliteQueryData]);
+  }, [filterOptionsData]);
 
   useEffect(() => {
     if (filteredData && hasFetched.current) {

@@ -28,8 +28,9 @@ import {
 } from "@/components/ui/table";
 import type { HotspotFeature, HotspotData } from "@/core/models/hotspot";
 import type { AccumulatedData } from "@/core/models/hotspot";
+import { hotspotService } from "@/core/services/hotspotService";
 
-const USE_MOCK_DATA = true;
+const USE_MOCK_DATA = false;
 
 const MOCK_HOTSPOT_DATA: HotspotFeature[] = Array.from(
   { length: 100 },
@@ -311,6 +312,8 @@ export default function HotspotTable() {
   const itemsPerPage = 15;
   const [sortBy, setSortBy] = useState<string>("properties.hotspot_time");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [confidenceOptions, setConfidenceOptions] = useState<Array<{ id: string; name: string }>>([]);
+  const [satelliteOptions, setSatelliteOptions] = useState<Array<{ id: string; name: string }>>([]);
 
   const getLatestDate = (hotspots: HotspotFeature[]) => {
     if (!hotspots || hotspots.length === 0) return null;
@@ -324,6 +327,7 @@ export default function HotspotTable() {
 
   useEffect(() => {
     const getDataHotspot = async () => {
+      setLoading(true);
       try {
         if (USE_MOCK_DATA) {
           setData(MOCK_HOTSPOT_DATA);
@@ -331,55 +335,71 @@ export default function HotspotTable() {
           return;
         }
 
-        const response = await fetch(
-          `${import.meta.env.PUBLIC_API_URL}/api/hotspot`,
-        );
-        const result: HotspotData = await response.json();
-        setData(result.features);
+        // Build filter parameters
+        const filters: any = {
+          limit: 10000,
+        };
+
+        // Add date range (RFC3339 format)
+        if (dates?.from) {
+          filters.start_date = dates.from.toISOString();
+        }
+        if (dates?.to) {
+          filters.end_date = dates.to.toISOString();
+        }
+
+        // Add confidence filter
+        if (selectedConfidence.length > 0) {
+          filters.confidence = selectedConfidence[0];
+        }
+
+        // Add satellite filter
+        if (selectedSatellites.length > 0) {
+          filters.satellite = selectedSatellites[0];
+        }
+
+        // Use backend GeoJSON endpoint with filters
+        const response = await hotspotService.getHotspotsGeoJSON(filters);
+        const features = response.data.features as unknown as HotspotFeature[];
+        setData(features);
+      } catch (error) {
+        console.error("Failed to fetch hotspot data:", error);
       } finally {
         setLoading(false);
       }
     };
     getDataHotspot();
+  }, [dates, selectedConfidence, selectedSatellites]); // Re-fetch when filters change
+
+  // Fetch filter options on mount
+  useEffect(() => {
+    const fetchFilterOptions = async () => {
+      try {
+        const response = await hotspotService.getFilterOptions();
+        setConfidenceOptions(response.data.confidence);
+        setSatelliteOptions(response.data.satellites);
+      } catch (error) {
+        console.error("Failed to fetch filter options:", error);
+      }
+    };
+    fetchFilterOptions();
   }, []);
 
+  // Client-side search filter (for location search only, as backend doesn't support text search yet)
   const filteredData = useMemo(() => {
+    if (!search) return data;
+
     return data.filter((item) => {
-      const searchMatch =
-        item.properties.location.desa
-          .toLowerCase()
-          .includes(search.toLowerCase()) ||
-        item.properties.location.kecamatan
-          .toLowerCase()
-          .includes(search.toLowerCase()) ||
-        item.properties.location.kab_kota
-          .toLowerCase()
-          .includes(search.toLowerCase()) ||
-        item.properties.location.provinsi
-          .toLowerCase()
-          .includes(search.toLowerCase()) ||
-        item.properties.location.pulau
-          .toLowerCase()
-          .includes(search.toLowerCase());
-
-      const dateMatch =
-        !dates ||
-        !dates.from ||
-        (item.properties.time >= dates.from.toISOString().split("T")[0] &&
-          (!dates.to ||
-            item.properties.time <= dates.to.toISOString().split("T")[0]));
-
-      const confidenceMatch =
-        selectedConfidence.length === 0 ||
-        selectedConfidence.includes(item.properties.confidence);
-
-      const satelliteMatch =
-        selectedSatellites.length === 0 ||
-        selectedSatellites.includes(item.properties.satellite);
-
-      return searchMatch && dateMatch && confidenceMatch && satelliteMatch;
+      const searchLower = search.toLowerCase();
+      return (
+        item.properties.location.desa?.toLowerCase().includes(searchLower) ||
+        item.properties.location.kecamatan?.toLowerCase().includes(searchLower) ||
+        item.properties.location.kab_kota?.toLowerCase().includes(searchLower) ||
+        item.properties.location.provinsi?.toLowerCase().includes(searchLower) ||
+        item.properties.location.pulau?.toLowerCase().includes(searchLower)
+      );
     });
-  }, [data, search, dates, selectedConfidence, selectedSatellites]);
+  }, [data, search]);
 
   const accumulatedData = useMemo(() => {
     return filteredData.reduce<AccumulatedData[]>((acc, item) => {
@@ -413,11 +433,6 @@ export default function HotspotTable() {
       return acc;
     }, []);
   }, [filteredData]);
-
-  const satellites = useMemo(
-    () => [...new Set(data.map((item) => item.properties.satellite))],
-    [data],
-  );
 
   function getNested(obj: Record<string, unknown>, path: string): unknown {
     return path.split(".").reduce((o: unknown, k: string) => {
@@ -468,8 +483,15 @@ export default function HotspotTable() {
     const exportContent =
       viewMode === "detail"
         ? filteredData.map((item) => ({
-            Tanggal: item.properties.time,
-            Waktu: extractTime(item.properties.hotspot_time),
+            Tanggal: new Date(item.properties.time).toLocaleDateString('id-ID', {
+              day: '2-digit',
+              month: 'short',
+              year: 'numeric'
+            }),
+            Waktu: new Date(item.properties.hotspot_time).toLocaleTimeString('id-ID', {
+              hour: '2-digit',
+              minute: '2-digit'
+            }),
             Pulau: item.properties.location.pulau,
             Provinsi: item.properties.location.provinsi,
             Kota: item.properties.location.kab_kota,
@@ -482,7 +504,11 @@ export default function HotspotTable() {
             Longitude: item.geometry.coordinates[0],
           }))
         : accumulatedData.map((item) => ({
-            Tanggal: item.tanggal,
+            Tanggal: new Date(item.tanggal).toLocaleDateString('id-ID', {
+              day: '2-digit',
+              month: 'short',
+              year: 'numeric'
+            }),
             Satelit: item.satelit,
             Confidence: item.confidence,
             Provinsi: item.provinsi,
@@ -524,21 +550,7 @@ export default function HotspotTable() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col justify-center items-center bg-gray-50 dark:bg-gray-900">
-        <FontAwesomeIcon
-          icon={faSpinner}
-          spin
-          size="3x"
-          className="text-gray-600 dark:text-gray-400 mb-4"
-        />
-        <p className="text-gray-700 dark:text-gray-300 text-lg">
-          Memuat data hotspot, mohon tunggu...
-        </p>
-      </div>
-    );
-  }
+  // Removed the early return for loading state - now handled inline in table
 
   function sortHeader(label: string, col: string) {
     return (
@@ -693,9 +705,11 @@ export default function HotspotTable() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Semua confidence</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="low">Low</SelectItem>
+                  {confidenceOptions.map((conf) => (
+                    <SelectItem key={conf.id} value={conf.id}>
+                      {conf.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -717,9 +731,9 @@ export default function HotspotTable() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Semua satelit</SelectItem>
-                  {satellites.map((sat) => (
-                    <SelectItem key={sat} value={sat}>
-                      {sat}
+                  {satelliteOptions.map((sat) => (
+                    <SelectItem key={sat.id} value={sat.id}>
+                      {sat.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -767,7 +781,26 @@ export default function HotspotTable() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {currentItems.length > 0 ? (
+                {loading ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={viewMode === "detail" ? 12 : 7}
+                      className="px-4 py-12 text-center"
+                    >
+                      <div className="flex flex-col items-center justify-center">
+                        <FontAwesomeIcon
+                          icon={faSpinner}
+                          spin
+                          size="2x"
+                          className="text-gray-600 dark:text-gray-400 mb-3"
+                        />
+                        <p className="text-gray-700 dark:text-gray-300">
+                          Memuat data hotspot, mohon tunggu...
+                        </p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : currentItems.length > 0 ? (
                   currentItems.map((item, index) => (
                     <TableRow key={index}>
                       <TableCell className="px-4 py-3">
@@ -777,12 +810,17 @@ export default function HotspotTable() {
                       {viewMode === "detail" ? (
                         <>
                           <TableCell className="px-4 py-3">
-                            {(item as HotspotFeature).properties.time}
+                            {new Date((item as HotspotFeature).properties.time).toLocaleDateString('id-ID', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric'
+                            })}
                           </TableCell>
                           <TableCell className="px-4 py-3">
-                            {extractTime(
-                              (item as HotspotFeature).properties.hotspot_time,
-                            )}
+                            {new Date((item as HotspotFeature).properties.hotspot_time).toLocaleTimeString('id-ID', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
                           </TableCell>
                           <TableCell className="px-4 py-3">
                             {(item as HotspotFeature).properties.location.pulau}
@@ -837,7 +875,11 @@ export default function HotspotTable() {
                       ) : (
                         <>
                           <TableCell className="px-4 py-3">
-                            {(item as AccumulatedData).tanggal}
+                            {new Date((item as AccumulatedData).tanggal).toLocaleDateString('id-ID', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric'
+                            })}
                           </TableCell>
                           <TableCell className="px-4 py-3">
                             {(item as AccumulatedData).satelit}

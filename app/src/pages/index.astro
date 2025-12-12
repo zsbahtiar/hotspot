@@ -1,106 +1,124 @@
 ---
-import BaseLayout from '@/layouts/BaseLayout.astro';
-import StaticNavbar from '@/components/layout/StaticNavbar.astro';
-import StaticFooter from '@/components/layout/StaticFooter.astro';
-import StaticMitigationSection from '@/components/layout/StaticMitigationSection.astro';
-import DashboardWithTheme from '@/components/DashboardWithTheme';
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import StaticNavbar from "@/components/layout/StaticNavbar.astro";
+import StaticFooter from "@/components/layout/StaticFooter.astro";
+import StaticMitigationSection from "@/components/layout/StaticMitigationSection.astro";
+import DashboardWithTheme from "@/components/DashboardWithTheme";
+
+// Calculate year in frontmatter for proper prop serialization
+const currentYear = new Date().getFullYear();
 ---
 
 <BaseLayout
-  title="OLAP Hotspot - Sistem Pemantauan Titik Panas Karhutla"
-  description="Sistem Pemantauan Hotspot Karhutla bersumber dari SIPONGI+ menggunakan teknologi Spatial Online Analytical Processing untuk menganalisis titik panas karhutla di Indonesia."
+    title="OLAP Hotspot - Sistem Pemantauan Titik Panas Karhutla"
+    description="Sistem Pemantauan Hotspot Karhutla bersumber dari SIPONGI+ menggunakan teknologi Spatial Online Analytical Processing untuk menganalisis titik panas karhutla di Indonesia."
 >
-  <link rel="preload" href="/assets/kebakaran2.webp" as="image" fetchpriority="high" />
-
-  <StaticNavbar />
-
-  <!-- Hero Section - Static HTML (No React Needed) -->
-  <section class="relative w-full min-h-screen flex items-center justify-center">
-    <div class="absolute inset-0">
-      <img
-        src="/assets/kebakaran2.webp"
-        alt="Kebakaran Hutan"
-        class="w-full h-full object-cover object-center"
-        loading="eager"
+    <link
+        rel="preload"
+        href="/assets/kebakaran2.webp"
+        as="image"
         fetchpriority="high"
-      />
-      <div class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent"></div>
-      <div class="absolute inset-0 bg-black/20"></div>
-    </div>
+    />
 
-    <div class="relative z-10 max-w-4xl mx-auto px-6 py-16 text-center">
-      <h1 class="text-5xl sm:text-6xl font-bold mb-4 text-white drop-shadow-2xl">
-        <span>Sistem Pemantauan</span>
-        <br />
-        <span>Hotspot Karhutla</span>
-      </h1>
+    <StaticNavbar />
 
-      <p class="text-lg sm:text-xl text-white/95 mb-8 max-w-2xl mx-auto drop-shadow-lg">
-        Situs penyedia titik panas karhutla bersumber dari NASA FIRMS
-        menggunakan teknologi Spatial Online Analytical Processing yang
-        mempermudah pengguna dalam menganalisis titik panas karhutla pada
-        suatu wilayah melalui visualisasi
-      </p>
-
-      <div class="flex flex-col sm:flex-row gap-6 justify-center mb-16">
-        <a
-          href="/map"
-          class="inline-flex items-center justify-center px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-lg shadow-lg hover:bg-white/20 hover:shadow-xl transition-all duration-200 border border-white/20"
-          title="Lihat Peta Persebaran Hotspot Karhutla"
-        >
-          <svg
-            class="w-5 h-5 mr-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
+    <!-- Hero Section - Static HTML (No React Needed) -->
+    <section
+        class="relative w-full min-h-screen flex items-center justify-center"
+    >
+        <div class="absolute inset-0">
+            <img
+                src="/assets/kebakaran2.webp"
+                alt="Kebakaran Hutan"
+                class="w-full h-full object-cover object-center"
+                loading="eager"
+                fetchpriority="high"
             />
-          </svg>
-          Lihat Peta
-        </a>
-        <a
-          href="/data"
-          class="inline-flex items-center justify-center px-8 py-4 border-2 border-white/60 text-white font-semibold rounded-lg hover:bg-white hover:text-gray-900 transition-all duration-200"
-          title="Lihat Data Tabel Hotspot Karhutla"
-        >
-          <svg
-            class="w-5 h-5 mr-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M9 17v1a1 1 0 001 1h4a1 1 0 001-1v-1m3-2V8a2 2 0 00-2-2H8a2 2 0 00-2 2v6m10 0v1a1 1 0 01-1 1H9a1 1 0 01-1-1v-1m4-4V4a1 1 0 00-1-1h-2a1 1 0 00-1 1v4"
-            />
-          </svg>
-          Lihat Data
-        </a>
-      </div>
-    </div>
-  </section>
+            <div
+                class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent"
+            >
+            </div>
+            <div class="absolute inset-0 bg-black/20"></div>
+        </div>
 
-  <!-- Dashboard Content - React Component (Loaded on idle) -->
-  <DashboardWithTheme client:idle />
+        <div class="relative z-10 max-w-4xl mx-auto px-6 py-16 text-center">
+            <h1
+                class="text-5xl sm:text-6xl font-bold mb-4 text-white drop-shadow-2xl"
+            >
+                <span>Sistem Pemantauan</span>
+                <br />
+                <span>Hotspot Karhutla</span>
+            </h1>
 
-  <StaticFooter />
+            <p
+                class="text-lg sm:text-xl text-white/95 mb-8 max-w-2xl mx-auto drop-shadow-lg"
+            >
+                Situs penyedia titik panas karhutla bersumber dari NASA FIRMS
+                menggunakan teknologi Spatial Online Analytical Processing yang
+                mempermudah pengguna dalam menganalisis titik panas karhutla
+                pada suatu wilayah melalui visualisasi
+            </p>
 
-  <script>
-    // Use requestIdleCallback for non-critical tasks
-    const requestIdleCallback = window.requestIdleCallback || ((cb) => setTimeout(cb, 1));
+            <div class="flex flex-col sm:flex-row gap-6 justify-center mb-16">
+                <a
+                    href="/map"
+                    class="inline-flex items-center justify-center px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-lg shadow-lg hover:bg-white/20 hover:shadow-xl transition-all duration-200 border border-white/20"
+                    title="Lihat Peta Persebaran Hotspot Karhutla"
+                >
+                    <svg
+                        class="w-5 h-5 mr-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
+                        ></path>
+                    </svg>
+                    Lihat Peta
+                </a>
+                <a
+                    href="/data"
+                    class="inline-flex items-center justify-center px-8 py-4 border-2 border-white/60 text-white font-semibold rounded-lg hover:bg-white hover:text-gray-900 transition-all duration-200"
+                    title="Lihat Data Tabel Hotspot Karhutla"
+                >
+                    <svg
+                        class="w-5 h-5 mr-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M9 17v1a1 1 0 001 1h4a1 1 0 001-1v-1m3-2V8a2 2 0 00-2-2H8a2 2 0 00-2 2v6m10 0v1a1 1 0 01-1 1H9a1 1 0 01-1-1v-1m4-4V4a1 1 0 00-1-1h-2a1 1 0 00-1 1v4"
+                        ></path>
+                    </svg>
+                    Lihat Data
+                </a>
+            </div>
+        </div>
+    </section>
 
-    // Defer Service Worker registration to idle time
-    requestIdleCallback(() => {
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').catch(() => {});
-      }
-    });
-  </script>
+    <!-- Dashboard Content - React Component (Loaded on idle) -->
+    <DashboardWithTheme client:idle currentYear={currentYear} />
+
+    <StaticFooter />
+
+    <script>
+        // Use requestIdleCallback for non-critical tasks
+        const requestIdleCallback =
+            window.requestIdleCallback || ((cb) => setTimeout(cb, 1));
+
+        // Defer Service Worker registration to idle time
+        requestIdleCallback(() => {
+            if ("serviceWorker" in navigator) {
+                navigator.serviceWorker.register("/sw.js").catch(() => {});
+            }
+        });
+    </script>
 </BaseLayout>
