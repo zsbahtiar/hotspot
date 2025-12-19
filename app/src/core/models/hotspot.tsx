@@ -14,7 +14,6 @@ export interface LocationInfo {
   city_name?: string;
   district_name?: string;
   subdistrict_name?: string;
-  // Legacy fields for backward compatibility
   pulau?: string;
   provinsi?: string;
   kota?: string;
@@ -34,7 +33,6 @@ export interface HotspotFeatureGeo extends GeoJSON.Feature {
     frp: number;
     brightness: number;
     location: LocationInfo;
-    // Legacy fields for backward compatibility
     time?: string;
     satellite?: string;
     hotspot_count?: number;
@@ -43,9 +41,17 @@ export interface HotspotFeatureGeo extends GeoJSON.Feature {
   };
 }
 
+export interface Pagination {
+  total_count: number;
+  has_next: boolean;
+  next_cursor?: string;
+  limit: number;
+}
+
 export interface HotspotDataGeo {
   features: HotspotFeatureGeo[];
   type: "FeatureCollection";
+  pagination?: Pagination;
 }
 
 export type HotspotFeature = {
@@ -63,7 +69,6 @@ export type HotspotFeature = {
     frp: number;
     brightness: number;
     location: LocationInfo;
-    // Legacy fields for backward compatibility
     time?: string;
     satellite?: string;
     hotspot_count?: number;

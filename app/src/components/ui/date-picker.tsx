@@ -1,6 +1,7 @@
 import * as React from "react"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
+import { id as idLocale } from "react-day-picker/locale"
 import { CalendarIcon, X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -55,9 +56,10 @@ export function DatePicker({
             mode="single"
             selected={value}
             onSelect={handleSelect}
-            initialFocus
+            autoFocus
             disabled={(date) => date > new Date()}
             className="pointer-events-auto"
+            locale={idLocale}
           />
         </PopoverContent>
       </Popover>

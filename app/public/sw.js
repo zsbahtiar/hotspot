@@ -49,7 +49,7 @@ self.addEventListener("fetch", (event) => {
           return response;
         })
         .catch(() => {
-          if (event.request.url.includes("/hotspot")) {
+          if (event.request.url.includes("/api/v1/hotspots")) {
             return new Response(
               JSON.stringify({ features: [], type: "FeatureCollection" }),
               {

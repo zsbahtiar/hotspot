@@ -1,5 +1,6 @@
 import type { LatLngBoundsExpression } from "leaflet";
 import type { DrillDownLevel } from "@/core/models/location";
+import type { HotspotFeatureGeo } from "@/core/models/hotspot";
 import type React from "react";
 
 export interface MapComponentProps {
@@ -32,10 +33,17 @@ export interface MapComponentProps {
     };
     selectedDate?: string;
     filterMode?: "period" | "date";
+    province_code?: string;
+    city_code?: string;
+    district_code?: string;
+    subdistrict_code?: string;
   };
   onLayerChange?: (layer: "hotspot-count" | "hotspot-locations") => void;
+  activeLayer?: "hotspot-count" | "hotspot-locations";
   locationData?: [string, number][];
   defaultZoom?: number;
+  onHotspotDataChange?: (data: HotspotFeatureGeo[]) => void;
+  onLoadingChange?: (isLoading: boolean) => void;
 }
 
 export interface MarkerClusterType {

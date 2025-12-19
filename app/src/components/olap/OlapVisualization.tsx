@@ -4,7 +4,8 @@ import L from "leaflet";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import type { IChart, QueryData } from "@/core/models/query";
 import type { DrillDownLevel, LocationData } from "@/core/models/location";
-import { OlapService } from "@/core/services/olapService";
+import type { HotspotFeatureGeo } from "@/core/models/hotspot";
+import { OlapService, getProvinceCodeByName, getCityCodeByName, getDistrictCodeByName, type LocationFilters } from "@/core/services/olapService";
 import { hotspotService } from "@/core/services/hotspotService";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -22,9 +23,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CalendarIcon, X } from "lucide-react";
+import { CalendarIcon, X, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
+import { id as idLocale } from "react-day-picker/locale";
 import { cn } from "@/lib/utils";
 import {
   Chart as ChartJS,
@@ -80,7 +82,7 @@ interface Data {
 
 type OlapData = [string, number];
 
-const USE_MOCK_DATA = true;
+const USE_MOCK_DATA = false;
 
 const MOCK_LOCATION_DATA = [
   ["Sumatera", 1250],
@@ -213,21 +215,7 @@ const MOCK_ALL_LOCATIONS: LocationData[] = [
   },
 ];
 
-const fetcher = async (url: string) => {
-  if (USE_MOCK_DATA) {
-    if (url.includes("/location")) {
-      return MOCK_ALL_LOCATIONS;
-    }
-    return {};
-  }
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error("An error occurred while fetching the data.");
-  }
-  return response.json();
-};
-
-const olapFetcher = async ([endpoint, params]: [string, QueryData]) => {
+const olapFetcher = async ([endpoint, params, filters]: [string, QueryData, LocationFilters?]) => {
   if (USE_MOCK_DATA) {
     if (endpoint === "location" && params.dimension === "location") {
       return MOCK_LOCATION_DATA;
@@ -240,7 +228,7 @@ const olapFetcher = async ([endpoint, params]: [string, QueryData]) => {
     }
     return [];
   }
-  return await OlapService.query(endpoint, params);
+  return await OlapService.query(endpoint, params, filters);
 };
 
 const OlapComponent = () => {
@@ -255,7 +243,6 @@ const OlapComponent = () => {
     return false;
   });
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
-    // Default closed on mobile, open on desktop
     if (typeof window !== "undefined") {
       return window.innerWidth >= 768;
     }
@@ -284,6 +271,10 @@ const OlapComponent = () => {
     time: {} as TimeFilters,
     filterMode: undefined as "period" | "date" | undefined,
     selectedDate: undefined as string | undefined,
+    province_code: undefined as string | undefined,
+    city_code: undefined as string | undefined,
+    district_code: undefined as string | undefined,
+    subdistrict_code: undefined as string | undefined,
   });
   const [modalTime, setModalTime] = useState({
     isOpen: false,
@@ -298,16 +289,38 @@ const OlapComponent = () => {
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [isDatePickerOpenMobile, setIsDatePickerOpenMobile] = useState(false);
   const [isChartCollapsed, setIsChartCollapsed] = useState(false);
+  const [filteredHotspotData, setFilteredHotspotData] = useState<HotspotFeatureGeo[]>([]);
+  const [isMapLoading, setIsMapLoading] = useState(false);
 
-  const { data: olapApiData } = useQuery({
-    queryKey: ["olap-hotspot"],
-    queryFn: () => fetcher(`${import.meta.env.PUBLIC_API_URL}/hotspot`),
-    refetchOnWindowFocus: false,
-  });
+  const handleHotspotDataChange = useCallback((data: HotspotFeatureGeo[]) => {
+    setFilteredHotspotData(data);
+  }, []);
+
+  const handleLoadingChange = useCallback((loading: boolean) => {
+    setIsMapLoading(loading);
+  }, []);
 
   const { data: locationApiData } = useQuery({
     queryKey: ["olap-location"],
-    queryFn: () => fetcher(`${import.meta.env.PUBLIC_API_URL}/location`),
+    queryFn: async () => {
+      if (USE_MOCK_DATA) {
+        return MOCK_ALL_LOCATIONS;
+      }
+      const response = await hotspotService.getLocations();
+      const provinces = response.data.provinces || [];
+
+      const locationData: LocationData[] = provinces.map((prov) => ({
+        lat: prov.lat,
+        lng: prov.lng,
+        pulau: prov.pulau || "",
+        provinsi: prov.name,
+        kab_kota: "",
+        kecamatan: "",
+        desa: "",
+      }));
+
+      return locationData;
+    },
     refetchOnWindowFocus: false,
   });
 
@@ -327,6 +340,36 @@ const OlapComponent = () => {
     queryFn: () => hotspotService.getFilterOptions(),
     refetchOnWindowFocus: false,
   });
+
+  const locationFilters = useMemo((): LocationFilters => {
+    const filters: LocationFilters = {};
+
+    if (globalFilters.confidence) {
+      filters.confidence = globalFilters.confidence;
+    }
+    if (globalFilters.satelite) {
+      filters.satellite = globalFilters.satelite;
+    }
+
+    if (globalFilters.filterMode === "period") {
+      if (globalFilters.time.tahun) filters.year = parseInt(globalFilters.time.tahun, 10);
+      if (globalFilters.time.semester) filters.semester = parseInt(globalFilters.time.semester, 10);
+      if (globalFilters.time.kuartal) filters.quarter = parseInt(globalFilters.time.kuartal, 10);
+      if (globalFilters.time.bulan) filters.month = parseInt(globalFilters.time.bulan, 10);
+      if (globalFilters.time.minggu) filters.week = parseInt(globalFilters.time.minggu, 10);
+    } else if (globalFilters.filterMode === "date" && globalFilters.selectedDate) {
+      filters.start_date = globalFilters.selectedDate;
+      filters.end_date = globalFilters.selectedDate;
+    }
+
+    return filters;
+  }, [
+    globalFilters.confidence,
+    globalFilters.satelite,
+    globalFilters.time,
+    globalFilters.filterMode,
+    globalFilters.selectedDate,
+  ]);
 
   const filteredQueryParams = useMemo(() => {
     let timeParams = {};
@@ -365,16 +408,23 @@ const OlapComponent = () => {
   ]);
 
   const { data: filteredData, isLoading: isFilteredLoading } = useQuery({
-    queryKey: ["location", filteredQueryParams],
-    queryFn: () => olapFetcher(["location", filteredQueryParams]),
+    queryKey: ["location", filteredQueryParams, locationFilters],
+    queryFn: () => olapFetcher(["location", filteredQueryParams, locationFilters]),
     enabled: hasFetched.current || Object.keys(olapData.query || {}).length > 0,
     refetchOnWindowFocus: false,
   });
 
   const { data: drillDownData, isLoading: isDrillDownLoading } = useQuery({
-    queryKey: ["location", drillDownQuery],
-    queryFn: () => olapFetcher(["location", drillDownQuery]),
+    queryKey: ["location-sidebar-drilldown", drillDownQuery],
+    queryFn: () => olapFetcher(["location", drillDownQuery!]),
     enabled: !!drillDownQuery,
+    refetchOnWindowFocus: false,
+  });
+
+  const { data: filteredDrillDownData, isLoading: isFilteredDrillDownLoading } = useQuery({
+    queryKey: ["location-filtered-drilldown", drillDownQuery, locationFilters],
+    queryFn: () => olapFetcher(["location", drillDownQuery!, locationFilters]),
+    enabled: !!drillDownQuery && Object.keys(locationFilters).length > 0,
     refetchOnWindowFocus: false,
   });
 
@@ -383,18 +433,12 @@ const OlapComponent = () => {
     const min = filteredValues.length > 0 ? Math.min(...filteredValues) : 0;
     const max = filteredValues.length > 0 ? Math.max(...filteredValues) : 1;
 
-    let threshold1, threshold2;
-    if (max - min < 3) {
-      const step = Math.ceil((max - min) / 3) || 1;
-      threshold1 = min + step;
-      threshold2 = min + step * 2;
-    } else {
-      const range = max - min;
-      threshold1 = min + range / 3;
-      threshold2 = min + (range * 2) / 3;
-    }
-
-    return { min, threshold1, threshold2, max };
+    return {
+      min,
+      threshold1: 10000,
+      threshold2: 100000,
+      max,
+    };
   }, []);
 
   const getBarColors = useCallback(
@@ -427,13 +471,6 @@ const OlapComponent = () => {
   );
 
   useEffect(() => {
-    if (olapApiData) {
-      setOlapData(olapApiData);
-    }
-  }, [olapApiData]);
-
-  // Handle window resize - auto close sidebar on mobile, auto open on desktop
-  useEffect(() => {
     const handleResize = () => {
       const isDesktop = window.innerWidth >= 768;
       setIsMobile(!isDesktop);
@@ -456,16 +493,8 @@ const OlapComponent = () => {
       Array.isArray(locationQueryData) &&
       !hasFetched.current
     ) {
-      const chart: IChart = {
-        labels: [],
-        values: [],
-      };
-
       const newData: Data[] = [];
       (locationQueryData as [string, number][]).forEach((d) => {
-        chart.labels.push(d[0]);
-        chart.values.push(d[1]);
-
         newData.push({
           data: d[0],
           total: d[1],
@@ -477,14 +506,33 @@ const OlapComponent = () => {
       });
 
       setData(newData);
-      setChart(chart);
       hasFetched.current = true;
     }
-  }, [locationQueryData, setChart]);
+  }, [locationQueryData]);
+
+  useEffect(() => {
+    if (
+      locationQueryData &&
+      Array.isArray(locationQueryData) &&
+      locationQueryData.length > 0 &&
+      drillDownIndexes.length === 0
+    ) {
+      const chart: IChart = {
+        labels: [],
+        values: [],
+      };
+
+      (locationQueryData as [string, number][]).forEach((d) => {
+        chart.labels.push(d[0]);
+        chart.values.push(d[1]);
+      });
+
+      setChart(chart);
+    }
+  }, [locationQueryData, drillDownIndexes.length, setChart]);
 
   useEffect(() => {
     if (filterOptionsData?.data) {
-      // Transform filter options to OlapData format [name, 0]
       const confidenceData: OlapData[] = filterOptionsData.data.confidence.map(
         (conf) => [conf.name, 0]
       );
@@ -497,42 +545,121 @@ const OlapComponent = () => {
   }, [filterOptionsData]);
 
   useEffect(() => {
-    if (filteredData && hasFetched.current) {
-      setDrillDownQuery(null);
-      setDrillDownIndexes([]);
+    if (filteredData && Array.isArray(filteredData) && filteredData.length > 0) {
       const chart: IChart = {
         labels: [],
         values: [],
       };
 
-      const newData: Data[] = [];
-      if (Array.isArray(filteredData) && filteredData.length > 0) {
-        (filteredData as [string, number][]).forEach((d) => {
-          if (!Array.isArray(d) || d.length < 2) {
-            return;
-          }
+      (filteredData as [string, number][]).forEach((d) => {
+        if (!Array.isArray(d) || d.length < 2) {
+          return;
+        }
+        chart.labels.push(d[0]);
+        chart.values.push(d[1]);
+      });
 
-          chart.labels.push(d[0]);
-          chart.values.push(d[1]);
+      setChart(chart);
+      if (!hasFetched.current) {
+        hasFetched.current = true;
+      }
+    }
+  }, [filteredData, setChart]);
 
-          newData.push({
-            data: d[0],
-            total: d[1],
-            modal: false,
-            query: {
-              pulau: d[0],
-              ...filteredQueryParams,
-            },
-            child: [],
-            isOpen: false,
-          });
-        });
+  useEffect(() => {
+    const fetchDrillDownLocations = async () => {
+      if (!drillDownQuery || USE_MOCK_DATA) return;
+
+      const query = drillDownQuery as QueryData & { tipe?: DrillDownLevel };
+      const tipe = query.tipe;
+
+      let params: {
+        province_code?: string;
+        city_code?: string;
+        district_code?: string;
+      } = {};
+
+      if (tipe === "kota" && query.provinsi) {
+        params = {};
       }
 
-      setData(newData);
-      setChart(chart);
-    }
-  }, [filteredData, filteredQueryParams, setChart]);
+      try {
+        const response = await hotspotService.getLocations(params);
+        const newLocations: LocationData[] = [];
+
+        if (response.data.provinces) {
+          response.data.provinces.forEach((prov) => {
+            newLocations.push({
+              lat: prov.lat,
+              lng: prov.lng,
+              pulau: prov.pulau || "",
+              provinsi: prov.name,
+              kab_kota: "",
+              kecamatan: "",
+              desa: "",
+            });
+          });
+        }
+        if (response.data.cities) {
+          response.data.cities.forEach((city) => {
+            newLocations.push({
+              lat: city.lat,
+              lng: city.lng,
+              pulau: "",
+              provinsi: "",
+              kab_kota: city.name,
+              kecamatan: "",
+              desa: "",
+            });
+          });
+        }
+        if (response.data.districts) {
+          response.data.districts.forEach((district) => {
+            newLocations.push({
+              lat: district.lat,
+              lng: district.lng,
+              pulau: "",
+              provinsi: "",
+              kab_kota: "",
+              kecamatan: district.name,
+              desa: "",
+            });
+          });
+        }
+        if (response.data.subdistricts) {
+          response.data.subdistricts.forEach((subdistrict) => {
+            newLocations.push({
+              lat: subdistrict.lat,
+              lng: subdistrict.lng,
+              pulau: "",
+              provinsi: "",
+              kab_kota: "",
+              kecamatan: "",
+              desa: subdistrict.name,
+            });
+          });
+        }
+
+        setAllLocationData((prev) => {
+          const existingNames = new Set(
+            prev.map((loc) =>
+              loc.desa || loc.kecamatan || loc.kab_kota || loc.provinsi,
+            ),
+          );
+          const filtered = newLocations.filter((loc) => {
+            const name =
+              loc.desa || loc.kecamatan || loc.kab_kota || loc.provinsi;
+            return !existingNames.has(name);
+          });
+          return [...prev, ...filtered];
+        });
+      } catch (error) {
+        console.error("Failed to fetch drill-down locations:", error);
+      }
+    };
+
+    fetchDrillDownLocations();
+  }, [drillDownQuery]);
 
   useEffect(() => {
     if (drillDownData && drillDownIndexes.length > 0 && drillDownQuery) {
@@ -600,20 +727,55 @@ const OlapComponent = () => {
         });
         return newData;
       });
-
-      setChart(chart);
     }
   }, [
     drillDownData,
     allLocationData,
     drillDownIndexes,
     drillDownQuery,
+  ]);
+
+  useEffect(() => {
+    if (drillDownIndexes.length > 0 && drillDownQuery) {
+      const hasFilters = Object.keys(locationFilters).length > 0;
+      const sourceData = hasFilters ? filteredDrillDownData : drillDownData;
+
+      if (sourceData && Array.isArray(sourceData) && sourceData.length > 0) {
+        const chart: IChart = {
+          labels: [],
+          values: [],
+        };
+
+        (sourceData as [string, number][]).forEach((d) => {
+          if (!Array.isArray(d) || d.length < 2) {
+            return;
+          }
+          chart.labels.push(d[0]);
+          chart.values.push(d[1]);
+        });
+
+        setChart(chart);
+      }
+    }
+  }, [
+    filteredDrillDownData,
+    drillDownData,
+    drillDownIndexes,
+    drillDownQuery,
+    locationFilters,
     setChart,
   ]);
 
   useEffect(() => {
     setIsLoading(isLocationLoading || isFilteredLoading || isDrillDownLoading);
   }, [isLocationLoading, isFilteredLoading, isDrillDownLoading]);
+
+  const effectiveMapLoading = useMemo(() => {
+    if (activeMapLayer === "hotspot-count") {
+      return isFilteredLoading || isFilteredDrillDownLoading;
+    }
+    return isMapLoading;
+  }, [activeMapLayer, isFilteredLoading, isFilteredDrillDownLoading, isMapLoading]);
 
   useEffect(() => {
     if (isLoading || !scrollTargetId.current) {
@@ -801,15 +963,22 @@ const OlapComponent = () => {
         switch (nextDrillType) {
           case "provinsi":
             queryForDrill.pulau = itemClicked.data.toString();
+            setGlobalFilters(prev => ({ ...prev, province_code: undefined, city_code: undefined, district_code: undefined, subdistrict_code: undefined }));
             break;
           case "kota":
             queryForDrill.provinsi = itemClicked.data.toString();
+            const provinceCode = getProvinceCodeByName(itemClicked.data.toString());
+            setGlobalFilters(prev => ({ ...prev, province_code: provinceCode, city_code: undefined, district_code: undefined, subdistrict_code: undefined }));
             break;
           case "kecamatan":
             queryForDrill.kota = itemClicked.data.toString();
+            const cityCode = getCityCodeByName(itemClicked.data.toString());
+            setGlobalFilters(prev => ({ ...prev, city_code: cityCode, district_code: undefined, subdistrict_code: undefined }));
             break;
           case "desa":
             queryForDrill.kecamatan = itemClicked.data.toString();
+            const districtCode = getDistrictCodeByName(itemClicked.data.toString());
+            setGlobalFilters(prev => ({ ...prev, district_code: districtCode, subdistrict_code: undefined }));
             break;
         }
         getDrilldownData(indexes, queryForDrill, nextDrillType);
@@ -817,7 +986,7 @@ const OlapComponent = () => {
         setOlapData({ query: queryForDrill });
         setHotspotCountQuery(queryForDrill);
         setDrillDownLevel(nextDrillType);
-        setMapBounds(null); // Reset bounds
+        setMapBounds(null);
         setSelectedLocation({
           lat: itemClicked.query.lat ?? -2.5,
           lng: itemClicked.query.lng ?? 118,
@@ -890,6 +1059,10 @@ const OlapComponent = () => {
       time: {},
       filterMode: undefined,
       selectedDate: undefined,
+      province_code: undefined,
+      city_code: undefined,
+      district_code: undefined,
+      subdistrict_code: undefined,
     });
     setDrillDownLevel("pulau");
     setMapBounds(null);
@@ -901,6 +1074,16 @@ const OlapComponent = () => {
     setHotspotLocationsQuery({});
 
     setActiveMapLayer("hotspot-count");
+
+    setDrillDownIndexes([]);
+
+    setData((prevData) =>
+      prevData.map((item) => ({
+        ...item,
+        isOpen: false,
+        child: [],
+      }))
+    );
   };
 
   const memoizedFilters = useMemo(() => {
@@ -916,6 +1099,10 @@ const OlapComponent = () => {
         confidence: undefined,
         satelite: undefined,
         time: {},
+        province_code: undefined,
+        city_code: undefined,
+        district_code: undefined,
+        subdistrict_code: undefined,
       };
     } else {
       return {
@@ -924,9 +1111,101 @@ const OlapComponent = () => {
         time: globalFilters.time,
         filterMode: globalFilters.filterMode,
         selectedDate: globalFilters.selectedDate,
+        province_code: globalFilters.province_code,
+        city_code: globalFilters.city_code,
+        district_code: globalFilters.district_code,
+        subdistrict_code: globalFilters.subdistrict_code,
       };
     }
   }, [globalFilters, activeMapLayer]);
+
+  const aggregatedChartData = useMemo(() => {
+    if (!filteredHotspotData || filteredHotspotData.length === 0) return null;
+
+    const counts: Record<string, number> = {};
+
+    filteredHotspotData.forEach((feature) => {
+      const location = feature.properties?.location as {
+        pulau?: string;
+        provinsi?: string;
+        kab_kota?: string;
+        kecamatan?: string;
+        desa?: string;
+        province_name?: string;
+        city_name?: string;
+        district_name?: string;
+        subdistrict_name?: string;
+      } | undefined;
+      let key = "";
+
+      switch (drillDownLevel) {
+        case "pulau":
+          key = location?.pulau || "Unknown";
+          break;
+        case "provinsi":
+          key = location?.provinsi || location?.province_name || "Unknown";
+          break;
+        case "kota":
+          key = location?.kab_kota || location?.city_name || "Unknown";
+          break;
+        case "kecamatan":
+          key = location?.kecamatan || location?.district_name || "Unknown";
+          break;
+        case "desa":
+          key = location?.desa || location?.subdistrict_name || "Unknown";
+          break;
+        default:
+          key = location?.pulau || "Unknown";
+      }
+
+      if (key && key !== "Unknown") {
+        counts[key] = (counts[key] || 0) + 1;
+      }
+    });
+
+    const sorted = Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, count]) => ({ name, count }));
+
+    return sorted.length > 0 ? sorted : null;
+  }, [filteredHotspotData, drillDownLevel]);
+
+  const hasActiveFilters = useMemo(() => {
+    return (
+      globalFilters.confidence ||
+      globalFilters.satelite ||
+      globalFilters.selectedDate ||
+      Object.keys(globalFilters.time).length > 0 ||
+      globalFilters.province_code ||
+      globalFilters.city_code ||
+      globalFilters.district_code
+    );
+  }, [globalFilters]);
+
+  const displayChartData = useMemo((): ChartData<"bar"> | null => {
+    if (activeMapLayer === "hotspot-count") {
+      return barChartData;
+    }
+
+    if (hasActiveFilters) {
+      if (aggregatedChartData && aggregatedChartData.length > 0) {
+        const labels = aggregatedChartData.map((d) => d.name);
+        const values = aggregatedChartData.map((d) => d.count);
+        return {
+          labels,
+          datasets: [
+            {
+              data: values,
+              label: "Titik Panas",
+              backgroundColor: getBarColors(values),
+            },
+          ],
+        };
+      }
+      return null;
+    }
+    return barChartData;
+  }, [activeMapLayer, hasActiveFilters, aggregatedChartData, barChartData, getBarColors]);
 
   const openModalTime = (
     index: number[],
@@ -1104,7 +1383,6 @@ const OlapComponent = () => {
       />
 
       <div className="flex flex-1 flex-col md:flex-row md:overflow-hidden">
-        {/* Sidebar - Desktop Only */}
         <div
           className={`${
             activeMapLayer === "hotspot-locations"
@@ -1113,14 +1391,10 @@ const OlapComponent = () => {
           } md:w-[320px] lg:w-[360px] bg-background border-r border-border flex-col overflow-y-auto relative`}
           style={{ zIndex: 10 }}
         >
-          {/* FILTERS */}
-
-          {/* FILTERS HEADER */}
           <div className="p-4 border-b border-border bg-muted/50">
             <h2 className="text-lg font-bold text-foreground">Filters</h2>
           </div>
 
-          {/* FILTERS CONTENT */}
           <div
             className={`px-6 py-4 space-y-4 border-b border-border ${
               activeMapLayer === "hotspot-locations"
@@ -1128,7 +1402,6 @@ const OlapComponent = () => {
                 : ""
             }`}
           >
-            {/* Confidence Level */}
             <div className="space-y-2">
               <Label
                 htmlFor="confidence-filter"
@@ -1161,7 +1434,6 @@ const OlapComponent = () => {
               </Select>
             </div>
 
-            {/* Satellite */}
             <div className="space-y-2">
               <Label htmlFor="satellite-filter" className="text-sm font-medium">
                 Satellite
@@ -1191,7 +1463,6 @@ const OlapComponent = () => {
               </Select>
             </div>
 
-            {/* Filter Periode Waktu */}
             <div className="space-y-2">
               <Label
                 htmlFor="time-period-filter"
@@ -1252,7 +1523,6 @@ const OlapComponent = () => {
               </Button>
             </div>
 
-            {/* Filter Tanggal Spesifik */}
             <div className="space-y-2">
               <Label
                 htmlFor="date-specific-filter"
@@ -1315,6 +1585,7 @@ const OlapComponent = () => {
                     >
                       <Calendar
                         mode="single"
+                        locale={idLocale}
                         selected={
                           globalFilters.selectedDate
                             ? new Date(globalFilters.selectedDate)
@@ -1338,7 +1609,7 @@ const OlapComponent = () => {
                           setIsDatePickerOpen(false);
                         }}
                         disabled={(date) => date > new Date()}
-                        initialFocus
+                        autoFocus
                         className="pointer-events-auto"
                       />
                     </div>
@@ -1381,8 +1652,7 @@ const OlapComponent = () => {
               )}
             </div>
 
-            {/* Reset Button */}
-            <Button
+                        <Button
               variant="secondary"
               className="w-full"
               onClick={resetAllFilters}
@@ -1391,8 +1661,7 @@ const OlapComponent = () => {
             </Button>
           </div>
 
-          {/* Location List */}
-          <div className="px-4 py-3 border-b border-border bg-muted/30">
+                    <div className="px-4 py-3 border-b border-border bg-muted/30">
             <Label className="text-base font-bold text-foreground flex items-center gap-1">
               Location
               <span
@@ -1424,8 +1693,7 @@ const OlapComponent = () => {
             ) : data && data.length > 0 ? (
               data.map((item, i) => (
                 <div key={i} id={`location-item-${i}`} className="mb-3">
-                  {/* Pulau */}
-                  <div className="bg-card border-l-4 border-blue-500 p-3 rounded-lg shadow-xs hover:shadow-sm transition-shadow">
+                                    <div className="bg-card border-l-4 border-blue-500 p-3 rounded-lg shadow-xs hover:shadow-sm transition-shadow">
                     <div className="flex justify-between items-center">
                       <span
                         className="font-semibold text-sm text-foreground cursor-pointer hover:text-blue-600 transition"
@@ -1445,8 +1713,7 @@ const OlapComponent = () => {
                     </div>
                   </div>
 
-                  {/* Provinsi */}
-                  {item.isOpen &&
+                                    {item.isOpen &&
                     item.child &&
                     item.child.map((provinsi, j) => (
                       <div
@@ -1481,8 +1748,7 @@ const OlapComponent = () => {
                           </div>
                         </div>
 
-                        {/* Kota */}
-                        {provinsi.isOpen &&
+                                                {provinsi.isOpen &&
                           provinsi.child &&
                           provinsi.child.map((kota, k) => (
                             <div
@@ -1519,8 +1785,7 @@ const OlapComponent = () => {
                                 </div>
                               </div>
 
-                              {/* Kecamatan */}
-                              {kota.isOpen &&
+                                                            {kota.isOpen &&
                                 kota.child &&
                                 kota.child.map((kecamatan, l) => (
                                   <div
@@ -1562,8 +1827,7 @@ const OlapComponent = () => {
                                       </div>
                                     </div>
 
-                                    {/* Desa */}
-                                    {kecamatan.isOpen &&
+                                                                        {kecamatan.isOpen &&
                                       kecamatan.child &&
                                       kecamatan.child.map((desa, m) => (
                                         <div
@@ -1631,14 +1895,12 @@ const OlapComponent = () => {
           </div>
         </div>
 
-        {/* Right Content */}
-        <div
+                <div
           className={`w-full flex flex-col md:overflow-hidden ${
             activeMapLayer === "hotspot-locations" ? "flex-1" : "md:flex-1"
           }`}
         >
-          {/* Map Section */}
-          <div
+                    <div
             className={`relative text-foreground flex-shrink-0 mt-4 md:mt-0 ${
               activeMapLayer === "hotspot-locations"
                 ? "h-full flex-grow"
@@ -1656,11 +1918,13 @@ const OlapComponent = () => {
                     : { query: olapData.query }
                 }
                 locationData={
-                  drillDownData && drillDownIndexes.length > 0
-                    ? (drillDownData as [string, number][])
-                    : filteredData && hasFetched.current
-                      ? (filteredData as [string, number][])
-                      : (locationQueryData as [string, number][])
+                  drillDownIndexes.length > 0
+                    ? (Object.keys(locationFilters).length > 0
+                        ? (filteredDrillDownData as [string, number][])
+                        : (drillDownData as [string, number][]))
+                    : (filteredData && Array.isArray(filteredData) && filteredData.length > 0
+                        ? (filteredData as [string, number][])
+                        : (locationQueryData as [string, number][]))
                 }
                 drillDownLevel={drillDownLevel}
                 onDrillDownChange={handleDrillDownChange}
@@ -1673,6 +1937,7 @@ const OlapComponent = () => {
                     setHotspotCountQuery(olapData.query || {});
                   }
                 }}
+                activeLayer={activeMapLayer}
                 className=""
                 style={{
                   height: "100%",
@@ -1684,12 +1949,13 @@ const OlapComponent = () => {
                 defaultZoom={
                   isMobile ? 13 : activeMapLayer === "hotspot-locations" ? 5 : 4
                 }
+                onHotspotDataChange={handleHotspotDataChange}
+                onLoadingChange={handleLoadingChange}
               />
             </div>
           </div>
 
-          {/* Chart Section */}
-          <div
+                    <div
             className={`${isChartCollapsed ? "h-[52px]" : "h-[280px] md:h-[35%]"} bg-card border-t-2 border-border flex-shrink-0 mt-0 transition-all duration-300
             ${activeMapLayer === "hotspot-locations" ? "hidden" : ""}`}
           >
@@ -1726,7 +1992,7 @@ const OlapComponent = () => {
                 </div>
               </div>
               {!isChartCollapsed && (
-                <div className="flex-1 min-h-0">
+                <div className="flex-1 min-h-0 relative">
                   {isLoading ? (
                     <div className="min-h-full flex flex-col justify-center items-center bg-muted/30">
                       <FontAwesomeIcon
@@ -1736,9 +2002,9 @@ const OlapComponent = () => {
                         className="text-gray-600 dark:text-gray-400 mb-4"
                       />
                     </div>
-                  ) : !barChartData ||
-                    !barChartData.labels ||
-                    barChartData.labels.length === 0 ? (
+                  ) : !displayChartData ||
+                    !displayChartData.labels ||
+                    displayChartData.labels.length === 0 ? (
                     <div className="min-h-full flex flex-col justify-center items-center bg-muted/30">
                       <p className="text-muted-foreground text-md">
                         Tidak ada data
@@ -1747,7 +2013,7 @@ const OlapComponent = () => {
                   ) : (
                     <div className="relative h-full">
                       <Bar
-                        data={barChartData}
+                        data={displayChartData}
                         options={{
                           ...barChartOptions,
                           maintainAspectRatio: false,
@@ -1845,26 +2111,37 @@ const OlapComponent = () => {
                       />
                     </div>
                   )}
+
+                                    {effectiveMapLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-lg z-10">
+                      <div className="bg-white dark:bg-gray-800 rounded-lg px-6 py-4 flex items-center gap-3 shadow-lg">
+                        <RefreshCw
+                          width="24"
+                          height="24"
+                          className="text-primary animate-spin"
+                        />
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Memuat data...
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           </div>
 
-          {/* Mobile Filters Section */}
-          <div
+                    <div
             className={`md:hidden bg-background border-t-2 border-border flex-shrink-0 min-h-[400px] ${
               activeMapLayer === "hotspot-locations" ? "hidden" : ""
             }`}
           >
-            {/* FILTERS HEADER - Mobile */}
-            <div className="px-4 py-3 border-b border-border bg-muted/50">
+                        <div className="px-4 py-3 border-b border-border bg-muted/50">
               <h2 className="text-base font-bold text-foreground">Filters</h2>
             </div>
 
-            {/* FILTERS CONTENT - Mobile */}
-            <div className="px-4 py-4 space-y-4 border-b border-border">
-              {/* Confidence Level */}
-              <div className="space-y-2">
+                        <div className="px-4 py-4 space-y-4 border-b border-border">
+                            <div className="space-y-2">
                 <Label
                   htmlFor="confidence-filter-mobile"
                   className="text-sm font-medium flex items-center"
@@ -1898,8 +2175,7 @@ const OlapComponent = () => {
                 </Select>
               </div>
 
-              {/* Satellite */}
-              <div className="space-y-2">
+                            <div className="space-y-2">
                 <Label
                   htmlFor="satellite-filter-mobile"
                   className="text-sm font-medium"
@@ -1933,8 +2209,7 @@ const OlapComponent = () => {
                 </Select>
               </div>
 
-              {/* Filter Periode Waktu */}
-              <div className="space-y-2">
+                            <div className="space-y-2">
                 <Label
                   htmlFor="time-period-filter-mobile"
                   className="text-sm font-medium flex items-center gap-1"
@@ -2001,8 +2276,7 @@ const OlapComponent = () => {
                 </Button>
               </div>
 
-              {/* Filter Tanggal Spesifik */}
-              <div className="space-y-2">
+                            <div className="space-y-2">
                 <Label
                   htmlFor="date-specific-filter-mobile"
                   className="text-sm font-medium flex items-center gap-1"
@@ -2064,6 +2338,7 @@ const OlapComponent = () => {
                       >
                         <Calendar
                           mode="single"
+                          locale={idLocale}
                           selected={
                             globalFilters.selectedDate
                               ? new Date(globalFilters.selectedDate)
@@ -2087,7 +2362,7 @@ const OlapComponent = () => {
                             setIsDatePickerOpenMobile(false);
                           }}
                           disabled={(date) => date > new Date()}
-                          initialFocus
+                          autoFocus
                           className="pointer-events-auto"
                         />
                       </div>
@@ -2130,8 +2405,7 @@ const OlapComponent = () => {
                 )}
               </div>
 
-              {/* Reset Button */}
-              <Button
+                            <Button
                 variant="secondary"
                 className="w-full"
                 onClick={resetAllFilters}
@@ -2140,8 +2414,7 @@ const OlapComponent = () => {
               </Button>
             </div>
 
-            {/* Location List - Mobile */}
-            <div className="px-4 py-3 border-b border-border bg-muted/30">
+                        <div className="px-4 py-3 border-b border-border bg-muted/30">
               <Label className="text-base font-bold text-foreground flex items-center gap-1">
                 Location
                 <span
@@ -2171,8 +2444,7 @@ const OlapComponent = () => {
                     id={`location-item-mobile-${i}`}
                     className="mb-3"
                   >
-                    {/* Pulau */}
-                    <div className="bg-card border-l-4 border-blue-500 p-3 rounded-lg shadow-xs hover:shadow-sm transition-shadow">
+                                        <div className="bg-card border-l-4 border-blue-500 p-3 rounded-lg shadow-xs hover:shadow-sm transition-shadow">
                       <div className="flex justify-between items-center">
                         <span
                           className="font-semibold text-sm text-foreground cursor-pointer hover:text-blue-600 transition"
@@ -2192,8 +2464,7 @@ const OlapComponent = () => {
                       </div>
                     </div>
 
-                    {/* Provinsi */}
-                    {item.isOpen &&
+                                        {item.isOpen &&
                       item.child &&
                       item.child.map((provinsi, j) => (
                         <div
@@ -2230,8 +2501,7 @@ const OlapComponent = () => {
                             </div>
                           </div>
 
-                          {/* Kota */}
-                          {provinsi.isOpen &&
+                                                    {provinsi.isOpen &&
                             provinsi.child &&
                             provinsi.child.map((kota, k) => (
                               <div
@@ -2273,8 +2543,7 @@ const OlapComponent = () => {
                                   </div>
                                 </div>
 
-                                {/* Kecamatan */}
-                                {kota.isOpen &&
+                                                                {kota.isOpen &&
                                   kota.child &&
                                   kota.child.map((kecamatan, l) => (
                                     <div
@@ -2317,8 +2586,7 @@ const OlapComponent = () => {
                                         </div>
                                       </div>
 
-                                      {/* Desa */}
-                                      {kecamatan.isOpen &&
+                                                                            {kecamatan.isOpen &&
                                         kecamatan.child &&
                                         kecamatan.child.map((desa, m) => (
                                           <div
@@ -2392,8 +2660,7 @@ const OlapComponent = () => {
         </div>
       </div>
 
-      {/* Modal Time */}
-      {modalTime.isOpen && activeMapLayer !== "hotspot-locations" && (
+            {modalTime.isOpen && activeMapLayer !== "hotspot-locations" && (
         <ModalTime
           query={modalTime.query}
           value={modalTime.query.point || ""}

@@ -29,20 +29,46 @@ interface MainProps {
 }
 
 const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps) => {
-  // Use provided year from Astro SSR, or fallback to current year
-  const year = currentYear || new Date().getFullYear();
+  const year = currentYear ?? 2025;
 
-  // Fetch all dashboard data in single request with concurrent backend queries
+  const ytdDateRange = useMemo(() => {
+    const now = new Date();
+    const startOfYear = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
+    const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+    const formatWithTimezone = (date: Date) => {
+      const offset = -date.getTimezoneOffset();
+      const sign = offset >= 0 ? '+' : '-';
+      const hours = String(Math.floor(Math.abs(offset) / 60)).padStart(2, '0');
+      const minutes = String(Math.abs(offset) % 60).padStart(2, '0');
+      const tzOffset = `${sign}${hours}:${minutes}`;
+
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hour = String(date.getHours()).padStart(2, '0');
+      const min = String(date.getMinutes()).padStart(2, '0');
+      const sec = String(date.getSeconds()).padStart(2, '0');
+
+      return `${year}-${month}-${day}T${hour}:${min}:${sec}${tzOffset}`;
+    };
+
+    return {
+      start_date: formatWithTimezone(startOfYear),
+      end_date: formatWithTimezone(endOfToday),
+    };
+  }, []);
+
   const { data: summaryRes, isLoading: summaryLoading } = useSummary({
     province_limit: 10,
     city_limit: 10,
+    ...ytdDateRange,
   });
   const { data: latestHotspotsRes, isLoading: latestLoading } =
     useLatestHotspots(5);
 
   const isLoading = summaryLoading || latestLoading;
 
-  // Transform data to match existing structure
   const hotspotData: HotspotDataGeo = {
     type: "FeatureCollection",
     features: [],
@@ -69,9 +95,7 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
   };
 
   const monthlyHotspotTrends = useMemo(() => {
-    // Use backend summary data when available, fallback to manual calculation
     if (summaryData?.monthly?.length > 0) {
-      // Backend data format: [{month: "2015-01-01T00:00:00Z", total: 4064, high_confidence: 0}, ...]
       const monthNames = [
         "Januari",
         "Februari",
@@ -88,7 +112,6 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
       ];
 
       return summaryData.monthly.map((item) => {
-        // Parse ISO date string to get month
         const date = new Date(item.month);
         const monthIndex = date.getMonth();
         const displayMonth = monthNames[monthIndex];
@@ -102,7 +125,6 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
         ];
       });
     } else {
-      // Fallback to manual calculation from 2025 hotspot data only
       interface MonthCount {
         total: number;
         highConfidence: number;
@@ -115,7 +137,6 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
           const date = new Date(feature.properties.time);
           const featureYear = date.getFullYear();
 
-          // Only process 2025 data
           if (featureYear === currentYear) {
             const monthYear = date.toLocaleString("id-ID", {
               month: "long",
@@ -184,12 +205,10 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
   );
 
   const stats = useMemo(() => {
-    // All data from single summary response
     const backendStats = summaryRes?.data?.stats;
     const topProvincesData = summaryData?.top_provinces || [];
     const todayStats = summaryRes?.data?.today_stats;
 
-    // Get top province as "lokasi tertinggi"
     const topProvince = topProvincesData[0]?.name || "N/A";
 
     return {
@@ -204,7 +223,6 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
   }, [summaryData, summaryRes]);
 
 
-  // Get latest hotspots from API
   const latestHotspots = latestHotspotsRes?.data?.hotspots || [];
 
   return (
@@ -291,8 +309,7 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
         </section>
       )}
 
-      {/* Info */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-900">
+            <section className="py-24 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl sm:text-5xl font-bold mb-6 dark:text-white text-gray-900 tracking-tight">
@@ -324,8 +341,7 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Hotspot Terbaru */}
-            <Card className="dark:border-gray-700 dark:bg-gray-800 border border-gray-200 bg-white hover:shadow-lg transition-all duration-300 rounded-xl">
+                        <Card className="dark:border-gray-700 dark:bg-gray-800 border border-gray-200 bg-white hover:shadow-lg transition-all duration-300 rounded-xl">
               <CardHeader className="dark:border-gray-700 px-6 py-4 border-b border-gray-100">
                 <CardTitle className="dark:text-white text-gray-900 text-lg font-semibold">
                   Data Terbaru
@@ -477,20 +493,18 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
               </CardContent>
             </Card>
 
-            {/* Grafik dan Statistik */}
-            <Card className="dark:border-gray-700 dark:bg-gray-800 border border-gray-200 bg-white hover:shadow-lg transition-all duration-300 rounded-xl">
+                        <Card className="dark:border-gray-700 dark:bg-gray-800 border border-gray-200 bg-white hover:shadow-lg transition-all duration-300 rounded-xl">
               <CardHeader className="dark:border-gray-700 px-6 py-4 border-b border-gray-100">
                 <CardTitle className="dark:text-white text-gray-900 text-lg font-semibold">
                   Statistik Hotspot
                 </CardTitle>
-                <p className="dark:text-gray-400 text-sm text-gray-500" suppressHydrationWarning>
-                  Analitik data hotspot Tahun {year}
+                <p className="dark:text-gray-400 text-sm text-gray-500">
+                  Analitik data hotspot Tahun <span suppressHydrationWarning>{year}</span>
                 </p>
               </CardHeader>
 
               <CardContent className="p-6">
-                {/* Grafik */}
-                <div className="dark:bg-gray-700 dark:border-gray-600 bg-gray-50 rounded-xl h-64 flex items-center justify-center mb-6 border border-gray-200">
+                                <div className="dark:bg-gray-700 dark:border-gray-600 bg-gray-50 rounded-xl h-64 flex items-center justify-center mb-6 border border-gray-200">
                   <Suspense fallback={<ChartSkeleton />}>
                     <ChartComponent
                       chartData={chartData}
@@ -499,15 +513,13 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
                   </Suspense>
                 </div>
 
-                {/* Top Locations */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                   <div className="dark:bg-gray-700 dark:border-gray-600 bg-gray-50 rounded-lg p-4 border border-gray-200">
                     <h5 className="dark:text-white text-sm font-medium text-gray-700 mb-2">
                       Top Provinsi
                     </h5>
                     <div className="space-y-1">
                       {(() => {
-                        // Use backend summary data when available, fallback to manual calculation
                         if (summaryData?.top_provinces?.length > 0) {
                           return summaryData.top_provinces.map((province) => (
                             <div
@@ -532,7 +544,6 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
                     </h5>
                     <div className="space-y-1">
                       {(() => {
-                        // Use backend summary data when available
                         if (summaryData?.top_cities?.length > 0) {
                           return summaryData.top_cities.map((city) => (
                             <div
@@ -553,8 +564,7 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
                   </div>
                 </div>
 
-                {/* Time Analysis */}
-                <div className="dark:bg-gray-700 dark:border-gray-600 bg-gray-50 rounded-lg p-4 border border-gray-200 mb-6">
+                                <div className="dark:bg-gray-700 dark:border-gray-600 bg-gray-50 rounded-lg p-4 border border-gray-200 mb-6">
                   <h5 className="dark:text-white text-sm font-medium text-gray-700 mb-3">
                     Analisis Waktu
                   </h5>
@@ -566,7 +576,6 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
                       <div className="dark:text-gray-300 text-xs text-gray-600">
                         {(() => {
                           if (summaryData?.monthly?.length > 0) {
-                            // Get first and last month from monthly stats
                             const firstMonth = new Date(
                               summaryData.monthly[0].month,
                             );
@@ -576,7 +585,6 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
                               ].month,
                             );
 
-                            // Set to first day of first month and last day of last month
                             const startDate = new Date(
                               firstMonth.getFullYear(),
                               firstMonth.getMonth(),
@@ -586,7 +594,7 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
                               lastMonth.getFullYear(),
                               lastMonth.getMonth() + 1,
                               0,
-                            ); // Last day of month
+                            );
 
                             return `${startDate.toLocaleDateString("id-ID")} - ${endDate.toLocaleDateString("id-ID")}`;
                           }
@@ -601,13 +609,11 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
                       <div className="dark:text-gray-300 text-xs text-gray-600">
                         {(() => {
                           if (summaryData?.monthly?.length > 0) {
-                            // Calculate total hotspots
                             const totalHotspots = summaryData.monthly.reduce(
                               (sum, month) => sum + month.total,
                               0,
                             );
 
-                            // Calculate total days from first to last month
                             const firstMonth = new Date(
                               summaryData.monthly[0].month,
                             );
@@ -622,7 +628,7 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
                               firstMonth.getMonth(),
                               1,
                             );
-                            const endDate = new Date(); // Today
+                            const endDate = new Date();
 
                             const daysDiff = Math.ceil(
                               (endDate.getTime() - startDate.getTime()) /
@@ -639,16 +645,13 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
                   </div>
                 </div>
 
-                {/* Monthly Distribution */}
-                <div className="dark:bg-gray-700 dark:border-gray-600 bg-gray-50 rounded-lg p-4 border border-gray-200 mb-6">
+                                <div className="dark:bg-gray-700 dark:border-gray-600 bg-gray-50 rounded-lg p-4 border border-gray-200 mb-6">
                   <h5 className="dark:text-white text-sm font-medium text-gray-700 mb-3">
                     Distribusi Bulanan
                   </h5>
                   <div className="grid grid-cols-3 gap-2 text-center">
                     {(() => {
-                      // Use backend summary data when available, fallback to manual calculation
                       if (summaryData?.monthly?.length > 0) {
-                        // Month names in Indonesian
                         const monthNames = [
                           "Januari",
                           "Februari",
@@ -665,7 +668,6 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
                         ];
 
                         return summaryData.monthly.map((monthData) => {
-                          // Parse ISO datetime to get month index
                           const date = new Date(monthData.month);
                           const monthIndex = date.getMonth();
                           const displayMonth = monthNames[monthIndex];
@@ -685,7 +687,6 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
                           );
                         });
                       } else {
-                        // Fallback to manual calculation - only use 2025 data
                         const monthCounts: Record<string, number> = {};
                         const currentYear = new Date().getFullYear();
 
@@ -693,7 +694,6 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
                           const date = new Date(f.properties.time);
                           const featureYear = date.getFullYear();
 
-                          // Only process 2025 data
                           if (featureYear === currentYear) {
                             const month = date.toLocaleDateString("id-ID", {
                               month: "short",
@@ -776,8 +776,7 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
                   </div>
                 </div>
 
-                {/* Confidence Breakdown */}
-                <div className="mt-6">
+                                <div className="mt-6">
                   <h4 className="dark:text-white text-sm font-medium text-gray-700 mb-3">
                     Distribusi Confidence Level
                   </h4>
@@ -805,7 +804,6 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
                         confidence: "low",
                       },
                     ].map((item) => {
-                      // Use backend summary data when available, fallback to manual calculation
                       const count =
                         summaryData?.confidence?.[
                           item.confidence.toUpperCase()
@@ -876,14 +874,12 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
                   </div>
                 </div>
 
-                {/* Satellite Distribution */}
-                <div className="mt-6">
+                                <div className="mt-6">
                   <h4 className="dark:text-white text-sm font-medium text-gray-700 mb-3">
                     Sumber Satelit
                   </h4>
                   <div className="space-y-2">
                     {(() => {
-                      // Define color mapping for satellites
                       const satelliteColors: Record<
                         string,
                         { bgColor: string; dotClass: string }
@@ -955,13 +951,11 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
         </div>
       </section>
 
-      {/* Lazy Loaded Stats Section */}
-      <Suspense fallback={<StatsSkeleton />}>
+            <Suspense fallback={<StatsSkeleton />}>
         <StatsSection stats={stats} isLoading={isLoading} />
       </Suspense>
 
-      {/* Lazy Loaded Mitigation Section */}
-      {showMitigation && (
+            {showMitigation && (
         <Suspense fallback={<CardSkeleton count={3} />}>
           <MitigationSection />
         </Suspense>

@@ -307,13 +307,18 @@ export default function HotspotTable() {
   const [selectedConfidence, setSelectedConfidence] = useState<string[]>([]);
   const [selectedSatellites, setSelectedSatellites] = useState<string[]>([]);
   const [exportFormat, setExportFormat] = useState<"xlsx" | "csv">("xlsx");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [viewMode, setViewMode] = useState<"detail" | "akumulasi">("akumulasi");
-  const itemsPerPage = 15;
+  const [viewMode, setViewMode] = useState<"detail" | "akumulasi">("detail");
   const [sortBy, setSortBy] = useState<string>("properties.hotspot_time");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [confidenceOptions, setConfidenceOptions] = useState<Array<{ id: string; name: string }>>([]);
   const [satelliteOptions, setSatelliteOptions] = useState<Array<{ id: string; name: string }>>([]);
+
+  const [cursor, setCursor] = useState<string | undefined>(undefined);
+  const [prevCursors, setPrevCursors] = useState<string[]>([]);
+  const [hasMore, setHasMore] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
+  const [apiPage, setApiPage] = useState(1);
+  const PAGE_SIZE = 50;
 
   const getLatestDate = (hotspots: HotspotFeature[]) => {
     if (!hotspots || hotspots.length === 0) return null;
@@ -325,53 +330,125 @@ export default function HotspotTable() {
     return new Date(sorted[0].properties.time);
   };
 
-  useEffect(() => {
-    const getDataHotspot = async () => {
-      setLoading(true);
-      try {
-        if (USE_MOCK_DATA) {
-          setData(MOCK_HOTSPOT_DATA);
-          setLoading(false);
-          return;
-        }
+  const formatWithTimezone = (date: Date) => {
+    const offset = -date.getTimezoneOffset();
+    const sign = offset >= 0 ? '+' : '-';
+    const hours = String(Math.floor(Math.abs(offset) / 60)).padStart(2, '0');
+    const minutes = String(Math.abs(offset) % 60).padStart(2, '0');
+    const tzOffset = `${sign}${hours}:${minutes}`;
 
-        // Build filter parameters
-        const filters: any = {
-          limit: 10000,
-        };
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hour = String(date.getHours()).padStart(2, '0');
+    const min = String(date.getMinutes()).padStart(2, '0');
+    const sec = String(date.getSeconds()).padStart(2, '0');
 
-        // Add date range (RFC3339 format)
-        if (dates?.from) {
-          filters.start_date = dates.from.toISOString();
-        }
-        if (dates?.to) {
-          filters.end_date = dates.to.toISOString();
-        }
+    return `${year}-${month}-${day}T${hour}:${min}:${sec}${tzOffset}`;
+  };
 
-        // Add confidence filter
-        if (selectedConfidence.length > 0) {
-          filters.confidence = selectedConfidence[0];
-        }
-
-        // Add satellite filter
-        if (selectedSatellites.length > 0) {
-          filters.satellite = selectedSatellites[0];
-        }
-
-        // Use backend GeoJSON endpoint with filters
-        const response = await hotspotService.getHotspotsGeoJSON(filters);
-        const features = response.data.features as unknown as HotspotFeature[];
-        setData(features);
-      } catch (error) {
-        console.error("Failed to fetch hotspot data:", error);
-      } finally {
-        setLoading(false);
-      }
+  const buildFilters = (cursorValue?: string) => {
+    const filters: any = {
+      limit: PAGE_SIZE,
     };
-    getDataHotspot();
-  }, [dates, selectedConfidence, selectedSatellites]); // Re-fetch when filters change
 
-  // Fetch filter options on mount
+    if (cursorValue) {
+      filters.cursor = cursorValue;
+    }
+
+    if (dates?.from) {
+      const startOfDay = new Date(dates.from);
+      startOfDay.setHours(0, 0, 0, 0);
+      filters.start_date = formatWithTimezone(startOfDay);
+    }
+    if (dates?.to) {
+      const endOfDay = new Date(dates.to);
+      endOfDay.setHours(23, 59, 59, 999);
+      filters.end_date = formatWithTimezone(endOfDay);
+    } else if (dates?.from) {
+      const endOfDay = new Date(dates.from);
+      endOfDay.setHours(23, 59, 59, 999);
+      filters.end_date = formatWithTimezone(endOfDay);
+    }
+
+    if (selectedConfidence.length > 0) {
+      filters.confidence = selectedConfidence[0];
+    }
+
+    if (selectedSatellites.length > 0) {
+      filters.satellite = selectedSatellites[0];
+    }
+
+    return filters;
+  };
+
+  const fetchData = async (cursorValue?: string, isNextPage = false, isPrevPage = false) => {
+    setLoading(true);
+    try {
+      if (USE_MOCK_DATA) {
+        setData(MOCK_HOTSPOT_DATA);
+        setLoading(false);
+        return;
+      }
+
+      const filters = buildFilters(cursorValue);
+      const response = await hotspotService.getHotspotsGeoJSON(filters);
+      const features = response.data.features as unknown as HotspotFeature[];
+      setData(features);
+
+      if (response.data.pagination) {
+        setHasMore(response.data.pagination.has_next);
+        setTotalCount(response.data.pagination.total_count);
+
+        if (isNextPage && cursor) {
+          setPrevCursors((prev) => [...prev, cursor]);
+          setApiPage((prev) => prev + 1);
+        } else if (isPrevPage) {
+          setApiPage((prev) => Math.max(1, prev - 1));
+        }
+
+        setCursor(response.data.pagination.next_cursor);
+      }
+    } catch (error) {
+      console.error("Failed to fetch hotspot data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    setCursor(undefined);
+    setPrevCursors([]);
+    setApiPage(1);
+    setData([]);
+    setTotalCount(0);
+    setHasMore(false);
+    fetchData();
+  }, [dates, selectedConfidence, selectedSatellites]);
+
+  const goToNextPage = () => {
+    if (!hasMore || loading) return;
+    fetchData(cursor, true, false);
+  };
+
+  const goToPrevPage = () => {
+    if (prevCursors.length === 0 || loading) return;
+    const newPrevCursors = [...prevCursors];
+    const prevCursor = newPrevCursors.pop();
+    setPrevCursors(newPrevCursors);
+
+    const cursorToUse = newPrevCursors.length === 0 ? undefined : prevCursor;
+    fetchData(cursorToUse, false, true);
+  };
+
+  const goToFirstPage = () => {
+    if (apiPage === 1 || loading) return;
+    setCursor(undefined);
+    setPrevCursors([]);
+    setApiPage(1);
+    fetchData(undefined, false, false);
+  };
+
   useEffect(() => {
     const fetchFilterOptions = async () => {
       try {
@@ -385,7 +462,6 @@ export default function HotspotTable() {
     fetchFilterOptions();
   }, []);
 
-  // Client-side search filter (for location search only, as backend doesn't support text search yet)
   const filteredData = useMemo(() => {
     if (!search) return data;
 
@@ -473,12 +549,6 @@ export default function HotspotTable() {
     });
   }, [displayData, sortBy, sortOrder]);
 
-  const totalPages = Math.ceil(sortedData.length / itemsPerPage);
-  const currentItems = sortedData.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
-  );
-
   const exportData = () => {
     const exportContent =
       viewMode === "detail"
@@ -550,8 +620,6 @@ export default function HotspotTable() {
     }
   };
 
-  // Removed the early return for loading state - now handled inline in table
-
   function sortHeader(label: string, col: string) {
     return (
       <th
@@ -591,30 +659,22 @@ export default function HotspotTable() {
         Data Hotspot
       </h1>
 
-      {/* Filter */}
-      <Card className="mb-4 sm:mb-6">
+            <Card className="mb-4 sm:mb-6">
         <CardContent className="p-4 sm:p-5 lg:p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            {/* View Mode */}
-            <div>
+                        <div>
               <Label className="mb-2 text-sm font-medium">Tampilan</Label>
               <div className="flex gap-2">
                 <Button
                   variant={viewMode === "akumulasi" ? "default" : "secondary"}
-                  onClick={() => {
-                    setViewMode("akumulasi");
-                    setCurrentPage(1);
-                  }}
+                  onClick={() => setViewMode("akumulasi")}
                   className="text-sm flex-1 md:flex-none"
                 >
                   Akumulasi
                 </Button>
                 <Button
                   variant={viewMode === "detail" ? "default" : "secondary"}
-                  onClick={() => {
-                    setViewMode("detail");
-                    setCurrentPage(1);
-                  }}
+                  onClick={() => setViewMode("detail")}
                   className="text-sm flex-1 md:flex-none"
                 >
                   Detail
@@ -622,8 +682,7 @@ export default function HotspotTable() {
               </div>
             </div>
 
-            {/* Export */}
-            <div>
+                        <div>
               <Label className="mb-2 text-sm font-medium">Format Data</Label>
               <div className="flex flex-wrap gap-2">
                 <Button
@@ -643,7 +702,7 @@ export default function HotspotTable() {
                 <Button
                   variant="outline"
                   onClick={exportData}
-                  disabled={!currentItems.length}
+                  disabled={!sortedData.length}
                   className="text-sm"
                 >
                   Unduh Data
@@ -653,8 +712,7 @@ export default function HotspotTable() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-            {/* Search Input */}
-            <div>
+                        <div>
               <Label htmlFor="search-location" className="mb-2 text-sm">
                 Lokasi
               </Label>
@@ -663,42 +721,31 @@ export default function HotspotTable() {
                 type="text"
                 placeholder="Cari lokasi..."
                 value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setCurrentPage(1);
-                }}
+                onChange={(e) => setSearch(e.target.value)}
                 className="text-sm"
               />
             </div>
 
-            {/* Date Picker */}
-            <div>
+                        <div>
               <Label htmlFor="date-range-filter" className="mb-2 text-sm">
                 Tanggal
               </Label>
               <DateRangePicker
                 id="date-range-filter"
                 value={dates}
-                onChange={(date) => {
-                  setDates(date);
-                  setCurrentPage(1);
-                }}
+                onChange={setDates}
                 placeholder="Pilih rentang tanggal"
                 className="w-full text-sm"
               />
             </div>
 
-            {/* Confidence Filter */}
-            <div>
+                        <div>
               <Label htmlFor="confidence-filter" className="mb-2 text-sm">
                 Confidence
               </Label>
               <Select
                 value={selectedConfidence[0] || "all"}
-                onValueChange={(value) => {
-                  setSelectedConfidence(value === "all" ? [] : [value]);
-                  setCurrentPage(1);
-                }}
+                onValueChange={(value) => setSelectedConfidence(value === "all" ? [] : [value])}
               >
                 <SelectTrigger id="confidence-filter" className="text-sm">
                   <SelectValue placeholder="Semua confidence" />
@@ -714,17 +761,13 @@ export default function HotspotTable() {
               </Select>
             </div>
 
-            {/* Satellite Filter */}
-            <div>
+                        <div>
               <Label htmlFor="satellite-filter" className="mb-2 text-sm">
                 Satelit
               </Label>
               <Select
                 value={selectedSatellites[0] || "all"}
-                onValueChange={(value) => {
-                  setSelectedSatellites(value === "all" ? [] : [value]);
-                  setCurrentPage(1);
-                }}
+                onValueChange={(value) => setSelectedSatellites(value === "all" ? [] : [value])}
               >
                 <SelectTrigger id="satellite-filter" className="text-sm">
                   <SelectValue placeholder="Semua satelit" />
@@ -743,8 +786,7 @@ export default function HotspotTable() {
         </CardContent>
       </Card>
 
-      {/* Data Table */}
-      <Card>
+            <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
@@ -800,11 +842,11 @@ export default function HotspotTable() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ) : currentItems.length > 0 ? (
-                  currentItems.map((item, index) => (
+                ) : sortedData.length > 0 ? (
+                  sortedData.map((item, index) => (
                     <TableRow key={index}>
                       <TableCell className="px-4 py-3">
-                        {(currentPage - 1) * itemsPerPage + index + 1}
+                        {(apiPage - 1) * PAGE_SIZE + index + 1}
                       </TableCell>
 
                       {viewMode === "detail" ? (
@@ -925,75 +967,36 @@ export default function HotspotTable() {
             </Table>
           </div>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center items-center gap-2 p-4 border-t">
-              <Input
-                type="number"
-                min={1}
-                max={totalPages}
-                value={currentPage}
-                onChange={(e) => {
-                  const page = parseInt(e.target.value);
-                  if (page >= 1 && page <= totalPages) {
-                    setCurrentPage(page);
-                  }
-                }}
-                className="w-16 text-center"
-              />
-              <span className="text-sm text-muted-foreground whitespace-nowrap">
-                dari {totalPages}
-              </span>
+                    <div className="flex justify-end items-center gap-2 p-4 border-t bg-gray-50 dark:bg-gray-800/50">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToFirstPage}
+              disabled={apiPage === 1 || loading}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-4 w-4 -ml-2" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToPrevPage}
+              disabled={apiPage === 1 || loading}
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Sebelumnya
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToNextPage}
+              disabled={!hasMore || loading}
+            >
+              Selanjutnya
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
 
-              <div className="flex gap-1">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setCurrentPage(1)}
-                  disabled={currentPage === 1}
-                  title="Halaman pertama"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  <ChevronLeft className="h-4 w-4 -ml-3" />
-                </Button>
-
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.max(prev - 1, 1))
-                  }
-                  disabled={currentPage === 1}
-                  title="Halaman sebelumnya"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                  }
-                  disabled={currentPage === totalPages}
-                  title="Halaman selanjutnya"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setCurrentPage(totalPages)}
-                  disabled={currentPage === totalPages}
-                  title="Halaman terakhir"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                  <ChevronRight className="h-4 w-4 -ml-3" />
-                </Button>
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>

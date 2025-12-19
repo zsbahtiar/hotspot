@@ -63,7 +63,7 @@ export function useLatestHotspots(limit: number = 5) {
  * Replaces individual hooks: useMonthlyStats, useTopProvinces, useTopCities, useConfidenceDistribution,
  * useSatelliteDistribution, useStats, useTodayStats
  */
-export function useSummary(params?: { province_limit?: number; city_limit?: number }) {
+export function useSummary(params?: { province_limit?: number; city_limit?: number; start_date?: string; end_date?: string }) {
   return useQuery({
     queryKey: ["hotspots", "summary", params],
     queryFn: () => hotspotService.getSummary(params),

@@ -12,7 +12,6 @@ export interface HotspotFilters {
   start_date?: string;
   end_date?: string;
 
-  // Time Period Filters
   year?: number;
   semester?: number;
   quarter?: number;
@@ -31,24 +30,21 @@ export interface HotspotFilters {
   max_lng?: number;
   limit?: number;
   offset?: number;
+  cursor?: string;
 }
 
 export class HotspotService {
   constructor(private httpClient: HttpClient) {}
 
-  /**
-   * Get hotspots
-   */
-  async getHotspots(filters?: HotspotFilters): Promise<BackendHotspotListResponse> {
+  async getHotspots(
+    filters?: HotspotFilters,
+  ): Promise<BackendHotspotListResponse> {
     return this.httpClient.get<BackendHotspotListResponse>("/api/v1/hotspots", {
       limit: 100,
       ...filters,
     });
   }
 
-  /**
-   * Get hotspots summary
-   */
   async getHotspotsSummary(
     filters?: HotspotFilters,
   ): Promise<BackendHotspotSummaryResponse> {
@@ -58,17 +54,15 @@ export class HotspotService {
     );
   }
 
-  /**
-   * Get hotspots as GeoJSON with filters
-   */
   async getHotspotsGeoJSON(
     filters?: HotspotFilters,
   ): Promise<BackendGeoJSONResponse> {
-    const params: Record<string, any> = {
-      limit: filters?.limit || 10000,
-    };
+    const params: Record<string, any> = {};
 
-    // Add date range (RFC3339 format)
+    if (filters?.limit) {
+      params.limit = filters.limit;
+    }
+
     if (filters?.start_date) {
       params.start_date = filters.start_date;
     }
@@ -76,7 +70,6 @@ export class HotspotService {
       params.end_date = filters.end_date;
     }
 
-    // Add time period filters
     if (filters?.year) {
       params.year = filters.year;
     }
@@ -93,22 +86,23 @@ export class HotspotService {
       params.week = filters.week;
     }
 
-    // Add confidence filter
     if (filters?.confidence) {
       params.confidence = filters.confidence;
     }
 
-    // Add satellite filter
     if (filters?.satellite) {
       params.satellite = filters.satellite;
     }
 
-    // Add location filters
     if (filters?.province_name) {
       params.province_code = filters.province_name;
     }
     if (filters?.city_name) {
       params.city_code = filters.city_name;
+    }
+
+    if (filters?.cursor) {
+      params.cursor = filters.cursor;
     }
 
     return this.httpClient.get<BackendGeoJSONResponse>(
@@ -117,17 +111,11 @@ export class HotspotService {
     );
   }
 
-  /**
-   * Fetch map data (legacy method for backward compatibility)
-   */
   async fetchMapData(filters?: HotspotFilters): Promise<HotspotDataGeo> {
     const response = await this.getHotspotsGeoJSON(filters);
     return response.data;
   }
 
-  /**
-   * Fetch summary data (legacy method for backward compatibility)
-   */
   async fetchSummaryData(
     filters?: HotspotFilters,
   ): Promise<BackendHotspotSummaryResponse["data"]> {
@@ -135,9 +123,6 @@ export class HotspotService {
     return response.data;
   }
 
-  /**
-   * Get latest hotspots (optimized endpoint for homepage "Data Terbaru" section)
-   */
   async getLatestHotspots(limit: number = 5): Promise<{
     data: {
       hotspots: Array<{
@@ -188,9 +173,6 @@ export class HotspotService {
     }>("/api/v1/hotspots", { limit });
   }
 
-  /**
-   * Get filter options (confidence and satellite lists)
-   */
   async getFilterOptions(): Promise<{
     data: {
       confidence: Array<{ id: string; name: string }>;
@@ -205,10 +187,6 @@ export class HotspotService {
     }>("/api/v1/hotspots/filter-options");
   }
 
-  /**
-   * Get time periods (years, semesters, quarters, months, weeks)
-   * Returns available periods based on provided filters
-   */
   async getPeriods(params?: {
     year?: number;
     semester?: number;
@@ -234,11 +212,121 @@ export class HotspotService {
     }>("/api/v1/hotspots/periods", params);
   }
 
-  /**
-   * Get all dashboard summary data in single request (optimized with concurrent queries)
-   * Replaces multiple individual API calls with one endpoint
-   */
-  async getSummary(params?: { province_limit?: number; city_limit?: number }): Promise<{
+  async getLocations(params?: {
+    province_code?: string;
+    city_code?: string;
+    district_code?: string;
+    confidence?: string;
+    satellite?: string;
+    year?: number;
+    semester?: number;
+    quarter?: number;
+    month?: number;
+    week?: number;
+    start_date?: string;
+    end_date?: string;
+  }): Promise<{
+    data: {
+      islands?: Array<{
+        name: string;
+        count: number;
+        lat: number;
+        lng: number;
+        provinces: Array<{
+          code: string;
+          name: string;
+          pulau: string;
+          count: number;
+          lat: number;
+          lng: number;
+        }>;
+      }>;
+      provinces?: Array<{
+        code: string;
+        name: string;
+        pulau: string;
+        count: number;
+        lat: number;
+        lng: number;
+      }>;
+      cities?: Array<{
+        code: string;
+        name: string;
+        count: number;
+        lat: number;
+        lng: number;
+      }>;
+      districts?: Array<{
+        code: string;
+        name: string;
+        count: number;
+        lat: number;
+        lng: number;
+      }>;
+      subdistricts?: Array<{
+        code: string;
+        name: string;
+        count: number;
+        lat: number;
+        lng: number;
+      }>;
+    };
+  }> {
+    return this.httpClient.get<{
+      data: {
+        islands?: Array<{
+          name: string;
+          count: number;
+          lat: number;
+          lng: number;
+          provinces: Array<{
+            code: string;
+            name: string;
+            pulau: string;
+            count: number;
+            lat: number;
+            lng: number;
+          }>;
+        }>;
+        provinces?: Array<{
+          code: string;
+          name: string;
+          pulau: string;
+          count: number;
+          lat: number;
+          lng: number;
+        }>;
+        cities?: Array<{
+          code: string;
+          name: string;
+          count: number;
+          lat: number;
+          lng: number;
+        }>;
+        districts?: Array<{
+          code: string;
+          name: string;
+          count: number;
+          lat: number;
+          lng: number;
+        }>;
+        subdistricts?: Array<{
+          code: string;
+          name: string;
+          count: number;
+          lat: number;
+          lng: number;
+        }>;
+      };
+    }>("/api/v1/hotspots/locations", params);
+  }
+
+  async getSummary(params?: {
+    province_limit?: number;
+    city_limit?: number;
+    start_date?: string;
+    end_date?: string;
+  }): Promise<{
     data: {
       top_provinces: Array<{ name: string; count: number }>;
       top_cities: Array<{ name: string; count: number }>;
@@ -287,9 +375,6 @@ export class HotspotService {
   }
 }
 
-/**
- * Singleton instance for backward compatibility
- */
 let _hotspotServiceInstance: HotspotService | null = null;
 
 export const getHotspotService = (): HotspotService => {
@@ -305,7 +390,4 @@ export const getHotspotService = (): HotspotService => {
   return _hotspotServiceInstance;
 };
 
-/**
- * Export default instance
- */
 export const hotspotService = getHotspotService();

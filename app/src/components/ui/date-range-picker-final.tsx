@@ -5,6 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { CalendarIcon, X } from "lucide-react";
 import { format, subDays, subWeeks, subMonths, subYears, startOfWeek, startOfMonth, startOfYear, endOfWeek, endOfMonth, endOfYear } from "date-fns";
+import { id as idLocale } from "react-day-picker/locale";
 
 interface DateRange {
   from: Date;
@@ -147,8 +148,7 @@ export function DateRangePicker({
         </PopoverTrigger>
       <PopoverContent className={cn("w-auto p-0", isMobile && "max-w-[calc(100vw-2rem)]")} align="start">
         <div className={cn("flex", isMobile ? "flex-col" : "flex-row")}>
-          {/* Presets Sidebar */}
-          <div className={cn(
+                    <div className={cn(
             "flex gap-1 p-3",
             isMobile ? "flex-row flex-wrap border-b" : "flex-col border-r min-w-[140px]"
           )}>
@@ -165,18 +165,17 @@ export function DateRangePicker({
             ))}
           </div>
 
-          {/* Calendar */}
-          <div className="p-3">
+                    <div className="p-3">
             <Calendar
               mode="range"
               selected={tempRange}
               onSelect={setTempRange as any}
               numberOfMonths={isMobile ? 1 : 2}
               defaultMonth={tempRange?.from}
+              locale={idLocale}
             />
 
-            {/* Date Inputs and Action Buttons */}
-            <div className={cn(
+                        <div className={cn(
               "flex gap-2 border-t pt-3 mt-3",
               isMobile ? "flex-col" : "items-center justify-between"
             )}>

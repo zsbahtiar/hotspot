@@ -33,6 +33,16 @@ import { hotspotService } from "@/core/services/hotspotService";
 
 const USE_MOCK_DATA = false;
 
+const toLocalRFC3339 = (date: Date): string => {
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  const offset = -date.getTimezoneOffset();
+  const sign = offset >= 0 ? "+" : "-";
+  const hours = Math.floor(Math.abs(offset) / 60);
+  const minutes = Math.abs(offset) % 60;
+
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}${sign}${pad(hours)}:${pad(minutes)}`;
+};
+
 const fetchHotspotData = async (filters?: {
   confidence?: string | null;
   satellite?: string | null;
@@ -43,52 +53,20 @@ const fetchHotspotData = async (filters?: {
   week?: number;
   start_date?: string;
   end_date?: string;
+  province_code?: string;
+  city_code?: string;
+  district_code?: string;
+  subdistrict_code?: string;
 }) => {
   if (USE_MOCK_DATA) {
     await new Promise((resolve) => setTimeout(resolve, 500));
     return mockHotspotData;
   }
 
-  // Build filter parameters for API call
-  const apiFilters: any = {};
+  const apiFilters: any = {
+    limit: 50000,
+  };
 
-  if (filters?.confidence) {
-    apiFilters.confidence = filters.confidence.toUpperCase();
-  }
-
-  if (filters?.satellite) {
-    apiFilters.satellite = filters.satellite;
-  }
-
-  if (filters?.year) {
-    apiFilters.year = filters.year;
-  }
-
-  if (filters?.semester) {
-    apiFilters.semester = filters.semester;
-  }
-
-  if (filters?.quarter) {
-    apiFilters.quarter = filters.quarter;
-  }
-
-  if (filters?.month) {
-    apiFilters.month = filters.month;
-  }
-
-  if (filters?.week) {
-    apiFilters.week = filters.week;
-  }
-
-  if (filters?.start_date) {
-    apiFilters.start_date = filters.start_date;
-  }
-
-  if (filters?.end_date) {
-    apiFilters.end_date = filters.end_date;
-  }
-
-  // Use backend GeoJSON endpoint with filters
   const response = await hotspotService.getHotspotsGeoJSON(apiFilters);
   return response.data;
 };
@@ -144,7 +122,7 @@ const customMarker = (confidence: string) => {
       iconColor = "green";
       break;
     default:
-      iconColor = "gray";
+      iconColor = "grey";
   }
   return new L.Icon({
     iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${iconColor}.png`,
@@ -274,8 +252,11 @@ const MapComponent: React.FC<MapComponentProps> = ({
   style = {},
   filters = {},
   onLayerChange,
+  activeLayer = "hotspot-count",
   locationData,
   defaultZoom = 5,
+  onHotspotDataChange,
+  onLoadingChange,
 }) => {
   const mapRef = useRef<Map | null>(null);
   const geoJsonRef = useRef<LeafletGeoJSON | null>(null);
@@ -377,79 +358,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
     }
   }, [drillDownLevel, geoJsonCacheData, fetchAndCacheGeoJson]);
 
-  const getHotspotData = useMemo(() => {
-    if (USE_MOCK_DATA) {
-      return "/hotspot";
-    }
-
-    const baseUrl = `${import.meta.env.PUBLIC_API_URL || ""}/hotspot`;
-    const queryParams = new URLSearchParams();
-
-    if (showLokasiHotspot) {
-      if (selectedDate) {
-        queryParams.append("selectedDate", selectedDate);
-      } else {
-        const today = new Date().toISOString().split("T")[0];
-        queryParams.append("selectedDate", today);
-      }
-
-      if (olapData?.query) {
-        Object.entries(olapData.query).forEach(([key, value]) => {
-          if (
-            value &&
-            key !== "lat" &&
-            key !== "lng" &&
-            key !== "dimension" &&
-            key !== "tipe"
-          ) {
-            queryParams.append(key, value.toString());
-          }
-        });
-      }
-      return queryParams.toString()
-        ? `${baseUrl}?${queryParams.toString()}`
-        : baseUrl;
-    }
-
-    if (showJumlahHotspot) {
-      if (filters?.confidence) {
-        queryParams.append("confidence", filters.confidence);
-      }
-      if (filters?.satelite) {
-        queryParams.append("satelite", filters.satelite);
-      }
-
-      if (filters?.filterMode === "date" && filters?.selectedDate) {
-        queryParams.append("selectedDate", filters.selectedDate);
-      } else if (filters?.filterMode === "period" && filters?.time) {
-        Object.entries(filters.time).forEach(([key, value]) => {
-          if (value) {
-            queryParams.append(key, value.toString());
-          }
-        });
-      }
-
-      if (olapData?.query) {
-        Object.entries(olapData.query).forEach(([key, value]) => {
-          if (
-            value &&
-            key !== "lat" &&
-            key !== "lng" &&
-            key !== "dimension" &&
-            key !== "tipe"
-          ) {
-            queryParams.append(key, value.toString());
-          }
-        });
-      }
-    }
-
-    return queryParams.toString()
-      ? `${baseUrl}?${queryParams.toString()}`
-      : baseUrl;
-  }, [filters, olapData, showJumlahHotspot, showLokasiHotspot, selectedDate]);
-
-  // Build filter params for API query
   const apiFilterParams = useMemo(() => {
     const params: any = {};
 
@@ -461,7 +369,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
       params.satellite = filters.satelite;
     }
 
-    // Time period filters
     if (filters?.filterMode === "period" && filters?.time) {
       if (filters.time.tahun) {
         params.year = parseInt(filters.time.tahun);
@@ -480,19 +387,65 @@ const MapComponent: React.FC<MapComponentProps> = ({
       }
     }
 
-    // Specific date filter
     if (filters?.filterMode === "date" && filters?.selectedDate) {
-      // Convert YYYY-MM-DD to RFC3339 format for start and end of day
       const date = new Date(filters.selectedDate);
-      const startOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0);
-      const endOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59);
+      const startOfDay = new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+        0,
+        0,
+        0,
+      );
+      const endOfDay = new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+        23,
+        59,
+        59,
+      );
 
-      params.start_date = startOfDay.toISOString();
-      params.end_date = endOfDay.toISOString();
+      params.start_date = toLocalRFC3339(startOfDay);
+      params.end_date = toLocalRFC3339(endOfDay);
+    } else if (activeLayer === "hotspot-locations" && selectedDate) {
+      const date = new Date(selectedDate);
+      const startOfDay = new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+        0,
+        0,
+        0,
+      );
+      const endOfDay = new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+        23,
+        59,
+        59,
+      );
+
+      params.start_date = toLocalRFC3339(startOfDay);
+      params.end_date = toLocalRFC3339(endOfDay);
+    }
+
+    if (filters?.province_code) {
+      params.province_code = filters.province_code;
+    }
+    if (filters?.city_code) {
+      params.city_code = filters.city_code;
+    }
+    if (filters?.district_code) {
+      params.district_code = filters.district_code;
+    }
+    if (filters?.subdistrict_code) {
+      params.subdistrict_code = filters.subdistrict_code;
     }
 
     return params;
-  }, [filters]);
+  }, [filters, activeLayer, selectedDate]);
 
   const {
     data: hotspotApiResponse,
@@ -503,11 +456,24 @@ const MapComponent: React.FC<MapComponentProps> = ({
     queryFn: () => fetchHotspotData(apiFilterParams),
     retry: 1,
     refetchOnWindowFocus: false,
+    enabled: activeLayer === "hotspot-locations",
   });
 
   const hotspotData: HotspotFeatureGeo[] = useMemo(() => {
     return hotspotApiResponse?.features || [];
   }, [hotspotApiResponse]);
+
+  useEffect(() => {
+    if (onHotspotDataChange) {
+      onHotspotDataChange(hotspotData);
+    }
+  }, [hotspotData, onHotspotDataChange]);
+
+  useEffect(() => {
+    if (onLoadingChange) {
+      onLoadingChange(isHotspotLoading);
+    }
+  }, [isHotspotLoading, onLoadingChange]);
 
   const calculateDateCounts = (data: HotspotFeatureGeo[]) => {
     const counts: Record<string, number> = {};
@@ -564,10 +530,33 @@ const MapComponent: React.FC<MapComponentProps> = ({
     }
   }, [showLokasiHotspot]);
 
+  useEffect(() => {
+    if (activeLayer === "hotspot-locations") {
+      setShowLokasiHotspot(true);
+      setShowJumlahHotspot(false);
+    } else {
+      setShowLokasiHotspot(false);
+      setShowJumlahHotspot(true);
+    }
+  }, [activeLayer]);
+
   const calculateHotspotCounts = useMemo(() => {
     const counts: Record<string, number> = {};
 
-    if (locationData && locationData.length > 0) {
+    const hasActiveFilters =
+      filters?.confidence ||
+      filters?.satelite ||
+      filters?.selectedDate ||
+      (filters?.time && Object.keys(filters.time).length > 0) ||
+      filters?.province_code ||
+      filters?.city_code ||
+      filters?.district_code;
+
+    const shouldUseLocationData =
+      activeLayer === "hotspot-count" ||
+      (!hasActiveFilters && locationData && locationData.length > 0);
+
+    if (shouldUseLocationData && locationData && locationData.length > 0) {
       locationData.forEach(([location, total]) => {
         const normalizedLocation = normalizeRegionName(location);
         counts[normalizedLocation] = total;
@@ -687,7 +676,14 @@ const MapComponent: React.FC<MapComponentProps> = ({
       }
     });
     return counts;
-  }, [locationData, hotspotData, drillDownLevel, filters, olapData]);
+  }, [
+    activeLayer,
+    locationData,
+    hotspotData,
+    drillDownLevel,
+    filters,
+    olapData,
+  ]);
 
   const getFilteredGeoFeatures = useMemo(() => {
     if (!geoData[drillDownLevel]) return [];
@@ -737,26 +733,12 @@ const MapComponent: React.FC<MapComponentProps> = ({
   }, [geoData, drillDownLevel, olapData, calculateHotspotCounts]);
 
   const { minHotspot, threshold1, threshold2 } = useMemo(() => {
-    const hotspotValues = Object.values(calculateHotspotCounts).filter(
-      (count) => count > 0,
-    );
-    const min = hotspotValues.length > 0 ? Math.min(...hotspotValues) : 0;
-    const max = hotspotValues.length > 0 ? Math.max(...hotspotValues) : 1;
-
-    if (max - min < 3) {
-      const step = Math.ceil((max - min) / 3) || 1;
-      return {
-        minHotspot: min,
-        threshold1: min + step,
-        threshold2: min + step * 2,
-      };
-    } else {
-      const range = max - min;
-      const t1 = min + range / 3;
-      const t2 = min + (range * 2) / 3;
-      return { minHotspot: min, threshold1: t1, threshold2: t2 };
-    }
-  }, [calculateHotspotCounts]);
+    return {
+      minHotspot: 0,
+      threshold1: 10000,
+      threshold2: 100000,
+    };
+  }, []);
 
   const colorScale = useMemo(() => {
     return scaleThreshold<number, string>()
@@ -790,16 +772,9 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
     return hotspotData.filter((feature) => {
       const coords = feature.geometry?.coordinates;
-      const date = feature.properties?.time?.split("T")[0];
-
-      if (selectedDate) {
-        return coords && coords.length === 2 && date === selectedDate;
-      } else {
-        const today = new Date().toISOString().split("T")[0];
-        return coords && coords.length === 2 && date === today;
-      }
+      return coords && coords.length === 2;
     });
-  }, [hotspotData, showLokasiHotspot, selectedDate]);
+  }, [hotspotData, showLokasiHotspot]);
 
   const mapStyle = useMemo(
     () => ({
@@ -906,7 +881,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
   useEffect(() => {
     if (mapRef.current) {
-      // Multiple recalculations to ensure proper sizing after layout changes
       const timers = [
         setTimeout(() => {
           if (mapRef.current) {
@@ -935,7 +909,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
     showJumlahHotspot,
   ]);
 
-  // More lenient loading condition - only show loading if actively fetching
   const loading =
     (isGeoJsonLoading || isHotspotLoading) && !geoData[drillDownLevel];
   const error = hotspotError;
@@ -1048,7 +1021,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
             geoData[drillDownLevel] && (
               <GeoJSON
                 ref={geoJsonRef}
-                key={`geojson-${drillDownLevel}-${JSON.stringify(olapData?.query || {})}-${getHotspotData}`}
+                key={`geojson-${drillDownLevel}-${JSON.stringify(olapData?.query || {})}-${JSON.stringify(filters)}-${hotspotData.length}-${JSON.stringify(locationData)}`}
                 data={
                   {
                     type: "FeatureCollection",
@@ -1139,13 +1112,25 @@ const MapComponent: React.FC<MapComponentProps> = ({
                   const [longitude, latitude] = feature.geometry.coordinates;
                   const confidence =
                     feature.properties?.confidence || "unknown";
-                  const date =
-                    feature.properties?.time?.split("T")[0] || "Unknown";
-                  const time = extractTime(
-                    feature.properties?.hotspot_time ||
-                      feature.properties?.time ||
-                      "",
-                  );
+                  const utcTime = feature.properties?.time;
+                  const date = utcTime
+                    ? new Date(utcTime).toLocaleDateString("id-ID", {
+                        year: "numeric",
+                        month: "2-digit",
+                        day: "2-digit",
+                      })
+                    : "Unknown";
+                  const time = utcTime
+                    ? new Date(utcTime).toLocaleTimeString("id-ID", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: false,
+                      })
+                    : extractTime(
+                        feature.properties?.hotspot_time ||
+                          feature.properties?.time ||
+                          "",
+                      );
 
                   return (
                     <Marker
@@ -1197,15 +1182,17 @@ const MapComponent: React.FC<MapComponentProps> = ({
                                     Tanggal
                                   </span>
                                   <span className="font-medium dark:text-gray-200">
-                                    {new Date(date).toLocaleDateString(
-                                      "id-ID",
-                                      {
-                                        weekday: "long",
-                                        day: "numeric",
-                                        month: "long",
-                                        year: "numeric",
-                                      },
-                                    )}
+                                    {utcTime
+                                      ? new Date(utcTime).toLocaleDateString(
+                                          "id-ID",
+                                          {
+                                            weekday: "long",
+                                            day: "numeric",
+                                            month: "long",
+                                            year: "numeric",
+                                          },
+                                        )
+                                      : date}
                                   </span>
                                 </div>
                               </div>
@@ -1237,7 +1224,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
                               </div>
                             </div>
 
-                            {/* Detail Lokasi */}
                             <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
                               <h4 className="font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center">
                                 <Loader2 className="text-black dark:text-white mr-2" />
@@ -1309,6 +1295,21 @@ const MapComponent: React.FC<MapComponentProps> = ({
             threshold2={threshold2}
           />
         </MapContainer>
+      )}
+
+      {isHotspotLoading && !loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/30 z-[1000] rounded-lg">
+          <div className="bg-white dark:bg-gray-800 rounded-lg px-6 py-4 flex items-center gap-3 shadow-lg">
+            <RefreshCw
+              width="24"
+              height="24"
+              className="text-primary animate-spin"
+            />
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Memuat data...
+            </span>
+          </div>
+        </div>
       )}
     </div>
   );
