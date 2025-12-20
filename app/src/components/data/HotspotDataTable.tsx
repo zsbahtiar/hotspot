@@ -572,6 +572,11 @@ export default function HotspotTable() {
             Jumlah: item.properties.hotspot_count,
             Latitude: item.geometry.coordinates[1],
             Longitude: item.geometry.coordinates[0],
+            FRP: item.properties.frp || "-",
+            Brightness: item.properties.brightness || "-",
+            "Bright T31": item.properties.bright_t31 || "-",
+            "Bright TI4": item.properties.bright_ti4 || "-",
+            "Bright TI5": item.properties.bright_ti5 || "-",
           }))
         : accumulatedData.map((item) => ({
             Tanggal: new Date(item.tanggal).toLocaleDateString('id-ID', {
@@ -812,6 +817,11 @@ export default function HotspotTable() {
                       {sortHeader("Suhu", "properties.temperature")}
                       {sortHeader("Kelembaban", "properties.humidity")}
                       {sortHeader("Kondisi Cuaca", "properties.weather_conditions")}
+                      {sortHeader("FRP", "properties.frp")}
+                      {sortHeader("Brightness", "properties.brightness")}
+                      {sortHeader("Bright T31", "properties.bright_t31")}
+                      {sortHeader("Bright TI4", "properties.bright_ti4")}
+                      {sortHeader("Bright TI5", "properties.bright_ti5")}
                     </>
                   ) : (
                     <>
@@ -829,7 +839,7 @@ export default function HotspotTable() {
                 {loading ? (
                   <TableRow>
                     <TableCell
-                      colSpan={viewMode === "detail" ? 15 : 7}
+                      colSpan={viewMode === "detail" ? 20 : 7}
                       className="px-4 py-12 text-center"
                     >
                       <div className="flex flex-col items-center justify-center">
@@ -929,6 +939,31 @@ export default function HotspotTable() {
                           <TableCell className="px-4 py-3">
                             {translateWeatherCondition((item as HotspotFeature).properties.weather_conditions)}
                           </TableCell>
+                          <TableCell className="px-4 py-3">
+                            {(item as HotspotFeature).properties.frp
+                              ? `${(item as HotspotFeature).properties.frp?.toFixed(1)} MW`
+                              : "-"}
+                          </TableCell>
+                          <TableCell className="px-4 py-3">
+                            {(item as HotspotFeature).properties.brightness
+                              ? `${(item as HotspotFeature).properties.brightness?.toFixed(1)} K`
+                              : "-"}
+                          </TableCell>
+                          <TableCell className="px-4 py-3">
+                            {(item as HotspotFeature).properties.bright_t31
+                              ? `${(item as HotspotFeature).properties.bright_t31?.toFixed(1)} K`
+                              : "-"}
+                          </TableCell>
+                          <TableCell className="px-4 py-3">
+                            {(item as HotspotFeature).properties.bright_ti4
+                              ? `${(item as HotspotFeature).properties.bright_ti4?.toFixed(1)} K`
+                              : "-"}
+                          </TableCell>
+                          <TableCell className="px-4 py-3">
+                            {(item as HotspotFeature).properties.bright_ti5
+                              ? `${(item as HotspotFeature).properties.bright_ti5?.toFixed(1)} K`
+                              : "-"}
+                          </TableCell>
                         </>
                       ) : (
                         <>
@@ -972,7 +1007,7 @@ export default function HotspotTable() {
                 ) : (
                   <TableRow>
                     <TableCell
-                      colSpan={viewMode === "detail" ? 12 : 7}
+                      colSpan={viewMode === "detail" ? 20 : 7}
                       className="px-4 py-6 text-center text-gray-500 dark:text-gray-400"
                     >
                       Tidak ada data yang ditemukan
