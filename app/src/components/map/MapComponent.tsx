@@ -809,8 +809,14 @@ const MapComponent: React.FC<MapComponentProps> = ({
           animate: true,
           duration: 0.8,
         });
-      } else if (selectedLocation) {
-        mapRef.current.flyTo(selectedLocation, zoomLevel, {
+      } else if (
+        selectedLocation &&
+        typeof selectedLocation.lat === "number" &&
+        typeof selectedLocation.lng === "number" &&
+        !isNaN(selectedLocation.lat) &&
+        !isNaN(selectedLocation.lng)
+      ) {
+        mapRef.current.flyTo([selectedLocation.lat, selectedLocation.lng], zoomLevel, {
           animate: true,
           duration: 1.0,
         });
