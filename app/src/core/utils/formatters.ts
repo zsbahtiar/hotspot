@@ -53,6 +53,20 @@ export const formatNumber = (num: number): string => {
   return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 };
 
+const weatherConditionsMap: Record<string, string> = {
+  "Clear": "Cerah",
+  "Overcast": "Mendung",
+  "Partially cloudy": "Berawan Sebagian",
+  "Rain": "Hujan",
+  "Rain, Overcast": "Hujan, Mendung",
+  "Rain, Partially cloudy": "Hujan, Berawan Sebagian",
+};
+
+export const translateWeatherCondition = (condition: string | undefined): string => {
+  if (!condition) return "-";
+  return weatherConditionsMap[condition] || condition;
+};
+
 export const decompressGzip = async (response: Response): Promise<any> => {
   try {
     const arrayBuffer = await response.arrayBuffer();
