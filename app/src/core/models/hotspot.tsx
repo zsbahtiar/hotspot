@@ -22,6 +22,29 @@ export interface LocationInfo {
   kab_kota?: string;
 }
 
+export interface MeasurementInfo {
+  frp?: number;
+  brightness?: number;
+  bright_t31?: number;
+  bright_ti4?: number;
+  bright_ti5?: number;
+}
+
+export interface WeatherInfo {
+  temperature?: number;
+  humidity?: number;
+  wind_speed?: number;
+  wind_degree?: number;
+  visibility?: number;
+  cloud_coverage?: number;
+  pressure?: number;
+  uv_index?: number;
+  precipitation?: number;
+  solar_radiation?: number;
+  weather_conditions?: string;
+  weather_icon?: string;
+}
+
 export interface HotspotFeatureGeo extends GeoJSON.Feature {
   geometry: GeoJSON.Point;
   properties: {
@@ -30,15 +53,13 @@ export interface HotspotFeatureGeo extends GeoJSON.Feature {
     confidence: ConfidenceLevel;
     satellite_name: string;
     instrument: string;
-    frp: number;
-    brightness: number;
     location: LocationInfo;
     time?: string;
     satellite?: string;
     hotspot_count?: number;
     hotspot_time?: string;
     minggu?: string;
-  };
+  } & MeasurementInfo & WeatherInfo;
 }
 
 export interface Pagination {
@@ -60,20 +81,30 @@ export type HotspotFeature = {
     coordinates: [number, number];
     type: string;
   };
-  hotspot: {
+  properties: {
     id: string;
     acquired_at: string;
     confidence: ConfidenceLevel;
     satellite_name: string;
     instrument: string;
-    frp: number;
-    brightness: number;
     location: LocationInfo;
     time?: string;
     satellite?: string;
     hotspot_count?: number;
     hotspot_time?: string;
-  };
+  } & MeasurementInfo & WeatherInfo;
+  hotspot?: {
+    id: string;
+    acquired_at: string;
+    confidence: ConfidenceLevel;
+    satellite_name: string;
+    instrument: string;
+    location: LocationInfo;
+    time?: string;
+    satellite?: string;
+    hotspot_count?: number;
+    hotspot_time?: string;
+  } & MeasurementInfo;
 };
 
 export type HotspotData = {

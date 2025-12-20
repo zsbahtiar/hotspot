@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { utils, writeFile } from "xlsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
-import { extractTime } from "@/core/utils/formatters";
+import { extractTime, translateWeatherCondition } from "@/core/utils/formatters";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -809,6 +809,9 @@ export default function HotspotTable() {
                       {sortHeader("Confidence", "properties.confidence")}
                       {sortHeader("Jumlah", "properties.hotspot_count")}
                       {sortHeader("Koordinat", "geometry.coordinates")}
+                      {sortHeader("Suhu", "properties.temperature")}
+                      {sortHeader("Kelembaban", "properties.humidity")}
+                      {sortHeader("Kondisi Cuaca", "properties.weather_conditions")}
                     </>
                   ) : (
                     <>
@@ -826,7 +829,7 @@ export default function HotspotTable() {
                 {loading ? (
                   <TableRow>
                     <TableCell
-                      colSpan={viewMode === "detail" ? 12 : 7}
+                      colSpan={viewMode === "detail" ? 15 : 7}
                       className="px-4 py-12 text-center"
                     >
                       <div className="flex flex-col items-center justify-center">
@@ -912,6 +915,19 @@ export default function HotspotTable() {
                           <TableCell className="px-4 py-3">
                             {(item as HotspotFeature).geometry.coordinates[1]},{" "}
                             {(item as HotspotFeature).geometry.coordinates[0]}
+                          </TableCell>
+                          <TableCell className="px-4 py-3">
+                            {(item as HotspotFeature).properties.temperature !== undefined
+                              ? `${(item as HotspotFeature).properties.temperature}°C`
+                              : "-"}
+                          </TableCell>
+                          <TableCell className="px-4 py-3">
+                            {(item as HotspotFeature).properties.humidity !== undefined
+                              ? `${(item as HotspotFeature).properties.humidity?.toFixed(1)}%`
+                              : "-"}
+                          </TableCell>
+                          <TableCell className="px-4 py-3">
+                            {translateWeatherCondition((item as HotspotFeature).properties.weather_conditions)}
                           </TableCell>
                         </>
                       ) : (

@@ -1,6 +1,6 @@
 import { useMemo, lazy, Suspense } from "react";
 import type { HotspotDataGeo } from "@/core/models/hotspot";
-import { formatNumber, extractTime, formatDate } from "@/core/utils/formatters";
+import { formatNumber, extractTime, formatDate, translateWeatherCondition } from "@/core/utils/formatters";
 import {
   useLatestHotspots,
   useSummary,
@@ -426,7 +426,7 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
                                 Cuaca
                               </span>
                               <span className="dark:text-white text-gray-900 text-sm">
-                                {hotspot.weather_conditions}
+                                {translateWeatherCondition(hotspot.weather_conditions)}
                               </span>
                             </div>
                             <div className="grid grid-cols-2 gap-2 text-xs">

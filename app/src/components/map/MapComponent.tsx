@@ -23,7 +23,7 @@ import MarkerClusterGroup from "react-leaflet-markercluster";
 import type { MapComponentProps, MarkerClusterType } from "@/core/models/map";
 import type { CustomFeature, GeoData } from "@/core/models/location";
 import type { HotspotFeatureGeo } from "@/core/models/hotspot";
-import { formatNumber, extractTime } from "@/core/utils/formatters";
+import { formatNumber, extractTime, translateWeatherCondition } from "@/core/utils/formatters";
 import MapControlPanel from "@/components/map/MapControls";
 import MapLegend from "@/components/map/MapLegend";
 import MapZoomControls from "@/components/map/ZoomControls";
@@ -1283,6 +1283,137 @@ const MapComponent: React.FC<MapComponentProps> = ({
                                 </li>
                               </ul>
                             </div>
+
+                            {(feature.properties?.frp !== undefined || feature.properties?.brightness !== undefined) && (
+                              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                                <h4 className="font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+                                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                  </svg>
+                                  Pengukuran
+                                </h4>
+                                <ul className="space-y-1.5 text-sm">
+                                  {feature.properties?.frp !== undefined && feature.properties.frp > 0 && (
+                                    <li className="flex justify-between">
+                                      <span className="text-gray-500 dark:text-gray-400">FRP:</span>
+                                      <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
+                                        {feature.properties.frp.toFixed(2)} MW
+                                      </strong>
+                                    </li>
+                                  )}
+                                  {feature.properties?.brightness !== undefined && feature.properties.brightness > 0 && (
+                                    <li className="flex justify-between">
+                                      <span className="text-gray-500 dark:text-gray-400">Brightness:</span>
+                                      <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
+                                        {feature.properties.brightness.toFixed(2)} K
+                                      </strong>
+                                    </li>
+                                  )}
+                                  {feature.properties?.bright_t31 !== undefined && feature.properties.bright_t31 > 0 && (
+                                    <li className="flex justify-between">
+                                      <span className="text-gray-500 dark:text-gray-400">Bright T31:</span>
+                                      <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
+                                        {feature.properties.bright_t31.toFixed(2)} K
+                                      </strong>
+                                    </li>
+                                  )}
+                                  {feature.properties?.bright_ti4 !== undefined && feature.properties.bright_ti4 > 0 && (
+                                    <li className="flex justify-between">
+                                      <span className="text-gray-500 dark:text-gray-400">Bright TI4:</span>
+                                      <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
+                                        {feature.properties.bright_ti4.toFixed(2)} K
+                                      </strong>
+                                    </li>
+                                  )}
+                                  {feature.properties?.bright_ti5 !== undefined && feature.properties.bright_ti5 > 0 && (
+                                    <li className="flex justify-between">
+                                      <span className="text-gray-500 dark:text-gray-400">Bright TI5:</span>
+                                      <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
+                                        {feature.properties.bright_ti5.toFixed(2)} K
+                                      </strong>
+                                    </li>
+                                  )}
+                                </ul>
+                              </div>
+                            )}
+
+                            {(feature.properties?.temperature !== undefined || feature.properties?.weather_conditions) && (
+                              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                                <h4 className="font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+                                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                                  </svg>
+                                  Cuaca
+                                </h4>
+                                <ul className="space-y-1.5 text-sm">
+                                  {feature.properties?.weather_conditions && (
+                                    <li className="flex justify-between">
+                                      <span className="text-gray-500 dark:text-gray-400">Kondisi:</span>
+                                      <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
+                                        {translateWeatherCondition(feature.properties.weather_conditions)}
+                                      </strong>
+                                    </li>
+                                  )}
+                                  {feature.properties?.temperature !== undefined && (
+                                    <li className="flex justify-between">
+                                      <span className="text-gray-500 dark:text-gray-400">Suhu:</span>
+                                      <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
+                                        {feature.properties.temperature}°C
+                                      </strong>
+                                    </li>
+                                  )}
+                                  {feature.properties?.humidity !== undefined && (
+                                    <li className="flex justify-between">
+                                      <span className="text-gray-500 dark:text-gray-400">Kelembaban:</span>
+                                      <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
+                                        {feature.properties.humidity.toFixed(1)}%
+                                      </strong>
+                                    </li>
+                                  )}
+                                  {feature.properties?.wind_speed !== undefined && (
+                                    <li className="flex justify-between">
+                                      <span className="text-gray-500 dark:text-gray-400">Angin:</span>
+                                      <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
+                                        {feature.properties.wind_speed} km/h
+                                        {feature.properties?.wind_degree !== undefined && ` (${feature.properties.wind_degree}°)`}
+                                      </strong>
+                                    </li>
+                                  )}
+                                  {feature.properties?.cloud_coverage !== undefined && (
+                                    <li className="flex justify-between">
+                                      <span className="text-gray-500 dark:text-gray-400">Awan:</span>
+                                      <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
+                                        {feature.properties.cloud_coverage}%
+                                      </strong>
+                                    </li>
+                                  )}
+                                  {feature.properties?.pressure !== undefined && feature.properties.pressure > 0 && (
+                                    <li className="flex justify-between">
+                                      <span className="text-gray-500 dark:text-gray-400">Tekanan:</span>
+                                      <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
+                                        {feature.properties.pressure} hPa
+                                      </strong>
+                                    </li>
+                                  )}
+                                  {feature.properties?.uv_index !== undefined && feature.properties.uv_index > 0 && (
+                                    <li className="flex justify-between">
+                                      <span className="text-gray-500 dark:text-gray-400">UV Index:</span>
+                                      <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
+                                        {feature.properties.uv_index}
+                                      </strong>
+                                    </li>
+                                  )}
+                                  {feature.properties?.precipitation !== undefined && feature.properties.precipitation > 0 && (
+                                    <li className="flex justify-between">
+                                      <span className="text-gray-500 dark:text-gray-400">Curah Hujan:</span>
+                                      <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
+                                        {feature.properties.precipitation} mm
+                                      </strong>
+                                    </li>
+                                  )}
+                                </ul>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </Popup>
