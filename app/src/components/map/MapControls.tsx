@@ -1,11 +1,16 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Tooltip } from "react-tooltip";
 import { formatNumber } from "@/core/utils/formatters";
-import { DatePicker } from "@/components/ui/date-picker";
+import { DateRangePicker } from "@/components/ui/date-range-picker-final";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+
+interface DateRange {
+  from: Date;
+  to?: Date;
+}
 
 interface MapControlPanelProps {
   isMobile: boolean;
@@ -16,9 +21,9 @@ interface MapControlPanelProps {
   setShowJumlahHotspot: (show: boolean) => void;
   showLokasiHotspot: boolean;
   setShowLokasiHotspot: (show: boolean) => void;
-  selectedDate: string;
-  setSelectedDate: (date: string) => void;
-  dateCounts: Record<string, number>;
+  dateRange: DateRange | undefined;
+  setDateRange: (range: DateRange | undefined) => void;
+  totalCount: number;
   onLayerChange:
     | ((layer: "hotspot-count" | "hotspot-locations") => void)
     | undefined;
@@ -33,12 +38,11 @@ export default function MapControlPanel({
   setShowJumlahHotspot,
   showLokasiHotspot,
   setShowLokasiHotspot,
-  selectedDate,
-  setSelectedDate,
-  dateCounts,
+  dateRange,
+  setDateRange,
+  totalCount,
   onLayerChange,
 }: MapControlPanelProps) {
-  const today = new Date().toISOString().split("T")[0];
 
   return (
     <>
@@ -217,7 +221,7 @@ export default function MapControlPanel({
                     marginBottom: "0.5rem",
                   }}
                 >
-                  Pilih Tanggal
+                  Pilih Rentang Tanggal
                   <span
                     style={{
                       marginLeft: "0.25rem",
@@ -227,7 +231,7 @@ export default function MapControlPanel({
                       fontWeight: 500,
                     }}
                     data-tooltip-id="filter-date-info"
-                    data-tooltip-content="Menampilkan titik lokasi hotspot sesuai tanggal yang dipilih."
+                    data-tooltip-content="Menampilkan titik lokasi hotspot sesuai rentang tanggal yang dipilih."
                     data-tooltip-place="left"
                   >
                     {" "}
@@ -241,38 +245,22 @@ export default function MapControlPanel({
                     gap: "0.5rem",
                   }}
                 >
-                  <Label htmlFor="date-filter" className="text-xs font-medium">
-                    Tanggal
+                  <Label htmlFor="date-range-filter" className="text-xs font-medium">
+                    Rentang Tanggal
                   </Label>
-                  <DatePicker
-                    value={
-                      selectedDate
-                        ? new Date(selectedDate + "T00:00:00")
-                        : undefined
-                    }
-                    onChange={(date) => {
-                      if (date) {
-                        const year = date.getFullYear();
-                        const month = String(date.getMonth() + 1).padStart(
-                          2,
-                          "0",
-                        );
-                        const day = String(date.getDate()).padStart(2, "0");
-                        const dateString = `${year}-${month}-${day}`;
-                        setSelectedDate(dateString);
-                      } else {
-                        setSelectedDate("");
-                      }
-                    }}
-                    placeholder="Pilih tanggal"
+                  <DateRangePicker
+                    id="date-range-filter"
+                    value={dateRange}
+                    onChange={setDateRange}
+                    placeholder="Pilih rentang tanggal"
                     className="text-sm"
                   />
-                  {selectedDate && dateCounts[selectedDate] !== undefined && (
+                  {dateRange?.from && (
                     <div
                       id="date-filter-help"
                       style={{ fontSize: "0.75rem", fontWeight: 500 }}
                     >
-                      Total: {formatNumber(dateCounts[selectedDate])} hotspot
+                      Total: {formatNumber(totalCount)} hotspot
                     </div>
                   )}
                 </div>

@@ -31,7 +31,7 @@ export interface MapComponentProps {
       bulan?: string;
       minggu?: string;
     };
-    selectedDate?: string;
+    dateRange?: { from: Date; to?: Date };
     filterMode?: "period" | "date";
     province_code?: string;
     city_code?: string;

@@ -23,16 +23,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { CalendarIcon, X, RefreshCw } from "lucide-react";
-import { format } from "date-fns";
-import { id } from "date-fns/locale";
-import { id as idLocale } from "react-day-picker/locale";
+import { DateRangePicker } from "@/components/ui/date-range-picker-final";
+import { X, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Chart as ChartJS,
@@ -63,7 +55,7 @@ import {
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { Tooltip as ReactTooltip } from "react-tooltip";
-import { formatNumber } from "@/core/utils/formatters";
+import { formatNumber, formatWithTimezone } from "@/core/utils/formatters";
 import type { TimeFilters } from "@/core/models/time";
 import { scaleThreshold } from "d3-scale";
 
@@ -340,7 +332,7 @@ const OlapComponent = () => {
     satelite: undefined as string | undefined,
     time: {} as TimeFilters,
     filterMode: undefined as "period" | "date" | undefined,
-    selectedDate: undefined as string | undefined,
+    dateRange: undefined as { from: Date; to?: Date } | undefined,
     province_code: undefined as string | undefined,
     city_code: undefined as string | undefined,
     district_code: undefined as string | undefined,
@@ -356,8 +348,6 @@ const OlapComponent = () => {
   const [drillDownIndexes, setDrillDownIndexes] = useState<number[]>([]);
   const [, setHotspotCountQuery] = useState({});
   const [hotspotLocationsQuery, setHotspotLocationsQuery] = useState({});
-  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
-  const [isDatePickerOpenMobile, setIsDatePickerOpenMobile] = useState(false);
   const [isChartCollapsed, setIsChartCollapsed] = useState(false);
   const [filteredHotspotData, setFilteredHotspotData] = useState<
     HotspotFeatureGeo[]
@@ -412,10 +402,16 @@ const OlapComponent = () => {
         filters.week = parseInt(globalFilters.time.minggu, 10);
     } else if (
       globalFilters.filterMode === "date" &&
-      globalFilters.selectedDate
+      globalFilters.dateRange?.from
     ) {
-      filters.start_date = globalFilters.selectedDate;
-      filters.end_date = globalFilters.selectedDate;
+      const startOfDay = new Date(globalFilters.dateRange.from);
+      startOfDay.setHours(0, 0, 0, 0);
+      filters.start_date = formatWithTimezone(startOfDay);
+
+      const endDate = globalFilters.dateRange.to || globalFilters.dateRange.from;
+      const endOfDay = new Date(endDate);
+      endOfDay.setHours(23, 59, 59, 999);
+      filters.end_date = formatWithTimezone(endOfDay);
     }
 
     return filters;
@@ -424,7 +420,7 @@ const OlapComponent = () => {
     globalFilters.satelite,
     globalFilters.time,
     globalFilters.filterMode,
-    globalFilters.selectedDate,
+    globalFilters.dateRange,
   ]);
 
   const locationQueryFilters = useMemo(() => {
@@ -494,9 +490,19 @@ const OlapComponent = () => {
       };
     } else if (
       globalFilters.filterMode === "date" &&
-      globalFilters.selectedDate
+      globalFilters.dateRange?.from
     ) {
-      timeParams = { selectedDate: globalFilters.selectedDate };
+      const startOfDay = new Date(globalFilters.dateRange.from);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endDate = globalFilters.dateRange.to || globalFilters.dateRange.from;
+      const endOfDay = new Date(endDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      timeParams = {
+        start_date: formatWithTimezone(startOfDay),
+        end_date: formatWithTimezone(endOfDay),
+      };
     }
 
     return {
@@ -510,7 +516,7 @@ const OlapComponent = () => {
     globalFilters.satelite,
     globalFilters.time,
     globalFilters.filterMode,
-    globalFilters.selectedDate,
+    globalFilters.dateRange,
   ]);
 
   const { data: filteredData, isFetching: isFilteredFetching, isLoading: isFilteredLoading } = useQuery({
@@ -1094,9 +1100,19 @@ const OlapComponent = () => {
       };
     } else if (
       globalFilters.filterMode === "date" &&
-      globalFilters.selectedDate
+      globalFilters.dateRange?.from
     ) {
-      timeParams = { selectedDate: globalFilters.selectedDate };
+      const startOfDay = new Date(globalFilters.dateRange.from);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endDate = globalFilters.dateRange.to || globalFilters.dateRange.from;
+      const endOfDay = new Date(endDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      timeParams = {
+        start_date: formatWithTimezone(startOfDay),
+        end_date: formatWithTimezone(endOfDay),
+      };
     }
 
     const filteredQuery = {
@@ -1243,7 +1259,7 @@ const OlapComponent = () => {
       satelite: undefined,
       time: {},
       filterMode: undefined,
-      selectedDate: undefined,
+      dateRange: undefined,
       province_code: undefined,
       city_code: undefined,
       district_code: undefined,
@@ -1267,7 +1283,7 @@ const OlapComponent = () => {
   const memoizedFilters = useMemo(() => {
     if (activeMapLayer === "hotspot-locations") {
       return {
-        selectedDate: undefined,
+        dateRange: undefined,
         filterMode: undefined,
         pulau: undefined,
         provinsi: undefined,
@@ -1288,7 +1304,7 @@ const OlapComponent = () => {
         satelite: globalFilters.satelite?.toLowerCase(),
         time: globalFilters.time,
         filterMode: globalFilters.filterMode,
-        selectedDate: globalFilters.selectedDate,
+        dateRange: globalFilters.dateRange,
         province_code: globalFilters.province_code,
         city_code: globalFilters.city_code,
         district_code: globalFilters.district_code,
@@ -1354,7 +1370,7 @@ const OlapComponent = () => {
     return (
       globalFilters.confidence ||
       globalFilters.satelite ||
-      globalFilters.selectedDate ||
+      globalFilters.dateRange?.from ||
       Object.keys(globalFilters.time).length > 0 ||
       globalFilters.province_code ||
       globalFilters.city_code ||
@@ -1435,7 +1451,7 @@ const OlapComponent = () => {
       ...prev,
       time: timeFilters,
       filterMode: "period",
-      selectedDate: undefined,
+      dateRange: undefined,
     }));
 
     if (activeMapLayer === "hotspot-count") {
@@ -1548,10 +1564,10 @@ const OlapComponent = () => {
   useEffect(() => {
     if (
       activeMapLayer === "hotspot-count" &&
-      (globalFilters.selectedDate || Object.keys(globalFilters.time).length > 0)
+      (globalFilters.dateRange?.from || Object.keys(globalFilters.time).length > 0)
     ) {
     }
-  }, [activeMapLayer, globalFilters.selectedDate, globalFilters.time]);
+  }, [activeMapLayer, globalFilters.dateRange, globalFilters.time]);
 
   return (
     <div className="min-h-screen md:h-screen w-full flex flex-col bg-background">
@@ -1711,128 +1727,55 @@ const OlapComponent = () => {
 
             <div className="space-y-2">
               <Label
-                htmlFor="date-specific-filter"
+                htmlFor="date-range-filter"
                 className="text-sm font-medium flex items-center gap-1"
               >
-                Filter Tanggal Spesifik
+                Filter Rentang Tanggal
                 <span
                   className="text-muted-foreground cursor-help text-xs"
                   data-tooltip-id="date-filter-info"
-                  data-tooltip-content="Pilih tanggal spesifik untuk melihat persebaran jumlah data hotspot pada hari tersebut."
+                  data-tooltip-content="Pilih rentang tanggal untuk melihat persebaran jumlah data hotspot pada periode tersebut."
                   data-tooltip-place="top"
                 >
                   ⓘ
                 </span>
               </Label>
-              <div className="relative z-50">
-                <Popover
-                  modal={true}
-                  open={isDatePickerOpen}
-                  onOpenChange={setIsDatePickerOpen}
-                >
-                  <PopoverTrigger asChild>
-                    <Button
-                      id="date-specific-filter"
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !globalFilters.selectedDate && "text-muted-foreground",
-                      )}
-                      disabled={activeMapLayer === "hotspot-locations"}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setIsDatePickerOpen(true);
-                      }}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {globalFilters.selectedDate ? (
-                        format(
-                          new Date(globalFilters.selectedDate),
-                          "d MMMM yyyy",
-                          {
-                            locale: id,
-                          },
-                        )
-                      ) : (
-                        <span>Pilih tanggal</span>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    className="w-auto p-0 z-[99999]"
-                    align="start"
-                    onOpenAutoFocus={(e) => e.preventDefault()}
-                    sideOffset={5}
-                    style={{ pointerEvents: "auto" }}
-                  >
-                    <div
-                      className="pointer-events-auto"
-                      style={{ pointerEvents: "auto" }}
-                    >
-                      <Calendar
-                        mode="single"
-                        locale={idLocale}
-                        selected={
-                          globalFilters.selectedDate
-                            ? new Date(globalFilters.selectedDate)
-                            : undefined
-                        }
-                        onSelect={(date) => {
-                          const dateString = date
-                            ? format(date, "yyyy-MM-dd")
-                            : undefined;
-                          setGlobalFilters({
-                            ...globalFilters,
-                            selectedDate: dateString,
-                            filterMode: dateString ? "date" : undefined,
-                            time: dateString ? {} : globalFilters.time,
-                          });
-                          setHotspotCountQuery((prev) => ({
-                            ...prev,
-                            selectedDate: dateString,
-                            filterMode: dateString ? "date" : undefined,
-                          }));
-                          setIsDatePickerOpen(false);
-                        }}
-                        disabled={(date) => date > new Date()}
-                        autoFocus
-                        className="pointer-events-auto"
-                      />
-                    </div>
-                  </PopoverContent>
-                </Popover>
-                {globalFilters.selectedDate && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
-                    onClick={() => {
-                      setGlobalFilters({
-                        ...globalFilters,
-                        selectedDate: undefined,
-                        filterMode: undefined,
-                      });
-                      setHotspotCountQuery((prev) => ({
-                        ...prev,
-                        selectedDate: undefined,
-                        filterMode: undefined,
-                      }));
-                    }}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-              {globalFilters.selectedDate && (
+              <DateRangePicker
+                id="date-range-filter"
+                value={globalFilters.dateRange}
+                onChange={(range) => {
+                  setGlobalFilters({
+                    ...globalFilters,
+                    dateRange: range,
+                    filterMode: range?.from ? "date" : undefined,
+                    time: range?.from ? {} : globalFilters.time,
+                  });
+                  setHotspotCountQuery((prev) => ({
+                    ...prev,
+                    dateRange: range,
+                    filterMode: range?.from ? "date" : undefined,
+                  }));
+                }}
+                placeholder="Pilih rentang tanggal"
+                className="w-full"
+              />
+              {globalFilters.dateRange?.from && (
                 <p className="text-xs text-primary font-medium">
                   Filter aktif:{" "}
-                  {new Date(globalFilters.selectedDate).toLocaleDateString(
-                    "id-ID",
-                    {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    },
+                  {globalFilters.dateRange.from.toLocaleDateString("id-ID", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                  {globalFilters.dateRange.to && (
+                    <>
+                      {" - "}
+                      {globalFilters.dateRange.to.toLocaleDateString("id-ID", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </>
                   )}
                 </p>
               )}
@@ -2480,128 +2423,55 @@ const OlapComponent = () => {
 
               <div className="space-y-2">
                 <Label
-                  htmlFor="date-specific-filter-mobile"
+                  htmlFor="date-range-filter-mobile"
                   className="text-sm font-medium flex items-center gap-1"
                 >
-                  Filter Tanggal Spesifik
+                  Filter Rentang Tanggal
                   <span
                     className="text-muted-foreground cursor-help text-xs"
                     data-tooltip-id="date-filter-info"
-                    data-tooltip-content="Pilih tanggal spesifik untuk melihat persebaran jumlah data hotspot pada hari tersebut."
+                    data-tooltip-content="Pilih rentang tanggal untuk melihat persebaran jumlah data hotspot pada periode tersebut."
                     data-tooltip-place="top"
                   >
                     ⓘ
                   </span>
                 </Label>
-                <div className="relative z-50">
-                  <Popover
-                    modal={true}
-                    open={isDatePickerOpenMobile}
-                    onOpenChange={setIsDatePickerOpenMobile}
-                  >
-                    <PopoverTrigger asChild>
-                      <Button
-                        id="date-specific-filter-mobile"
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !globalFilters.selectedDate &&
-                            "text-muted-foreground",
-                        )}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsDatePickerOpenMobile(true);
-                        }}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {globalFilters.selectedDate ? (
-                          format(
-                            new Date(globalFilters.selectedDate),
-                            "d MMMM yyyy",
-                            {
-                              locale: id,
-                            },
-                          )
-                        ) : (
-                          <span>Pilih tanggal</span>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      className="w-auto p-0 z-[99999]"
-                      align="start"
-                      onOpenAutoFocus={(e) => e.preventDefault()}
-                      sideOffset={5}
-                      style={{ pointerEvents: "auto" }}
-                    >
-                      <div
-                        className="pointer-events-auto"
-                        style={{ pointerEvents: "auto" }}
-                      >
-                        <Calendar
-                          mode="single"
-                          locale={idLocale}
-                          selected={
-                            globalFilters.selectedDate
-                              ? new Date(globalFilters.selectedDate)
-                              : undefined
-                          }
-                          onSelect={(date) => {
-                            const dateString = date
-                              ? format(date, "yyyy-MM-dd")
-                              : undefined;
-                            setGlobalFilters({
-                              ...globalFilters,
-                              selectedDate: dateString,
-                              filterMode: dateString ? "date" : undefined,
-                              time: dateString ? {} : globalFilters.time,
-                            });
-                            setHotspotCountQuery((prev) => ({
-                              ...prev,
-                              selectedDate: dateString,
-                              filterMode: dateString ? "date" : undefined,
-                            }));
-                            setIsDatePickerOpenMobile(false);
-                          }}
-                          disabled={(date) => date > new Date()}
-                          autoFocus
-                          className="pointer-events-auto"
-                        />
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                  {globalFilters.selectedDate && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
-                      onClick={() => {
-                        setGlobalFilters({
-                          ...globalFilters,
-                          selectedDate: undefined,
-                          filterMode: undefined,
-                        });
-                        setHotspotCountQuery((prev) => ({
-                          ...prev,
-                          selectedDate: undefined,
-                          filterMode: undefined,
-                        }));
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-                {globalFilters.selectedDate && (
+                <DateRangePicker
+                  id="date-range-filter-mobile"
+                  value={globalFilters.dateRange}
+                  onChange={(range) => {
+                    setGlobalFilters({
+                      ...globalFilters,
+                      dateRange: range,
+                      filterMode: range?.from ? "date" : undefined,
+                      time: range?.from ? {} : globalFilters.time,
+                    });
+                    setHotspotCountQuery((prev) => ({
+                      ...prev,
+                      dateRange: range,
+                      filterMode: range?.from ? "date" : undefined,
+                    }));
+                  }}
+                  placeholder="Pilih rentang tanggal"
+                  className="w-full"
+                />
+                {globalFilters.dateRange?.from && (
                   <p className="text-xs text-primary font-medium">
                     Filter aktif:{" "}
-                    {new Date(globalFilters.selectedDate).toLocaleDateString(
-                      "id-ID",
-                      {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      },
+                    {globalFilters.dateRange.from.toLocaleDateString("id-ID", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                    {globalFilters.dateRange.to && (
+                      <>
+                        {" - "}
+                        {globalFilters.dateRange.to.toLocaleDateString("id-ID", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </>
                     )}
                   </p>
                 )}

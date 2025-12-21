@@ -65,6 +65,7 @@ const fetchHotspotData = async (filters?: {
 
   const apiFilters: any = {
     limit: 50000,
+    ...filters,
   };
 
   const response = await hotspotService.getHotspotsGeoJSON(apiFilters);
@@ -265,8 +266,8 @@ const MapComponent: React.FC<MapComponentProps> = ({
   const [isMobile, setIsMobile] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isControlPanelCollapsed, setIsControlPanelCollapsed] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(
-    () => new Date().toISOString().split("T")[0],
+  const [dateRange, setDateRange] = useState<{ from: Date; to?: Date } | undefined>(
+    () => ({ from: new Date(), to: new Date() }),
   );
   const [loadingLevel, setLoadingLevel] = useState<string | null>(null);
 
@@ -387,45 +388,23 @@ const MapComponent: React.FC<MapComponentProps> = ({
       }
     }
 
-    if (filters?.filterMode === "date" && filters?.selectedDate) {
-      const date = new Date(filters.selectedDate);
-      const startOfDay = new Date(
-        date.getFullYear(),
-        date.getMonth(),
-        date.getDate(),
-        0,
-        0,
-        0,
-      );
-      const endOfDay = new Date(
-        date.getFullYear(),
-        date.getMonth(),
-        date.getDate(),
-        23,
-        59,
-        59,
-      );
+    if (filters?.filterMode === "date" && filters?.dateRange?.from) {
+      const startOfDay = new Date(filters.dateRange.from);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endDate = filters.dateRange.to || filters.dateRange.from;
+      const endOfDay = new Date(endDate);
+      endOfDay.setHours(23, 59, 59, 999);
 
       params.start_date = toLocalRFC3339(startOfDay);
       params.end_date = toLocalRFC3339(endOfDay);
-    } else if (activeLayer === "hotspot-locations" && selectedDate) {
-      const date = new Date(selectedDate);
-      const startOfDay = new Date(
-        date.getFullYear(),
-        date.getMonth(),
-        date.getDate(),
-        0,
-        0,
-        0,
-      );
-      const endOfDay = new Date(
-        date.getFullYear(),
-        date.getMonth(),
-        date.getDate(),
-        23,
-        59,
-        59,
-      );
+    } else if (activeLayer === "hotspot-locations" && dateRange?.from) {
+      const startOfDay = new Date(dateRange.from);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endDate = dateRange.to || dateRange.from;
+      const endOfDay = new Date(endDate);
+      endOfDay.setHours(23, 59, 59, 999);
 
       params.start_date = toLocalRFC3339(startOfDay);
       params.end_date = toLocalRFC3339(endOfDay);
@@ -445,7 +424,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
     }
 
     return params;
-  }, [filters, activeLayer, selectedDate]);
+  }, [filters, activeLayer, dateRange]);
 
   const {
     data: hotspotApiResponse,
@@ -462,6 +441,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
   const hotspotData: HotspotFeatureGeo[] = useMemo(() => {
     return hotspotApiResponse?.features || [];
   }, [hotspotApiResponse]);
+
 
   useEffect(() => {
     if (onHotspotDataChange) {
@@ -497,18 +477,21 @@ const MapComponent: React.FC<MapComponentProps> = ({
   }, [hotspotData]);
 
   useEffect(() => {
-    if (initialSelectedDate && !selectedDate) {
-      setSelectedDate(initialSelectedDate);
+    if (initialSelectedDate && !dateRange) {
+      const date = new Date(initialSelectedDate);
+      setDateRange({ from: date, to: date });
     }
   }, [initialSelectedDate]);
 
   useEffect(() => {
-    if (showLokasiHotspot && !selectedDate) {
-      const today = new Date().toISOString().split("T")[0];
-      if (dateCounts[today] && dateCounts[today] > 0) {
-        setSelectedDate(today);
+    if (showLokasiHotspot && !dateRange) {
+      const today = new Date();
+      const todayString = today.toISOString().split("T")[0];
+      if (dateCounts[todayString] && dateCounts[todayString] > 0) {
+        setDateRange({ from: today, to: today });
       } else if (initialSelectedDate) {
-        setSelectedDate(initialSelectedDate);
+        const date = new Date(initialSelectedDate);
+        setDateRange({ from: date, to: date });
       }
     }
   }, [showLokasiHotspot]);
@@ -546,7 +529,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
     const hasActiveFilters =
       filters?.confidence ||
       filters?.satelite ||
-      filters?.selectedDate ||
+      filters?.dateRange?.from ||
       (filters?.time && Object.keys(filters.time).length > 0) ||
       filters?.province_code ||
       filters?.city_code ||
@@ -581,15 +564,19 @@ const MapComponent: React.FC<MapComponentProps> = ({
         return;
       }
 
-      if (filters?.filterMode === "date" && filters.selectedDate) {
+      if (filters?.filterMode === "date" && filters.dateRange?.from) {
         const hotspotDate = new Date(hotspot.properties?.time || "");
-        const filterDate = new Date(filters.selectedDate);
+        hotspotDate.setHours(0, 0, 0, 0);
 
-        if (
-          hotspotDate.getFullYear() !== filterDate.getFullYear() ||
-          hotspotDate.getMonth() !== filterDate.getMonth() ||
-          hotspotDate.getDate() !== filterDate.getDate()
-        ) {
+        const startDate = new Date(filters.dateRange.from);
+        startDate.setHours(0, 0, 0, 0);
+
+        const endDate = filters.dateRange.to
+          ? new Date(filters.dateRange.to)
+          : new Date(filters.dateRange.from);
+        endDate.setHours(23, 59, 59, 999);
+
+        if (hotspotDate < startDate || hotspotDate > endDate) {
           return;
         }
       } else if (filters?.filterMode === "period" && filters?.time) {
@@ -933,9 +920,9 @@ const MapComponent: React.FC<MapComponentProps> = ({
         setShowJumlahHotspot={setShowJumlahHotspot}
         showLokasiHotspot={showLokasiHotspot}
         setShowLokasiHotspot={setShowLokasiHotspot}
-        selectedDate={selectedDate}
-        setSelectedDate={setSelectedDate}
-        dateCounts={dateCounts}
+        dateRange={dateRange}
+        setDateRange={setDateRange}
+        totalCount={hotspotData.length}
         onLayerChange={onLayerChange}
       />
 

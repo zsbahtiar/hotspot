@@ -131,7 +131,7 @@ export function DateRangePicker({
 
   return (
     <div className="relative">
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={setOpen} modal={true}>
         <PopoverTrigger asChild>
           <Button
             id={id}
@@ -146,7 +146,7 @@ export function DateRangePicker({
             {formatDateRange(value)}
           </Button>
         </PopoverTrigger>
-      <PopoverContent className={cn("w-auto p-0", isMobile && "max-w-[calc(100vw-2rem)]")} align="start">
+      <PopoverContent className={cn("w-auto p-0 z-[99999]", isMobile && "max-w-[calc(100vw-2rem)]")} align="start">
         <div className={cn("flex", isMobile ? "flex-col" : "flex-row")}>
                     <div className={cn(
             "flex gap-1 p-3",
