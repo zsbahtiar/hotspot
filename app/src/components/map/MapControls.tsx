@@ -251,7 +251,14 @@ export default function MapControlPanel({
                   <DateRangePicker
                     id="date-range-filter"
                     value={dateRange}
-                    onChange={setDateRange}
+                    onChange={(range) => {
+                      if (!range) {
+                        const today = new Date();
+                        setDateRange({ from: today, to: today });
+                      } else {
+                        setDateRange(range);
+                      }
+                    }}
                     placeholder="Pilih rentang tanggal"
                     className="text-sm"
                   />
