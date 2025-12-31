@@ -1816,7 +1816,7 @@ const OlapComponent = () => {
                   icon={faSpinner}
                   spin
                   size="2x"
-                  className="text-gray-600 dark:text-gray-400 mb-2"
+                  className="text-muted-foreground mb-2"
                 />
               </div>
             ) : sidebarTree && sidebarTree.length > 0 ? (
@@ -1825,7 +1825,7 @@ const OlapComponent = () => {
                   <div className="bg-card border-l-4 border-blue-500 p-3 rounded-lg shadow-xs hover:shadow-sm transition-shadow">
                     <div className="flex justify-between items-center">
                       <span
-                        className="font-semibold text-sm text-foreground cursor-pointer hover:text-blue-600 transition"
+                        className="font-semibold text-sm text-foreground cursor-pointer hover:text-primary transition"
                         onClick={() => handleSelect(item, [i], "provinsi")}
                       >
                         {item.data}{" "}
@@ -1853,7 +1853,7 @@ const OlapComponent = () => {
                         <div className="bg-card rounded-lg shadow-xs p-3 border-l-4 border-green-500 hover:shadow-sm transition">
                           <div className="flex justify-between items-center">
                             <span
-                              className="font-semibold text-foreground text-sm cursor-pointer hover:text-blue-600 transition"
+                              className="font-semibold text-foreground text-sm cursor-pointer hover:text-primary transition"
                               onClick={() =>
                                 handleSelect(provinsi, [i, j], "kota")
                               }
@@ -1888,7 +1888,7 @@ const OlapComponent = () => {
                               <div className="bg-card rounded-lg shadow-xs p-3 border-l-4 border-yellow-500 hover:shadow-sm transition">
                                 <div className="flex justify-between items-center">
                                   <span
-                                    className="font-semibold text-foreground text-sm cursor-pointer hover:text-blue-600 transition"
+                                    className="font-semibold text-foreground text-sm cursor-pointer hover:text-primary transition"
                                     onClick={() =>
                                       handleSelect(kota, [i, j, k], "kecamatan")
                                     }
@@ -1925,7 +1925,7 @@ const OlapComponent = () => {
                                     <div className="bg-card rounded-lg shadow-xs p-3 border-l-4 border-purple-500 hover:shadow-sm transition">
                                       <div className="flex justify-between items-center">
                                         <span
-                                          className="font-semibold text-foreground text-sm cursor-pointer hover:text-blue-600 transition"
+                                          className="font-semibold text-foreground text-sm cursor-pointer hover:text-primary transition"
                                           onClick={() =>
                                             handleSelect(
                                               kecamatan,
@@ -1967,7 +1967,7 @@ const OlapComponent = () => {
                                           <div className="bg-card rounded-lg shadow-xs p-3 border-l-4 border-red-500 hover:shadow-sm transition">
                                             <div className="flex justify-between items-center">
                                               <span
-                                                className="font-semibold text-foreground text-sm cursor-pointer hover:text-blue-600 transition"
+                                                className="font-semibold text-foreground text-sm cursor-pointer hover:text-primary transition"
                                                 onClick={() => {
                                                   if (window.innerWidth < 768) {
                                                     setIsSidebarOpen(false);
@@ -2038,13 +2038,13 @@ const OlapComponent = () => {
           >
             {isRefetching && activeMapLayer === "hotspot-count" && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-lg z-[1000]">
-                <div className="bg-white dark:bg-gray-800 rounded-lg px-6 py-4 flex items-center gap-3 shadow-lg">
+                <div className="bg-card rounded-lg px-6 py-4 flex items-center gap-3 shadow-lg">
                   <RefreshCw
                     width="24"
                     height="24"
                     className="text-primary animate-spin"
                   />
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <span className="text-sm font-medium text-foreground">
                     Memuat data...
                   </span>
                 </div>
@@ -2111,7 +2111,7 @@ const OlapComponent = () => {
                 </h2>
                 <div className="flex items-center space-x-2">
                   {!isChartCollapsed && (
-                    <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-xs font-medium">
+                    <span className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium">
                       {drillDownLevel
                         ? `Level: ${
                             drillDownLevel === "kota"
@@ -2144,7 +2144,7 @@ const OlapComponent = () => {
                         icon={faSpinner}
                         spin
                         size="3x"
-                        className="text-gray-600 dark:text-gray-400 mb-4"
+                        className="text-muted-foreground mb-4"
                       />
                     </div>
                   ) : !displayChartData ||
@@ -2259,13 +2259,13 @@ const OlapComponent = () => {
 
                   {isRefetching && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-lg z-10">
-                      <div className="bg-white dark:bg-gray-800 rounded-lg px-6 py-4 flex items-center gap-3 shadow-lg">
+                      <div className="bg-card rounded-lg px-6 py-4 flex items-center gap-3 shadow-lg">
                         <RefreshCw
                           width="24"
                           height="24"
                           className="text-primary animate-spin"
                         />
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <span className="text-sm font-medium text-foreground">
                           Memuat data...
                         </span>
                       </div>
@@ -2506,7 +2506,7 @@ const OlapComponent = () => {
                     icon={faSpinner}
                     spin
                     size="2x"
-                    className="text-gray-600 dark:text-gray-400 mb-2"
+                    className="text-muted-foreground mb-2"
                   />
                 </div>
               ) : sidebarTree && sidebarTree.length > 0 ? (
@@ -2519,7 +2519,7 @@ const OlapComponent = () => {
                     <div className="bg-card border-l-4 border-blue-500 p-3 rounded-lg shadow-xs hover:shadow-sm transition-shadow">
                       <div className="flex justify-between items-center">
                         <span
-                          className="font-semibold text-sm text-foreground cursor-pointer hover:text-blue-600 transition"
+                          className="font-semibold text-sm text-foreground cursor-pointer hover:text-primary transition"
                           onClick={() => handleSelect(item, [i], "provinsi")}
                         >
                           {item.data}{" "}
@@ -2547,7 +2547,7 @@ const OlapComponent = () => {
                           <div className="bg-card rounded-lg shadow-xs p-3 border-l-4 border-green-500 hover:shadow-sm transition">
                             <div className="flex justify-between items-center">
                               <span
-                                className="font-semibold text-foreground text-sm cursor-pointer hover:text-blue-600 transition"
+                                className="font-semibold text-foreground text-sm cursor-pointer hover:text-primary transition"
                                 onClick={() =>
                                   handleSelect(provinsi, [i, j], "kota")
                                 }
@@ -2584,7 +2584,7 @@ const OlapComponent = () => {
                                 <div className="bg-card rounded-lg shadow-xs p-3 border-l-4 border-yellow-500 hover:shadow-sm transition">
                                   <div className="flex justify-between items-center">
                                     <span
-                                      className="font-semibold text-foreground text-sm cursor-pointer hover:text-blue-600 transition"
+                                      className="font-semibold text-foreground text-sm cursor-pointer hover:text-primary transition"
                                       onClick={() =>
                                         handleSelect(
                                           kota,
@@ -2626,7 +2626,7 @@ const OlapComponent = () => {
                                       <div className="bg-card rounded-lg shadow-xs p-3 border-l-4 border-purple-500 hover:shadow-sm transition">
                                         <div className="flex justify-between items-center">
                                           <span
-                                            className="font-semibold text-foreground text-sm cursor-pointer hover:text-blue-600 transition"
+                                            className="font-semibold text-foreground text-sm cursor-pointer hover:text-primary transition"
                                             onClick={() =>
                                               handleSelect(
                                                 kecamatan,
@@ -2669,7 +2669,7 @@ const OlapComponent = () => {
                                             <div className="bg-card rounded-lg shadow-xs p-3 border-l-4 border-red-500 hover:shadow-sm transition">
                                               <div className="flex justify-between items-center">
                                                 <span
-                                                  className="font-semibold text-foreground text-sm cursor-pointer hover:text-blue-600 transition"
+                                                  className="font-semibold text-foreground text-sm cursor-pointer hover:text-primary transition"
                                                   onClick={() => {
                                                     if (
                                                       window.innerWidth < 768

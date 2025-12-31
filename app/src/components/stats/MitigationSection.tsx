@@ -1,23 +1,22 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
 const MitigationSection = () => {
   return (
-    <section className="py-20 px-4 sm:px-6 lg:px-8 bg-secondary dark:bg-gray-900">
+    <section className="py-20 px-4 sm:px-6 lg:px-8 bg-secondary">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-foreground dark:text-white">
+          <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-foreground">
             Upaya Mitigasi Kebakaran
           </h2>
-          <p className="text-lg text-muted-foreground dark:text-gray-300 max-w-3xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
             Penyelenggaraan pencegahan, pemadaman, dan penanganan pasca karhutla
             berdasarkan Permen LHK Nomor 32 Tahun 2016
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <Card className="hover:shadow-lg transition-shadow duration-300 dark:border-gray-700 dark:bg-gray-800">
-            <CardHeader className="dark:border-gray-700">
-              <div className="text-primary mb-4 dark:text-white">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-0 md:divide-x divide-border">
+          {/* Pencegahan */}
+          <div className="px-6 md:px-8">
+            <div className="mb-6">
+              <div className="text-primary mb-4">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-10 w-10"
@@ -33,97 +32,46 @@ const MitigationSection = () => {
                   />
                 </svg>
               </div>
-              <CardTitle className="dark:text-white">Pencegahan</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-muted-foreground dark:text-gray-300">
-                <li className="flex items-start">
-                  <svg
-                    className="h-5 w-5 text-primary mr-2 mt-0.5 dark:text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="dark:text-gray-200">Pemberdayaan masyarakat</span>
-                </li>
-                <li className="flex items-start">
-                  <svg
-                    className="h-5 w-5 text-primary mr-2 mt-0.5 dark:text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="dark:text-gray-200">Penyadartahuan pengurangan resiko karhutla</span>
-                </li>
-                <li className="flex items-start">
-                  <svg
-                    className="h-5 w-5 text-primary mr-2 mt-0.5 dark:text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="dark:text-gray-200">Kesiapsiagaan</span>
-                </li>
-                <li className="flex items-start">
-                  <svg
-                    className="h-5 w-5 text-primary mr-2 mt-0.5 dark:text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="dark:text-gray-200">Pelaksanaan peringatan dini</span>
-                </li>
-                <li className="flex items-start">
-                  <svg
-                    className="h-5 w-5 text-primary mr-2 mt-0.5 dark:text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="dark:text-gray-200">Patroli pencegahan</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
+              <h3 className="text-xl font-semibold text-foreground">Pencegahan</h3>
+            </div>
+            <ul className="space-y-3 text-muted-foreground">
+              <li className="flex items-start">
+                <svg className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Pemberdayaan masyarakat</span>
+              </li>
+              <li className="flex items-start">
+                <svg className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Penyadartahuan pengurangan resiko karhutla</span>
+              </li>
+              <li className="flex items-start">
+                <svg className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Kesiapsiagaan</span>
+              </li>
+              <li className="flex items-start">
+                <svg className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Pelaksanaan peringatan dini</span>
+              </li>
+              <li className="flex items-start">
+                <svg className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Patroli pencegahan</span>
+              </li>
+            </ul>
+          </div>
 
-          <Card className="hover:shadow-lg transition-shadow duration-300 dark:border-gray-700 dark:bg-gray-800">
-            <CardHeader className="dark:border-gray-700">
-              <div className="text-primary mb-4 dark:text-white">
+          {/* Pemadaman */}
+          <div className="px-6 md:px-8 pt-8 md:pt-0 border-t md:border-t-0 border-border">
+            <div className="mb-6">
+              <div className="text-primary mb-4">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-10 w-10"
@@ -145,129 +93,58 @@ const MitigationSection = () => {
                   />
                 </svg>
               </div>
-              <CardTitle className="dark:text-white">Pemadaman</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-muted-foreground dark:text-gray-300">
-                <li className="flex items-start">
-                  <svg
-                    className="h-5 w-5 text-primary mr-2 mt-0.5 dark:text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="dark:text-gray-200">Deteksi dini</span>
-                </li>
-                <li className="flex items-start">
-                  <svg
-                    className="h-5 w-5 text-primary mr-2 mt-0.5 dark:text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="dark:text-gray-200">Pemadaman awal</span>
-                </li>
-                <li className="flex items-start">
-                  <svg
-                    className="h-5 w-5 text-primary mr-2 mt-0.5 dark:text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="dark:text-gray-200">Koordinasi pemadaman</span>
-                </li>
-                <li className="flex items-start">
-                  <svg
-                    className="h-5 w-5 text-primary mr-2 mt-0.5 dark:text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="dark:text-gray-200">Mobilisasi pemadaman</span>
-                </li>
-                <li className="flex items-start">
-                  <svg
-                    className="h-5 w-5 text-primary mr-2 mt-0.5 dark:text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="dark:text-gray-200">Pemadaman lanjutan</span>
-                </li>
-                <li className="flex items-start">
-                  <svg
-                    className="h-5 w-5 text-primary mr-2 mt-0.5 dark:text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="dark:text-gray-200">Demobilisasi pemadaman</span>
-                </li>
-                <li className="flex items-start">
-                  <svg
-                    className="h-5 w-5 text-primary mr-2 mt-0.5 dark:text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="dark:text-gray-200">Evakuasi dan penyelamatan</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
+              <h3 className="text-xl font-semibold text-foreground">Pemadaman</h3>
+            </div>
+            <ul className="space-y-3 text-muted-foreground">
+              <li className="flex items-start">
+                <svg className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Deteksi dini</span>
+              </li>
+              <li className="flex items-start">
+                <svg className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Pemadaman awal</span>
+              </li>
+              <li className="flex items-start">
+                <svg className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Koordinasi pemadaman</span>
+              </li>
+              <li className="flex items-start">
+                <svg className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Mobilisasi pemadaman</span>
+              </li>
+              <li className="flex items-start">
+                <svg className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Pemadaman lanjutan</span>
+              </li>
+              <li className="flex items-start">
+                <svg className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Demobilisasi pemadaman</span>
+              </li>
+              <li className="flex items-start">
+                <svg className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Evakuasi dan penyelamatan</span>
+              </li>
+            </ul>
+          </div>
 
-          <Card className="hover:shadow-lg transition-shadow duration-300 dark:border-gray-700 dark:bg-gray-800">
-            <CardHeader className="dark:border-gray-700">
-              <div className="text-primary mb-4 dark:text-white">
+          {/* Penanganan Pasca Karhutla */}
+          <div className="px-6 md:px-8 pt-8 md:pt-0 border-t md:border-t-0 border-border">
+            <div className="mb-6">
+              <div className="text-primary mb-4">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="h-10 w-10"
@@ -283,77 +160,35 @@ const MitigationSection = () => {
                   />
                 </svg>
               </div>
-              <CardTitle className="dark:text-white">Penanganan Pasca Karhutla</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-muted-foreground dark:text-gray-300">
-                <li className="flex items-start">
-                  <svg
-                    className="h-5 w-5 text-primary mr-2 mt-0.5 dark:text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="dark:text-gray-200">Pengawasan areal bekas terbakar</span>
-                </li>
-                <li className="flex items-start">
-                  <svg
-                    className="h-5 w-5 text-primary mr-2 mt-0.5 dark:text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="dark:text-gray-200">Inventarisasi luas karhutla</span>
-                </li>
-                <li className="flex items-start">
-                  <svg
-                    className="h-5 w-5 text-primary mr-2 mt-0.5 dark:text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="dark:text-gray-200">Penaksiran kerugian</span>
-                </li>
-                <li className="flex items-start">
-                  <svg
-                    className="h-5 w-5 text-primary mr-2 mt-0.5 dark:text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="dark:text-gray-200">Koordinasi penanganan pasca karhutla</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
+              <h3 className="text-xl font-semibold text-foreground">Penanganan Pasca</h3>
+            </div>
+            <ul className="space-y-3 text-muted-foreground">
+              <li className="flex items-start">
+                <svg className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Pengawasan areal bekas terbakar</span>
+              </li>
+              <li className="flex items-start">
+                <svg className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Inventarisasi luas karhutla</span>
+              </li>
+              <li className="flex items-start">
+                <svg className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Penaksiran kerugian</span>
+              </li>
+              <li className="flex items-start">
+                <svg className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Koordinasi penanganan pasca karhutla</span>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </section>
