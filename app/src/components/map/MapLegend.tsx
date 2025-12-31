@@ -27,7 +27,7 @@ export default function MapLegend({
     <>
       {showJumlahHotspot && (
         <div
-          className={`legend-box absolute bottom-5 z-[1200] bg-card rounded-lg shadow-md text-xs text-card-foreground transition-all duration-300
+          className={`legend-box absolute bottom-5 z-[1200] bg-background border border-border rounded-lg text-xs text-foreground transition-all duration-300
         md:bottom-30 md:z-[1000] md:text-xs ${
           isCollapsedJumlah ? "w-8 h-10" : "w-[200px] md:w-auto"
         }`}
@@ -102,7 +102,7 @@ export default function MapLegend({
 
       {showLokasiHotspot && (
         <div
-          className={`legend-box absolute bottom-5 z-[1000] bg-card rounded-lg shadow-md text-card-foreground transition-all duration-300 ${
+          className={`legend-box absolute bottom-5 z-[1000] bg-background border border-border rounded-lg text-foreground transition-all duration-300 ${
             isCollapsedLokasi ? "w-10 h-10" : "w-auto"
           }`}
           style={{ left: "0.5rem" }}

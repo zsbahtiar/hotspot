@@ -1822,7 +1822,7 @@ const OlapComponent = () => {
             ) : sidebarTree && sidebarTree.length > 0 ? (
               sidebarTree.map((item, i) => (
                 <div key={i} id={`location-item-${i}`} className="mb-3">
-                  <div className="bg-card border-l-4 border-blue-500 p-3 rounded-lg shadow-xs hover:shadow-sm transition-shadow">
+                  <div className="border-l-4 border-primary p-3">
                     <div className="flex justify-between items-center">
                       <span
                         className="font-semibold text-sm text-foreground cursor-pointer hover:text-primary transition"
@@ -1850,7 +1850,7 @@ const OlapComponent = () => {
                         id={`location-item-${i}-${j}`}
                         className="mt-2 ml-4"
                       >
-                        <div className="bg-card rounded-lg shadow-xs p-3 border-l-4 border-green-500 hover:shadow-sm transition">
+                        <div className="border-l-4 border-primary/80 p-3">
                           <div className="flex justify-between items-center">
                             <span
                               className="font-semibold text-foreground text-sm cursor-pointer hover:text-primary transition"
@@ -1885,7 +1885,7 @@ const OlapComponent = () => {
                               id={`location-item-${i}-${j}-${k}`}
                               className="mt-2 ml-4"
                             >
-                              <div className="bg-card rounded-lg shadow-xs p-3 border-l-4 border-yellow-500 hover:shadow-sm transition">
+                              <div className="border-l-4 border-primary/60 p-3">
                                 <div className="flex justify-between items-center">
                                   <span
                                     className="font-semibold text-foreground text-sm cursor-pointer hover:text-primary transition"
@@ -1922,7 +1922,7 @@ const OlapComponent = () => {
                                     id={`location-item-${i}-${j}-${k}-${l}`}
                                     className="mt-2 ml-4"
                                   >
-                                    <div className="bg-card rounded-lg shadow-xs p-3 border-l-4 border-purple-500 hover:shadow-sm transition">
+                                    <div className="border-l-4 border-primary/40 p-3">
                                       <div className="flex justify-between items-center">
                                         <span
                                           className="font-semibold text-foreground text-sm cursor-pointer hover:text-primary transition"
@@ -1964,7 +1964,7 @@ const OlapComponent = () => {
                                           id={`location-item-${i}-${j}-${k}-${l}-${m}`}
                                           className="mt-2 ml-4"
                                         >
-                                          <div className="bg-card rounded-lg shadow-xs p-3 border-l-4 border-red-500 hover:shadow-sm transition">
+                                          <div className="border-l-4 border-primary/20 p-3">
                                             <div className="flex justify-between items-center">
                                               <span
                                                 className="font-semibold text-foreground text-sm cursor-pointer hover:text-primary transition"
@@ -2101,12 +2101,12 @@ const OlapComponent = () => {
           </div>
 
           <div
-            className={`${isChartCollapsed ? "h-[52px]" : "h-[280px] md:h-[35%]"} bg-card border-t-2 border-border flex-shrink-0 mt-0 transition-all duration-300
+            className={`${isChartCollapsed ? "h-[52px]" : "h-[280px] md:h-[35%]"} border-t-2 border-border flex-shrink-0 mt-0 transition-all duration-300
             ${activeMapLayer === "hotspot-locations" ? "hidden" : ""}`}
           >
             <div className="h-full p-3 md:p-6 flex flex-col">
               <div className="flex justify-between items-center mb-3 relative">
-                <h2 className="font-semibold text-card-foreground text-lg">
+                <h2 className="font-semibold text-foreground text-lg">
                   Persebaran Jumlah Hotspot
                 </h2>
                 <div className="flex items-center space-x-2">
@@ -2516,7 +2516,7 @@ const OlapComponent = () => {
                     id={`location-item-mobile-${i}`}
                     className="mb-3"
                   >
-                    <div className="bg-card border-l-4 border-blue-500 p-3 rounded-lg shadow-xs hover:shadow-sm transition-shadow">
+                    <div className="border-l-4 border-primary p-3">
                       <div className="flex justify-between items-center">
                         <span
                           className="font-semibold text-sm text-foreground cursor-pointer hover:text-primary transition"
@@ -2544,7 +2544,7 @@ const OlapComponent = () => {
                           id={`location-item-mobile-${i}-${j}`}
                           className="mt-2 ml-4"
                         >
-                          <div className="bg-card rounded-lg shadow-xs p-3 border-l-4 border-green-500 hover:shadow-sm transition">
+                          <div className="border-l-4 border-primary/80 p-3">
                             <div className="flex justify-between items-center">
                               <span
                                 className="font-semibold text-foreground text-sm cursor-pointer hover:text-primary transition"
@@ -2581,7 +2581,7 @@ const OlapComponent = () => {
                                 id={`location-item-mobile-${i}-${j}-${k}`}
                                 className="mt-2 ml-4"
                               >
-                                <div className="bg-card rounded-lg shadow-xs p-3 border-l-4 border-yellow-500 hover:shadow-sm transition">
+                                <div className="border-l-4 border-primary/60 p-3">
                                   <div className="flex justify-between items-center">
                                     <span
                                       className="font-semibold text-foreground text-sm cursor-pointer hover:text-primary transition"
@@ -2623,7 +2623,7 @@ const OlapComponent = () => {
                                       id={`location-item-mobile-${i}-${j}-${k}-${l}`}
                                       className="mt-2 ml-4"
                                     >
-                                      <div className="bg-card rounded-lg shadow-xs p-3 border-l-4 border-purple-500 hover:shadow-sm transition">
+                                      <div className="border-l-4 border-primary/40 p-3">
                                         <div className="flex justify-between items-center">
                                           <span
                                             className="font-semibold text-foreground text-sm cursor-pointer hover:text-primary transition"
@@ -2666,7 +2666,7 @@ const OlapComponent = () => {
                                             id={`location-item-mobile-${i}-${j}-${k}-${l}-${m}`}
                                             className="mt-2 ml-4"
                                           >
-                                            <div className="bg-card rounded-lg shadow-xs p-3 border-l-4 border-red-500 hover:shadow-sm transition">
+                                            <div className="border-l-4 border-primary/20 p-3">
                                               <div className="flex justify-between items-center">
                                                 <span
                                                   className="font-semibold text-foreground text-sm cursor-pointer hover:text-primary transition"

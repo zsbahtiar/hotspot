@@ -366,84 +366,69 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
                         index < latestHotspots.length - 1 ? "border-b border-border" : ""
                       }`}
                     >
-                      <div className="flex justify-between items-center mb-3">
-                        <span className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
+                      <div className="grid grid-cols-[100px_1fr] gap-x-4 gap-y-3 text-sm">
+                        <span className="font-medium text-muted-foreground uppercase tracking-wide">
                           Tanggal
                         </span>
-                        <span className="text-foreground font-medium">
+                        <span className="text-foreground font-medium text-right">
                           {formatDate(hotspot.acquired_at)}
                         </span>
-                      </div>
-                      <div className="flex justify-between items-center mb-3">
-                        <span className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
+
+                        <span className="font-medium text-muted-foreground uppercase tracking-wide">
                           Waktu
                         </span>
-                        <span className="text-foreground font-medium">
+                        <span className="text-foreground font-medium text-right">
                           {extractTime(hotspot.acquired_at)}
                         </span>
-                      </div>
-                      <div className="flex justify-between items-center mb-3">
-                        <span className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
+
+                        <span className="font-medium text-muted-foreground uppercase tracking-wide">
                           Sumber
                         </span>
-                        <span className="text-foreground font-medium">
+                        <span className="text-foreground font-medium text-right">
                           {hotspot.satellite_name || "N/A"}
                         </span>
-                      </div>
-                      <div className="mb-4">
-                        <span className="font-medium text-muted-foreground text-sm uppercase tracking-wide block mb-2">
+
+                        <span className="font-medium text-muted-foreground uppercase tracking-wide">
                           Lokasi
                         </span>
-                        <span className="text-foreground text-sm leading-relaxed block">
-                          {hotspot.subdistrict_name || "N/A"},{" "}
-                          {hotspot.district_name || "N/A"}
+                        <span className="text-foreground text-right leading-relaxed">
+                          {hotspot.subdistrict_name || "N/A"}, {hotspot.district_name || "N/A"}
+                          <br />
+                          {hotspot.city_name || "N/A"}, {hotspot.province_name || "N/A"}
                         </span>
-                        <span className="text-foreground text-sm leading-relaxed block">
-                          {hotspot.city_name || "N/A"},{" "}
-                          {hotspot.province_name || "N/A"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center mb-3">
-                        <span className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
+
+                        <span className="font-medium text-muted-foreground uppercase tracking-wide">
                           Confidence
                         </span>
-                        <Badge
-                          variant={
-                            hotspot.confidence_class === "HIGH"
-                              ? "destructive"
-                              : "secondary"
-                          }
-                        >
-                          {hotspot.confidence_class || "NOMINAL"}
-                        </Badge>
+                        <span className="text-foreground font-medium text-right">
+                          {hotspot.confidence_class === "HIGH" ? (
+                            <Badge variant="destructive">HIGH</Badge>
+                          ) : (
+                            hotspot.confidence_class || "NOMINAL"
+                          )}
+                        </span>
                       </div>
                       {hotspot.weather_conditions && (
-                        <div className="mt-4 pt-4 border-t border-border">
-                          <div className="flex justify-between items-center mb-2">
-                            <span className="font-medium text-muted-foreground text-sm uppercase tracking-wide">
+                        <div className="mt-3">
+                          <div className="grid grid-cols-[100px_1fr] gap-x-4 gap-y-2 text-sm">
+                            <span className="font-medium text-muted-foreground uppercase tracking-wide">
                               Cuaca
                             </span>
-                            <span className="text-foreground text-sm">
+                            <span className="text-foreground font-medium text-right">
                               {translateWeatherCondition(hotspot.weather_conditions)}
                             </span>
-                          </div>
-                          <div className="grid grid-cols-2 gap-2 text-xs">
-                            <div>
-                              <span className="text-muted-foreground">Suhu:</span>
-                              <span className="text-foreground ml-1">{hotspot.temperature}°C</span>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">Kelembaban:</span>
-                              <span className="text-foreground ml-1">{hotspot.humidity}%</span>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">Angin:</span>
-                              <span className="text-foreground ml-1">{hotspot.wind_speed} km/h</span>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground">Hujan:</span>
-                              <span className="text-foreground ml-1">{hotspot.precipitation} mm</span>
-                            </div>
+
+                            <span className="text-muted-foreground">Suhu</span>
+                            <span className="text-foreground text-right">{hotspot.temperature}°C</span>
+
+                            <span className="text-muted-foreground">Kelembaban</span>
+                            <span className="text-foreground text-right">{hotspot.humidity}%</span>
+
+                            <span className="text-muted-foreground">Angin</span>
+                            <span className="text-foreground text-right">{hotspot.wind_speed} km/h</span>
+
+                            <span className="text-muted-foreground">Hujan</span>
+                            <span className="text-foreground text-right">{hotspot.precipitation} mm</span>
                           </div>
                         </div>
                       )}

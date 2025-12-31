@@ -51,7 +51,7 @@ export default function MapZoomControls({
         zIndex: 1000,
       }}
     >
-      <div className="leaflet-control leaflet-bar bg-card shadow-lg rounded overflow-hidden">
+      <div className="leaflet-control leaflet-bar bg-background border border-border rounded overflow-hidden">
         <button
           onClick={handleZoomIn}
           className="w-8 h-8 flex items-center justify-center border-b border-border hover:bg-accent transition-colors text-foreground"
