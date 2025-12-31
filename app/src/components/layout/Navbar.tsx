@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
 const Navbar = () => {
@@ -45,29 +44,21 @@ const Navbar = () => {
     setIsOpen(false);
   };
 
-  const linkClass = (path: string, currentPath: string) =>
-    cn(
-      "px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200",
-      currentPath === path
-        ? "text-blue-700 dark:text-blue-300 font-semibold"
-        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800",
-    );
-
   if (!mounted) {
     return (
-      <nav className="bg-white/80 backdrop-blur-xl border-b border-gray-200/60 dark:bg-gray-900/90 dark:border-gray-700/60 fixed w-full top-0 z-[99999] shadow-sm">
+      <nav className="bg-background/80 backdrop-blur-xl border-b border-border/60 fixed w-full top-0 z-[99999] shadow-sm">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3 min-w-0">
-              <div className="w-8 h-8 bg-gray-200 rounded-lg animate-pulse"></div>
+              <div className="w-8 h-8 bg-muted rounded-lg animate-pulse"></div>
               <div>
-                <div className="h-4 w-32 bg-gray-200 rounded animate-pulse mb-1"></div>
-                <div className="h-3 w-24 bg-gray-100 rounded animate-pulse"></div>
+                <div className="h-4 w-32 bg-muted rounded animate-pulse mb-1"></div>
+                <div className="h-3 w-24 bg-muted/50 rounded animate-pulse"></div>
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gray-200 rounded-xl animate-pulse"></div>
-              <div className="w-10 h-10 bg-gray-200 rounded-xl animate-pulse md:hidden"></div>
+              <div className="w-8 h-8 bg-muted rounded-xl animate-pulse"></div>
+              <div className="w-10 h-10 bg-muted rounded-xl animate-pulse md:hidden"></div>
             </div>
           </div>
         </div>
@@ -76,7 +67,7 @@ const Navbar = () => {
   }
 
   return (
-    <nav className="bg-white/80 backdrop-blur-xl border-b border-gray-200/60 dark:bg-gray-900/90 dark:border-gray-700/60 fixed w-full top-0 z-[99999] shadow-sm">
+    <nav className="bg-background/80 backdrop-blur-xl border-b border-border/60 fixed w-full top-0 z-[99999] shadow-sm">
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex justify-between items-center h-16">
           <a href="/" className="flex items-center space-x-3 min-w-0 group" title="OLAP Hotspot - Beranda">
@@ -90,10 +81,10 @@ const Navbar = () => {
               />
             </div>
             <div>
-              <h1 className="text-base font-bold text-gray-900 dark:text-white truncate">
+              <h1 className="text-base font-bold text-foreground truncate">
                 Hotspot Karhutla
               </h1>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-xs text-muted-foreground">
                 Monitoring System
               </p>
             </div>
@@ -104,8 +95,8 @@ const Navbar = () => {
               href="/"
               className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                 pathname === "/" || pathname === ""
-                  ? "text-gray-900 dark:text-gray-100 font-semibold"
-                  : "text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+                  ? "text-primary font-semibold"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary"
               }`}
               title="Halaman Beranda"
             >
@@ -116,8 +107,8 @@ const Navbar = () => {
               href="/map"
               className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                 pathname === "/map" || pathname === "/map/"
-                  ? "text-gray-900 dark:text-gray-100 font-semibold"
-                  : "text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+                  ? "text-primary font-semibold"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary"
               }`}
               title="Lihat Peta Hotspot"
             >
@@ -127,8 +118,8 @@ const Navbar = () => {
               href="/data"
               className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                 pathname === "/data"
-                  ? "text-gray-900 dark:text-gray-100 font-semibold"
-                  : "text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+                  ? "text-primary font-semibold"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary"
               }`}
               title="Lihat Data Tabel Hotspot"
             >
@@ -138,8 +129,8 @@ const Navbar = () => {
               href="/about"
               className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                 pathname === "/about"
-                  ? "text-gray-900 dark:text-gray-100 font-semibold"
-                  : "text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+                  ? "text-primary font-semibold"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary"
               }`}
               title="Tentang Sistem"
             >
@@ -153,7 +144,7 @@ const Navbar = () => {
               variant="ghost"
               size="icon"
               onClick={toggleMenu}
-              className="md:hidden rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200"
+              className="md:hidden rounded-xl hover:bg-secondary transition-colors duration-200"
               aria-label="Toggle menu"
               aria-expanded={isOpen}
             >
@@ -169,14 +160,14 @@ const Navbar = () => {
 
       {isOpen && (
         <div
-          className="md:hidden fixed inset-0 bg-black/20 dark:bg-black/40 backdrop-blur-sm z-[1099]"
+          className="md:hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-[1099]"
           onClick={closeMenu}
         />
       )}
 
       {isOpen && (
         <div
-          className="md:hidden absolute top-16 left-0 right-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200/60 dark:border-gray-700/60 z-[100000] rounded-b-3xl"
+          className="md:hidden absolute top-16 left-0 right-0 bg-background/95 backdrop-blur-xl border-b border-border/60 z-[100000] rounded-b-3xl"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="px-6 py-6 space-y-2">
@@ -185,14 +176,14 @@ const Navbar = () => {
               onClick={closeMenu}
               className={`block w-full px-4 py-4 rounded-xl text-sm font-medium transition-all duration-200 ${
                 pathname === "/"
-                  ? "text-gray-900 dark:text-gray-100 font-semibold"
-                  : "text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+                  ? "text-primary font-semibold"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
               title="Halaman Beranda"
             >
               <div className="flex items-center space-x-2">
                 <svg
-                  className="w-4 h-4 dark:stroke-gray-300"
+                  className="w-4 h-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -212,14 +203,14 @@ const Navbar = () => {
               onClick={closeMenu}
               className={`block w-full px-4 py-4 rounded-xl text-sm font-medium transition-all duration-200 ${
                 pathname === "/map"
-                  ? "text-gray-900 dark:text-gray-100 font-semibold"
-                  : "text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+                  ? "text-primary font-semibold"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
               title="Lihat Peta Hotspot"
             >
               <div className="flex items-center space-x-2">
                 <svg
-                  className="w-4 h-4 dark:stroke-gray-300"
+                  className="w-4 h-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -239,14 +230,14 @@ const Navbar = () => {
               onClick={closeMenu}
               className={`block w-full px-4 py-4 rounded-xl text-sm font-medium transition-all duration-200 ${
                 pathname === "/data"
-                  ? "text-gray-900 dark:text-gray-100 font-semibold"
-                  : "text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+                  ? "text-primary font-semibold"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
               title="Lihat Data Tabel Hotspot"
             >
               <div className="flex items-center space-x-2">
                 <svg
-                  className="w-4 h-4 dark:stroke-gray-300"
+                  className="w-4 h-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -266,14 +257,14 @@ const Navbar = () => {
               onClick={closeMenu}
               className={`block w-full px-4 py-4 rounded-xl text-sm font-medium transition-all duration-200 ${
                 pathname === "/about"
-                  ? "text-gray-900 dark:text-gray-100 font-semibold"
-                  : "text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+                  ? "text-primary font-semibold"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
               title="Tentang Sistem"
             >
               <div className="flex items-center space-x-2">
                 <svg
-                  className="w-4 h-4 dark:stroke-gray-300"
+                  className="w-4 h-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
