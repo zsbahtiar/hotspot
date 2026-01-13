@@ -928,19 +928,19 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
       {loading ? (
         <div
-          className="flex flex-col items-center justify-center h-full w-full bg-gray-100 dark:bg-gray-800 rounded-lg"
+          className="flex flex-col items-center justify-center h-full w-full bg-muted rounded-lg"
           style={{ minHeight: "600px" }}
         >
           <RefreshCw
             width="48"
             height="48"
-            className="text-gray-600 dark:text-gray-400 mb-4"
+            className="text-muted-foreground mb-4"
             style={{ animation: "spin 1s linear infinite" }}
           />
-          <p className="text-gray-700 dark:text-gray-300 text-center">
+          <p className="text-foreground text-center">
             Memuat peta Indonesia...
             <br />
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-muted-foreground">
               {loadingLevel
                 ? `Mengunduh batas ${
                     loadingLevel === "province"
@@ -1004,8 +1004,8 @@ const MapComponent: React.FC<MapComponentProps> = ({
           getFilteredGeoFeatures.length === 0 &&
           !isHotspotLoading &&
           geoData[drillDownLevel] ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800 bg-opacity-80 dark:bg-opacity-80 z-10">
-              <p className="text-gray-700 dark:text-gray-300 text-lg font-semibold">
+            <div className="absolute inset-0 flex items-center justify-center bg-muted bg-opacity-80 dark:bg-opacity-80 z-10">
+              <p className="text-foreground text-lg font-semibold">
                 Tidak ada data
               </p>
             </div>
@@ -1070,8 +1070,8 @@ const MapComponent: React.FC<MapComponentProps> = ({
           )}
 
           {showLokasiHotspot && filteredHotspots.length === 0 ? (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800 bg-opacity-80 dark:bg-opacity-80 z-10">
-              <p className="text-gray-700 dark:text-gray-300 text-lg font-semibold">
+            <div className="absolute inset-0 flex items-center justify-center bg-muted bg-opacity-80 dark:bg-opacity-80 z-10">
+              <p className="text-foreground text-lg font-semibold">
                 Tidak ada data
               </p>
             </div>
@@ -1137,13 +1137,13 @@ const MapComponent: React.FC<MapComponentProps> = ({
                           style={{ maxWidth: 320, minWidth: 280 }}
                         >
                           <div className="p-2">
-                            <div className="flex items-center gap-2 mb-3 pb-2 border-b dark:border-gray-600">
-                              <div className="w-3 h-3 bg-black dark:bg-white rounded-full"></div>
-                              <h4 className="font-semibold text-sm text-gray-800 dark:text-gray-200">
+                            <div className="flex items-center gap-2 mb-3 pb-2 border-b border-border">
+                              <div className="w-3 h-3 bg-foreground rounded-full"></div>
+                              <h4 className="font-semibold text-sm text-foreground">
                                 Detail Hotspot
                               </h4>
                               <div className="ml-auto">
-                                <span className="text-xs text-gray-500 dark:text-gray-400 mr-1">
+                                <span className="text-xs text-muted-foreground mr-1">
                                   Confidence:
                                 </span>
                                 <span
@@ -1163,18 +1163,18 @@ const MapComponent: React.FC<MapComponentProps> = ({
                             <div className="space-y-2 text-sm">
                               <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                  <span className="text-gray-500 dark:text-gray-400 block">
+                                  <span className="text-muted-foreground block">
                                     Satelit
                                   </span>
-                                  <span className="font-medium dark:text-gray-200">
+                                  <span className="font-medium text-foreground">
                                     {feature.properties?.satellite || "-"}
                                   </span>
                                 </div>
                                 <div>
-                                  <span className="text-gray-600 dark:text-gray-400 block">
+                                  <span className="text-muted-foreground block">
                                     Tanggal
                                   </span>
-                                  <span className="font-medium dark:text-gray-200">
+                                  <span className="font-medium text-foreground">
                                     {utcTime
                                       ? new Date(utcTime).toLocaleDateString(
                                           "id-ID",
@@ -1192,22 +1192,22 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
                               <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                  <span className="text-gray-500 dark:text-gray-400 block">
+                                  <span className="text-muted-foreground block">
                                     Waktu
                                   </span>
-                                  <span className="font-medium dark:text-gray-200">
+                                  <span className="font-medium text-foreground">
                                     {time}
                                   </span>
                                 </div>
                                 <div>
-                                  <span className="text-gray-500 dark:text-gray-400 block">
+                                  <span className="text-muted-foreground block">
                                     Koordinat
                                   </span>
                                   <a
                                     href={`https://www.google.com/maps?q=${latitude},${longitude}`}
                                     target="_blank"
                                     rel="nofollow noopener noreferrer"
-                                    className="font-medium text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                                    className="font-medium text-primary hover:text-primary/80 hover:underline cursor-pointer"
                                     title="Lihat lokasi di Google Maps"
                                   >
                                     {latitude.toFixed(4)},{" "}
@@ -1217,53 +1217,53 @@ const MapComponent: React.FC<MapComponentProps> = ({
                               </div>
                             </div>
 
-                            <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
-                              <h4 className="font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center">
-                                <Loader2 className="text-black dark:text-white mr-2" />
+                            <div className="mt-3 pt-3 border-t border-border">
+                              <h4 className="font-bold text-foreground mb-2 flex items-center">
+                                <Loader2 className="text-foreground mr-2" />
                                 Lokasi
                               </h4>
                               <ul className="space-y-1.5 text-sm">
                                 <li className="flex justify-between">
-                                  <span className="text-gray-500 dark:text-gray-400">
+                                  <span className="text-muted-foreground">
                                     Desa/Kel:
                                   </span>
-                                  <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
+                                  <strong className="text-foreground text-right font-medium">
                                     {feature.properties?.location?.desa ||
                                       "N/A"}
                                   </strong>
                                 </li>
                                 <li className="flex justify-between">
-                                  <span className="text-gray-500 dark:text-gray-400">
+                                  <span className="text-muted-foreground">
                                     Kecamatan:
                                   </span>
-                                  <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
+                                  <strong className="text-foreground text-right font-medium">
                                     {feature.properties?.location?.kecamatan ||
                                       "N/A"}
                                   </strong>
                                 </li>
                                 <li className="flex justify-between">
-                                  <span className="text-gray-500 dark:text-gray-400">
+                                  <span className="text-muted-foreground">
                                     Kab/Kota:
                                   </span>
-                                  <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
+                                  <strong className="text-foreground text-right font-medium">
                                     {feature.properties?.location?.kab_kota ||
                                       "N/A"}
                                   </strong>
                                 </li>
                                 <li className="flex justify-between">
-                                  <span className="text-gray-500 dark:text-gray-400">
+                                  <span className="text-muted-foreground">
                                     Provinsi:
                                   </span>
-                                  <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
+                                  <strong className="text-foreground text-right font-medium">
                                     {feature.properties?.location?.provinsi ||
                                       "N/A"}
                                   </strong>
                                 </li>
                                 <li className="flex justify-between">
-                                  <span className="text-gray-500 dark:text-gray-400">
+                                  <span className="text-muted-foreground">
                                     Pulau:
                                   </span>
-                                  <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
+                                  <strong className="text-foreground text-right font-medium">
                                     {feature.properties?.location?.pulau ||
                                       "N/A"}
                                   </strong>
@@ -1272,8 +1272,8 @@ const MapComponent: React.FC<MapComponentProps> = ({
                             </div>
 
                             {(feature.properties?.frp !== undefined || feature.properties?.brightness !== undefined) && (
-                              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
-                                <h4 className="font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+                              <div className="mt-3 pt-3 border-t border-border">
+                                <h4 className="font-bold text-foreground mb-2 flex items-center">
                                   <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                                   </svg>
@@ -1282,40 +1282,40 @@ const MapComponent: React.FC<MapComponentProps> = ({
                                 <ul className="space-y-1.5 text-sm">
                                   {feature.properties?.frp !== undefined && feature.properties.frp > 0 && (
                                     <li className="flex justify-between">
-                                      <span className="text-gray-500 dark:text-gray-400">FRP:</span>
-                                      <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
+                                      <span className="text-muted-foreground">FRP:</span>
+                                      <strong className="text-foreground text-right font-medium">
                                         {feature.properties.frp.toFixed(2)} MW
                                       </strong>
                                     </li>
                                   )}
                                   {feature.properties?.brightness !== undefined && feature.properties.brightness > 0 && (
                                     <li className="flex justify-between">
-                                      <span className="text-gray-500 dark:text-gray-400">Brightness:</span>
-                                      <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
+                                      <span className="text-muted-foreground">Brightness:</span>
+                                      <strong className="text-foreground text-right font-medium">
                                         {feature.properties.brightness.toFixed(2)} K
                                       </strong>
                                     </li>
                                   )}
                                   {feature.properties?.bright_t31 !== undefined && feature.properties.bright_t31 > 0 && (
                                     <li className="flex justify-between">
-                                      <span className="text-gray-500 dark:text-gray-400">Bright T31:</span>
-                                      <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
+                                      <span className="text-muted-foreground">Bright T31:</span>
+                                      <strong className="text-foreground text-right font-medium">
                                         {feature.properties.bright_t31.toFixed(2)} K
                                       </strong>
                                     </li>
                                   )}
                                   {feature.properties?.bright_ti4 !== undefined && feature.properties.bright_ti4 > 0 && (
                                     <li className="flex justify-between">
-                                      <span className="text-gray-500 dark:text-gray-400">Bright TI4:</span>
-                                      <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
+                                      <span className="text-muted-foreground">Bright TI4:</span>
+                                      <strong className="text-foreground text-right font-medium">
                                         {feature.properties.bright_ti4.toFixed(2)} K
                                       </strong>
                                     </li>
                                   )}
                                   {feature.properties?.bright_ti5 !== undefined && feature.properties.bright_ti5 > 0 && (
                                     <li className="flex justify-between">
-                                      <span className="text-gray-500 dark:text-gray-400">Bright TI5:</span>
-                                      <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
+                                      <span className="text-muted-foreground">Bright TI5:</span>
+                                      <strong className="text-foreground text-right font-medium">
                                         {feature.properties.bright_ti5.toFixed(2)} K
                                       </strong>
                                     </li>
@@ -1325,8 +1325,8 @@ const MapComponent: React.FC<MapComponentProps> = ({
                             )}
 
                             {(feature.properties?.temperature !== undefined || feature.properties?.weather_conditions) && (
-                              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
-                                <h4 className="font-bold text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+                              <div className="mt-3 pt-3 border-t border-border">
+                                <h4 className="font-bold text-foreground mb-2 flex items-center">
                                   <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
                                   </svg>
@@ -1335,32 +1335,32 @@ const MapComponent: React.FC<MapComponentProps> = ({
                                 <ul className="space-y-1.5 text-sm">
                                   {feature.properties?.weather_conditions && (
                                     <li className="flex justify-between">
-                                      <span className="text-gray-500 dark:text-gray-400">Kondisi:</span>
-                                      <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
+                                      <span className="text-muted-foreground">Kondisi:</span>
+                                      <strong className="text-foreground text-right font-medium">
                                         {translateWeatherCondition(feature.properties.weather_conditions)}
                                       </strong>
                                     </li>
                                   )}
                                   {feature.properties?.temperature !== undefined && (
                                     <li className="flex justify-between">
-                                      <span className="text-gray-500 dark:text-gray-400">Suhu:</span>
-                                      <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
+                                      <span className="text-muted-foreground">Suhu:</span>
+                                      <strong className="text-foreground text-right font-medium">
                                         {feature.properties.temperature}°C
                                       </strong>
                                     </li>
                                   )}
                                   {feature.properties?.humidity !== undefined && (
                                     <li className="flex justify-between">
-                                      <span className="text-gray-500 dark:text-gray-400">Kelembaban:</span>
-                                      <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
+                                      <span className="text-muted-foreground">Kelembaban:</span>
+                                      <strong className="text-foreground text-right font-medium">
                                         {feature.properties.humidity.toFixed(1)}%
                                       </strong>
                                     </li>
                                   )}
                                   {feature.properties?.wind_speed !== undefined && (
                                     <li className="flex justify-between">
-                                      <span className="text-gray-500 dark:text-gray-400">Angin:</span>
-                                      <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
+                                      <span className="text-muted-foreground">Angin:</span>
+                                      <strong className="text-foreground text-right font-medium">
                                         {feature.properties.wind_speed} km/h
                                         {feature.properties?.wind_degree !== undefined && ` (${feature.properties.wind_degree}°)`}
                                       </strong>
@@ -1368,32 +1368,32 @@ const MapComponent: React.FC<MapComponentProps> = ({
                                   )}
                                   {feature.properties?.cloud_coverage !== undefined && (
                                     <li className="flex justify-between">
-                                      <span className="text-gray-500 dark:text-gray-400">Awan:</span>
-                                      <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
+                                      <span className="text-muted-foreground">Awan:</span>
+                                      <strong className="text-foreground text-right font-medium">
                                         {feature.properties.cloud_coverage}%
                                       </strong>
                                     </li>
                                   )}
                                   {feature.properties?.pressure !== undefined && feature.properties.pressure > 0 && (
                                     <li className="flex justify-between">
-                                      <span className="text-gray-500 dark:text-gray-400">Tekanan:</span>
-                                      <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
+                                      <span className="text-muted-foreground">Tekanan:</span>
+                                      <strong className="text-foreground text-right font-medium">
                                         {feature.properties.pressure} hPa
                                       </strong>
                                     </li>
                                   )}
                                   {feature.properties?.uv_index !== undefined && feature.properties.uv_index > 0 && (
                                     <li className="flex justify-between">
-                                      <span className="text-gray-500 dark:text-gray-400">UV Index:</span>
-                                      <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
+                                      <span className="text-muted-foreground">UV Index:</span>
+                                      <strong className="text-foreground text-right font-medium">
                                         {feature.properties.uv_index}
                                       </strong>
                                     </li>
                                   )}
                                   {feature.properties?.precipitation !== undefined && feature.properties.precipitation > 0 && (
                                     <li className="flex justify-between">
-                                      <span className="text-gray-500 dark:text-gray-400">Curah Hujan:</span>
-                                      <strong className="text-gray-800 dark:text-gray-200 text-right font-medium">
+                                      <span className="text-muted-foreground">Curah Hujan:</span>
+                                      <strong className="text-foreground text-right font-medium">
                                         {feature.properties.precipitation} mm
                                       </strong>
                                     </li>
@@ -1423,13 +1423,13 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
       {isHotspotLoading && !loading && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/30 z-[1000] rounded-lg">
-          <div className="bg-white dark:bg-gray-800 rounded-lg px-6 py-4 flex items-center gap-3 shadow-lg">
+          <div className="bg-card rounded-lg px-6 py-4 flex items-center gap-3 shadow-lg">
             <RefreshCw
               width="24"
               height="24"
               className="text-primary animate-spin"
             />
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <span className="text-sm font-medium text-foreground">
               Memuat data...
             </span>
           </div>

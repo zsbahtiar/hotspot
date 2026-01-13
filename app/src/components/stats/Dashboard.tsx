@@ -12,8 +12,6 @@ import {
   ChartSkeleton,
   CardSkeleton,
 } from "@/components/common/LoadingSkeletons";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 const StatsSection = lazy(() => import("@/components/stats/StatsSection"));
@@ -226,12 +224,12 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
   const latestHotspots = latestHotspotsRes?.data?.hotspots || [];
 
   return (
-    <div className="bg-gray-50 dark:bg-gray-900">
+    <div className="bg-background">
       <Tooltip
         id="confidence-tooltip"
         style={{
-          backgroundColor: "#2d3748",
-          color: "#fff",
+          backgroundColor: "hsl(var(--foreground))",
+          color: "hsl(var(--background))",
           maxWidth: "250px",
           fontSize: "12px",
           zIndex: 9999,
@@ -286,7 +284,7 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
               </a>
               <a
                 href="/data"
-                className="inline-flex items-center justify-center px-8 py-4 border-2 border-white/60 text-white font-semibold rounded-lg hover:bg-white hover:text-gray-900 transition-all duration-200"
+                className="inline-flex items-center justify-center px-8 py-4 border-2 border-white/60 text-white font-semibold rounded-lg hover:bg-white hover:text-foreground transition-all duration-200"
                 title="Lihat Data Tabel Hotspot Karhutla"
               >
                 <svg
@@ -309,20 +307,20 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
         </section>
       )}
 
-            <section className="py-24 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-900">
+      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-background">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl sm:text-5xl font-bold mb-6 dark:text-white text-gray-900 tracking-tight">
+            <h2 className="text-4xl sm:text-5xl font-bold mb-6 text-foreground tracking-tight">
               Data Hotspot Terkini
             </h2>
-            <p className="text-xl dark:text-gray-300 text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
               Monitoring hotspot kebakaran hutan dan lahan Indonesia bersumber
               dari&nbsp;
               <a
                 href="https://firms.modaps.eosdis.nasa.gov/"
                 target="_blank"
                 rel="nofollow noopener noreferrer"
-                className="dark:text-blue-400 text-blue-600 hover:text-blue-700 dark:hover:text-blue-300 font-medium underline decoration-2 underline-offset-2"
+                className="text-primary hover:underline font-medium"
                 title="NASA Fire Information for Resource Management System"
               >
                 NASA FIRMS
@@ -332,7 +330,7 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
                 href="https://www.visualcrossing.com/"
                 target="_blank"
                 rel="nofollow noopener noreferrer"
-                className="dark:text-blue-400 text-blue-600 hover:text-blue-700 dark:hover:text-blue-300 font-medium underline decoration-2 underline-offset-2"
+                className="text-primary hover:underline font-medium"
                 title="Visual Crossing Weather Data & API"
               >
                 Visual Crossing
@@ -340,622 +338,382 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <Card className="dark:border-gray-700 dark:bg-gray-800 border border-gray-200 bg-white hover:shadow-lg transition-all duration-300 rounded-xl">
-              <CardHeader className="dark:border-gray-700 px-6 py-4 border-b border-gray-100">
-                <CardTitle className="dark:text-white text-gray-900 text-lg font-semibold">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-0 lg:divide-x divide-border">
+            {/* Data Terbaru */}
+            <div className="lg:pr-8">
+              <div className="mb-6">
+                <h3 className="text-foreground text-xl font-semibold">
                   Data Terbaru
-                </CardTitle>
-                <p className="dark:text-gray-400 text-sm text-gray-500">
+                </h3>
+                <p className="text-sm text-muted-foreground">
                   Update terkini
                 </p>
-              </CardHeader>
+              </div>
 
-              <CardContent className="p-6">
-                {isLoading ? (
-                  <div className="flex flex-col items-center justify-center py-16">
-                    <div className="w-8 h-8 dark:border-gray-500 dark:border-t-gray-400 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin mb-4"></div>
-                    <p className="dark:text-gray-300 text-gray-600 text-lg font-medium">
-                      Memuat data...
-                    </p>
-                  </div>
-                ) : latestHotspots.length > 0 ? (
-                  <div className="space-y-6">
-                    {latestHotspots.map((hotspot, index) => (
-                      <div
-                        key={index}
-                        className={`dark:bg-gray-700 dark:border-gray-600 p-5 rounded-2xl bg-gray-50 border border-gray-100 hover:dark:bg-gray-600 hover:bg-gray-100 transition-all duration-200 ${
-                          index < latestHotspots.length - 1 ? "" : ""
-                        }`}
-                      >
-                        <div className="flex justify-between items-center mb-3">
-                          <span className="dark:text-gray-300 font-medium text-gray-700 text-sm uppercase tracking-wide">
-                            Tanggal
-                          </span>
-                          <span className="dark:text-white text-gray-900 font-medium">
-                            {formatDate(hotspot.acquired_at)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center mb-3">
-                          <span className="dark:text-gray-300 font-medium text-gray-700 text-sm uppercase tracking-wide">
-                            Waktu
-                          </span>
-                          <span className="dark:text-white text-gray-900 font-medium">
-                            {extractTime(hotspot.acquired_at)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center mb-3">
-                          <span className="dark:text-gray-300 font-medium text-gray-700 text-sm uppercase tracking-wide">
-                            Sumber
-                          </span>
-                          <span className="dark:text-white text-gray-900 font-medium">
-                            {hotspot.satellite_name || "N/A"}
-                          </span>
-                        </div>
-                        <div className="mb-4">
-                          <span className="dark:text-gray-300 font-medium text-gray-700 text-sm uppercase tracking-wide block mb-2">
-                            Lokasi
-                          </span>
-                          <span className="dark:text-white text-gray-900 text-sm leading-relaxed block">
-                            {hotspot.subdistrict_name || "N/A"},{" "}
-                            {hotspot.district_name || "N/A"}
-                          </span>
-                          <span className="dark:text-white text-gray-900 text-sm leading-relaxed block">
-                            {hotspot.city_name || "N/A"},{" "}
-                            {hotspot.province_name || "N/A"}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center mb-3">
-                          <span className="dark:text-gray-300 font-medium text-gray-700 text-sm uppercase tracking-wide">
-                            Confidence
-                          </span>
-                          <Badge
-                            variant={
-                              hotspot.confidence_class === "HIGH"
-                                ? "destructive"
-                                : "secondary"
-                            }
-                          >
-                            {hotspot.confidence_class || "NOMINAL"}
-                          </Badge>
-                        </div>
-                        {hotspot.weather_conditions && (
-                          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-                            <div className="flex justify-between items-center mb-2">
-                              <span className="dark:text-gray-300 font-medium text-gray-700 text-sm uppercase tracking-wide">
-                                Cuaca
-                              </span>
-                              <span className="dark:text-white text-gray-900 text-sm">
-                                {translateWeatherCondition(hotspot.weather_conditions)}
-                              </span>
-                            </div>
-                            <div className="grid grid-cols-2 gap-2 text-xs">
-                              <div>
-                                <span className="dark:text-gray-400 text-gray-600">
-                                  Suhu:
-                                </span>
-                                <span className="dark:text-white text-gray-900 ml-1">
-                                  {hotspot.temperature}°C
-                                </span>
-                              </div>
-                              <div>
-                                <span className="dark:text-gray-400 text-gray-600">
-                                  Kelembaban:
-                                </span>
-                                <span className="dark:text-white text-gray-900 ml-1">
-                                  {hotspot.humidity}%
-                                </span>
-                              </div>
-                              <div>
-                                <span className="dark:text-gray-400 text-gray-600">
-                                  Angin:
-                                </span>
-                                <span className="dark:text-white text-gray-900 ml-1">
-                                  {hotspot.wind_speed} km/h
-                                </span>
-                              </div>
-                              <div>
-                                <span className="dark:text-gray-400 text-gray-600">
-                                  Hujan:
-                                </span>
-                                <span className="dark:text-white text-gray-900 ml-1">
-                                  {hotspot.precipitation} mm
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        )}
+              {isLoading ? (
+                <div className="flex flex-col items-center justify-center py-16">
+                  <div className="w-8 h-8 border-2 border-muted border-t-primary rounded-full animate-spin mb-4"></div>
+                  <p className="text-muted-foreground text-lg font-medium">
+                    Memuat data...
+                  </p>
+                </div>
+              ) : latestHotspots.length > 0 ? (
+                <div className="space-y-4">
+                  {latestHotspots.map((hotspot, index) => (
+                    <div
+                      key={index}
+                      className={`py-5 ${
+                        index < latestHotspots.length - 1 ? "border-b border-border" : ""
+                      }`}
+                    >
+                      <div className="grid grid-cols-[100px_1fr] gap-x-4 gap-y-3 text-sm">
+                        <span className="font-medium text-muted-foreground uppercase tracking-wide">
+                          Tanggal
+                        </span>
+                        <span className="text-foreground font-medium text-right">
+                          {formatDate(hotspot.acquired_at)}
+                        </span>
+
+                        <span className="font-medium text-muted-foreground uppercase tracking-wide">
+                          Waktu
+                        </span>
+                        <span className="text-foreground font-medium text-right">
+                          {extractTime(hotspot.acquired_at)}
+                        </span>
+
+                        <span className="font-medium text-muted-foreground uppercase tracking-wide">
+                          Sumber
+                        </span>
+                        <span className="text-foreground font-medium text-right">
+                          {hotspot.satellite_name || "N/A"}
+                        </span>
+
+                        <span className="font-medium text-muted-foreground uppercase tracking-wide">
+                          Lokasi
+                        </span>
+                        <span className="text-foreground text-right leading-relaxed">
+                          {hotspot.subdistrict_name || "N/A"}, {hotspot.district_name || "N/A"}
+                          <br />
+                          {hotspot.city_name || "N/A"}, {hotspot.province_name || "N/A"}
+                        </span>
+
+                        <span className="font-medium text-muted-foreground uppercase tracking-wide">
+                          Confidence
+                        </span>
+                        <span className="text-foreground font-medium text-right">
+                          {hotspot.confidence_class === "HIGH" ? (
+                            <Badge variant="destructive">HIGH</Badge>
+                          ) : (
+                            hotspot.confidence_class || "NOMINAL"
+                          )}
+                        </span>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-16">
-                    <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                      <svg
-                        className="w-8 h-8 text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-                        />
-                      </svg>
-                    </div>
-                    <p className="text-gray-500 font-medium">
-                      Tidak ada data hotspot
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                      {hotspot.weather_conditions && (
+                        <div className="mt-3">
+                          <div className="grid grid-cols-[100px_1fr] gap-x-4 gap-y-2 text-sm">
+                            <span className="font-medium text-muted-foreground uppercase tracking-wide">
+                              Cuaca
+                            </span>
+                            <span className="text-foreground font-medium text-right">
+                              {translateWeatherCondition(hotspot.weather_conditions)}
+                            </span>
 
-                        <Card className="dark:border-gray-700 dark:bg-gray-800 border border-gray-200 bg-white hover:shadow-lg transition-all duration-300 rounded-xl">
-              <CardHeader className="dark:border-gray-700 px-6 py-4 border-b border-gray-100">
-                <CardTitle className="dark:text-white text-gray-900 text-lg font-semibold">
+                            <span className="text-muted-foreground">Suhu</span>
+                            <span className="text-foreground text-right">{hotspot.temperature}°C</span>
+
+                            <span className="text-muted-foreground">Kelembaban</span>
+                            <span className="text-foreground text-right">{hotspot.humidity}%</span>
+
+                            <span className="text-muted-foreground">Angin</span>
+                            <span className="text-foreground text-right">{hotspot.wind_speed} km/h</span>
+
+                            <span className="text-muted-foreground">Hujan</span>
+                            <span className="text-foreground text-right">{hotspot.precipitation} mm</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-16">
+                  <div className="w-16 h-16 bg-secondary rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <svg
+                      className="w-8 h-8 text-muted-foreground"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                      />
+                    </svg>
+                  </div>
+                  <p className="text-muted-foreground font-medium">
+                    Tidak ada data hotspot
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Statistik Hotspot */}
+            <div className="lg:pl-8 pt-8 lg:pt-0 border-t lg:border-t-0 border-border">
+              <div className="mb-6">
+                <h3 className="text-foreground text-xl font-semibold">
                   Statistik Hotspot
-                </CardTitle>
-                <p className="dark:text-gray-400 text-sm text-gray-500">
+                </h3>
+                <p className="text-sm text-muted-foreground">
                   Analitik data hotspot Tahun <span suppressHydrationWarning>{year}</span>
                 </p>
-              </CardHeader>
+              </div>
 
-              <CardContent className="p-6">
-                                <div className="dark:bg-gray-700 dark:border-gray-600 bg-gray-50 rounded-xl h-64 flex items-center justify-center mb-6 border border-gray-200">
-                  <Suspense fallback={<ChartSkeleton />}>
-                    <ChartComponent
-                      chartData={chartData}
-                      isLoading={isLoading}
-                    />
-                  </Suspense>
-                </div>
+              {/* Chart */}
+              <div className="bg-secondary rounded-xl h-64 flex items-center justify-center mb-6">
+                <Suspense fallback={<ChartSkeleton />}>
+                  <ChartComponent
+                    chartData={chartData}
+                    isLoading={isLoading}
+                  />
+                </Suspense>
+              </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                  <div className="dark:bg-gray-700 dark:border-gray-600 bg-gray-50 rounded-lg p-4 border border-gray-200">
-                    <h5 className="dark:text-white text-sm font-medium text-gray-700 mb-2">
-                      Top Provinsi
-                    </h5>
-                    <div className="space-y-1">
-                      {(() => {
-                        if (summaryData?.top_provinces?.length > 0) {
-                          return summaryData.top_provinces.map((province) => (
-                            <div
-                              key={province.name}
-                              className="flex justify-between text-xs"
-                            >
-                              <span className="dark:text-gray-300 text-gray-600">
-                                {province.name}
-                              </span>
-                              <span className="dark:text-white font-medium text-gray-900">
-                                {province.count}
-                              </span>
-                            </div>
-                          ));
-                        }
-                      })()}
-                    </div>
-                  </div>
-                  <div className="dark:bg-gray-700 dark:border-gray-600 bg-gray-50 rounded-lg p-4 border border-gray-200">
-                    <h5 className="dark:text-white text-sm font-medium text-gray-700 mb-2">
-                      Top Kabupaten
-                    </h5>
-                    <div className="space-y-1">
-                      {(() => {
-                        if (summaryData?.top_cities?.length > 0) {
-                          return summaryData.top_cities.map((city) => (
-                            <div
-                              key={city.name}
-                              className="flex justify-between text-xs"
-                            >
-                              <span className="dark:text-gray-300 text-gray-600">
-                                {city.name}
-                              </span>
-                              <span className="dark:text-white font-medium text-gray-900">
-                                {city.count}
-                              </span>
-                            </div>
-                          ));
-                        }
-                      })()}
-                    </div>
-                  </div>
-                </div>
-
-                                <div className="dark:bg-gray-700 dark:border-gray-600 bg-gray-50 rounded-lg p-4 border border-gray-200 mb-6">
-                  <h5 className="dark:text-white text-sm font-medium text-gray-700 mb-3">
-                    Analisis Waktu
+              {/* Top Provinsi & Kabupaten */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div className="border-l-4 border-primary pl-4">
+                  <h5 className="text-sm font-medium text-foreground mb-2">
+                    Top Provinsi
                   </h5>
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <div className="dark:text-white text-sm font-medium text-gray-900 mb-1">
-                        Periode
-                      </div>
-                      <div className="dark:text-gray-300 text-xs text-gray-600">
-                        {(() => {
-                          if (summaryData?.monthly?.length > 0) {
-                            const firstMonth = new Date(
-                              summaryData.monthly[0].month,
-                            );
-                            const lastMonth = new Date(
-                              summaryData.monthly[
-                                summaryData.monthly.length - 1
-                              ].month,
-                            );
-
-                            const startDate = new Date(
-                              firstMonth.getFullYear(),
-                              firstMonth.getMonth(),
-                              1,
-                            );
-                            const endDate = new Date(
-                              lastMonth.getFullYear(),
-                              lastMonth.getMonth() + 1,
-                              0,
-                            );
-
-                            return `${startDate.toLocaleDateString("id-ID")} - ${endDate.toLocaleDateString("id-ID")}`;
-                          }
-                          return "Tidak ada data";
-                        })()}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="dark:text-white text-sm font-medium text-gray-900 mb-1">
-                        Rata-rata per Hari
-                      </div>
-                      <div className="dark:text-gray-300 text-xs text-gray-600">
-                        {(() => {
-                          if (summaryData?.monthly?.length > 0) {
-                            const totalHotspots = summaryData.monthly.reduce(
-                              (sum, month) => sum + month.total,
-                              0,
-                            );
-
-                            const firstMonth = new Date(
-                              summaryData.monthly[0].month,
-                            );
-                            const lastMonth = new Date(
-                              summaryData.monthly[
-                                summaryData.monthly.length - 1
-                              ].month,
-                            );
-
-                            const startDate = new Date(
-                              firstMonth.getFullYear(),
-                              firstMonth.getMonth(),
-                              1,
-                            );
-                            const endDate = new Date();
-
-                            const daysDiff = Math.ceil(
-                              (endDate.getTime() - startDate.getTime()) /
-                                (1000 * 60 * 60 * 24),
-                            );
-
-                            return Math.round(totalHotspots / daysDiff);
-                          }
-                          return 0;
-                        })()}{" "}
-                        hotspot
-                      </div>
-                    </div>
+                  <div className="space-y-1">
+                    {summaryData?.top_provinces?.length > 0 &&
+                      summaryData.top_provinces.map((province) => (
+                        <div key={province.name} className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">{province.name}</span>
+                          <span className="font-medium text-foreground">{province.count}</span>
+                        </div>
+                      ))}
                   </div>
                 </div>
-
-                                <div className="dark:bg-gray-700 dark:border-gray-600 bg-gray-50 rounded-lg p-4 border border-gray-200 mb-6">
-                  <h5 className="dark:text-white text-sm font-medium text-gray-700 mb-3">
-                    Distribusi Bulanan
+                <div className="border-l-4 border-primary pl-4">
+                  <h5 className="text-sm font-medium text-foreground mb-2">
+                    Top Kabupaten
                   </h5>
-                  <div className="grid grid-cols-3 gap-2 text-center">
-                    {(() => {
-                      if (summaryData?.monthly?.length > 0) {
-                        const monthNames = [
-                          "Januari",
-                          "Februari",
-                          "Maret",
-                          "April",
-                          "Mei",
-                          "Juni",
-                          "Juli",
-                          "Agustus",
-                          "September",
-                          "Oktober",
-                          "November",
-                          "Desember",
-                        ];
-
-                        return summaryData.monthly.map((monthData) => {
-                          const date = new Date(monthData.month);
-                          const monthIndex = date.getMonth();
-                          const displayMonth = monthNames[monthIndex];
-
-                          return (
-                            <div
-                              key={monthData.month}
-                              className="dark:bg-gray-800 dark:border-gray-600 bg-white p-2 rounded border border-gray-200"
-                            >
-                              <div className="dark:text-gray-300 text-xs text-gray-600">
-                                {displayMonth}
-                              </div>
-                              <div className="dark:text-white text-sm font-medium text-gray-900">
-                                {monthData.total}
-                              </div>
-                            </div>
-                          );
-                        });
-                      } else {
-                        const monthCounts: Record<string, number> = {};
-                        const currentYear = new Date().getFullYear();
-
-                        hotspotData.features?.forEach((f) => {
-                          const date = new Date(f.properties.time);
-                          const featureYear = date.getFullYear();
-
-                          if (featureYear === currentYear) {
-                            const month = date.toLocaleDateString("id-ID", {
-                              month: "short",
-                            });
-                            monthCounts[month] = (monthCounts[month] || 0) + 1;
-                          }
-                        });
-                        return Object.entries(monthCounts)
-                          .sort((a, b) => {
-                            const months = [
-                              "Jan",
-                              "Feb",
-                              "Mar",
-                              "Apr",
-                              "May",
-                              "Jun",
-                              "Jul",
-                              "Aug",
-                              "Sep",
-                              "Oct",
-                              "Nov",
-                              "Dec",
-                            ];
-                            return months.indexOf(a[0]) - months.indexOf(b[0]);
-                          })
-                          .map(([month, count]) => (
-                            <div
-                              key={month}
-                              className="dark:bg-gray-800 dark:border-gray-600 bg-white p-2 rounded border border-gray-200"
-                            >
-                              <div className="dark:text-gray-300 text-xs text-gray-600">
-                                {month}
-                              </div>
-                              <div className="dark:text-white text-sm font-medium text-gray-900">
-                                {count}
-                              </div>
-                            </div>
-                          ));
-                      }
-                    })()}
+                  <div className="space-y-1">
+                    {summaryData?.top_cities?.length > 0 &&
+                      summaryData.top_cities.map((city) => (
+                        <div key={city.name} className="flex justify-between text-xs">
+                          <span className="text-muted-foreground">{city.name}</span>
+                          <span className="font-medium text-foreground">{city.count}</span>
+                        </div>
+                      ))}
                   </div>
                 </div>
+              </div>
 
+              {/* Analisis Waktu */}
+              <div className="border-l-4 border-primary pl-4 mb-6">
+                <h5 className="text-sm font-medium text-foreground mb-3">
+                  Analisis Waktu
+                </h5>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="dark:bg-gray-700 dark:border-gray-600 bg-gray-50 rounded-lg p-4 border border-gray-200 text-center">
-                    <div className="dark:text-white text-2xl font-bold text-gray-900">
-                      {stats.totalHotspots
-                        ? formatNumber(stats.totalHotspots)
-                        : "-"}
-                    </div>
-                    <div className="dark:text-gray-300 text-sm text-gray-600">
-                      Jumlah Hotspot
-                    </div>
-                  </div>
-                  <div className="dark:bg-gray-700 dark:border-gray-600 bg-gray-50 rounded-lg p-4 border border-gray-200 text-center">
-                    <div className="dark:text-white text-2xl font-bold text-gray-900">
-                      {stats.highConfidence
-                        ? formatNumber(stats.highConfidence)
-                        : "-"}
-                    </div>
-                    <div className="dark:text-gray-300 text-sm text-gray-600 flex items-center justify-center">
-                      Confidence Tinggi
+                  <div>
+                    <div className="text-sm font-medium text-foreground mb-1">Periode</div>
+                    <div className="text-xs text-muted-foreground">
+                      {summaryData?.monthly?.length > 0 ? (() => {
+                        const firstMonth = new Date(summaryData.monthly[0].month);
+                        const lastMonth = new Date(summaryData.monthly[summaryData.monthly.length - 1].month);
+                        const startDate = new Date(firstMonth.getFullYear(), firstMonth.getMonth(), 1);
+                        const endDate = new Date(lastMonth.getFullYear(), lastMonth.getMonth() + 1, 0);
+                        return `${startDate.toLocaleDateString("id-ID")} - ${endDate.toLocaleDateString("id-ID")}`;
+                      })() : "Tidak ada data"}
                     </div>
                   </div>
-                  <div className="dark:bg-gray-700 dark:border-gray-600 bg-gray-50 rounded-lg p-4 border border-gray-200 text-center">
-                    <div className="dark:text-white text-2xl font-bold text-gray-900">
-                      {stats.topLocation ? stats.topLocation : "-"}
-                    </div>
-                    <div className="dark:text-gray-300 text-sm text-gray-600">
-                      Lokasi Tertinggi
-                    </div>
-                  </div>
-                  <div className="dark:bg-gray-700 dark:border-gray-600 bg-gray-50 rounded-lg p-4 border border-gray-200 text-center">
-                    <div className="dark:text-white text-2xl font-bold text-gray-900">
-                      {stats.affectedProvinces ? stats.affectedProvinces : "-"}
-                    </div>
-                    <div className="dark:text-gray-300 text-sm text-gray-600">
-                      Provinsi Terdampak
+                  <div>
+                    <div className="text-sm font-medium text-foreground mb-1">Rata-rata per Hari</div>
+                    <div className="text-xs text-muted-foreground">
+                      {summaryData?.monthly?.length > 0 ? (() => {
+                        const totalHotspots = summaryData.monthly.reduce((sum, month) => sum + month.total, 0);
+                        const firstMonth = new Date(summaryData.monthly[0].month);
+                        const startDate = new Date(firstMonth.getFullYear(), firstMonth.getMonth(), 1);
+                        const endDate = new Date();
+                        const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+                        return Math.round(totalHotspots / daysDiff);
+                      })() : 0} hotspot
                     </div>
                   </div>
                 </div>
+              </div>
 
-                                <div className="mt-6">
-                  <h4 className="dark:text-white text-sm font-medium text-gray-700 mb-3">
-                    Distribusi Confidence Level
-                  </h4>
-                  <div className="space-y-2">
-                    {[
-                      {
-                        level: "Tinggi",
-                        range: "80-100%",
-                        bgColor: "#ef4444",
-                        dotClass: "bg-red-500",
-                        confidence: "high",
-                      },
-                      {
-                        level: "Sedang",
-                        range: "30-79%",
-                        bgColor: "#eab308",
-                        dotClass: "bg-yellow-500",
-                        confidence: "medium",
-                      },
-                      {
-                        level: "Rendah",
-                        range: "0-29%",
-                        bgColor: "#22c55e",
-                        dotClass: "bg-green-500",
-                        confidence: "low",
-                      },
-                    ].map((item) => {
-                      const count =
-                        summaryData?.confidence?.[
-                          item.confidence.toUpperCase()
-                        ] ||
-                        hotspotData.features?.filter(
-                          (f) => f.properties.confidence === item.confidence,
-                        ).length ||
-                        0;
-
-                      const confidenceData = summaryData?.confidence || {};
-                      const backendHigh =
-                        (confidenceData.HIGH || 0) +
-                        (confidenceData.NOMINAL || 0);
-                      const backendMedium = confidenceData.MEDIUM || 0;
-                      const backendLow = confidenceData.LOW || 0;
-
-                      const manualHigh =
-                        hotspotData.features?.filter(
-                          (f) => f.properties.confidence === "high",
-                        ).length || 0;
-                      const manualMedium =
-                        hotspotData.features?.filter(
-                          (f) => f.properties.confidence === "medium",
-                        ).length || 0;
-                      const manualLow =
-                        hotspotData.features?.filter(
-                          (f) => f.properties.confidence === "low",
-                        ).length || 0;
-
-                      const maxCount = Math.max(
-                        summaryData
-                          ? Math.max(backendHigh, backendMedium, backendLow)
-                          : Math.max(manualHigh, manualMedium, manualLow),
-                      );
-                      const lineWidth =
-                        maxCount > 0 ? (count / maxCount) * 100 : 0;
+              {/* Distribusi Bulanan */}
+              <div className="mb-6">
+                <h5 className="text-sm font-medium text-foreground mb-3">
+                  Distribusi Bulanan
+                </h5>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  {summaryData?.monthly?.length > 0 ? (
+                    summaryData.monthly.map((monthData) => {
+                      const date = new Date(monthData.month);
+                      const monthIndex = date.getMonth();
+                      const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+                      const displayMonth = monthNames[monthIndex];
 
                       return (
-                        <div
-                          key={item.confidence}
-                          className="flex items-center"
-                        >
-                          <div className="flex items-center space-x-2 min-w-0 flex-1">
+                        <div key={monthData.month} className="bg-secondary p-2 rounded">
+                          <div className="text-xs text-muted-foreground">{displayMonth}</div>
+                          <div className="text-sm font-medium text-foreground">{monthData.total}</div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="col-span-3 text-center py-4 text-muted-foreground text-sm">
+                      Tidak ada data
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Summary Stats */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="text-center py-4 border-b border-r border-border">
+                  <div className="text-2xl font-bold text-primary">
+                    {stats.totalHotspots ? formatNumber(stats.totalHotspots) : "-"}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Jumlah Hotspot</div>
+                </div>
+                <div className="text-center py-4 border-b border-border">
+                  <div className="text-2xl font-bold text-primary">
+                    {stats.highConfidence ? formatNumber(stats.highConfidence) : "-"}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Confidence Tinggi</div>
+                </div>
+                <div className="text-center py-4 border-r border-border">
+                  <div className="text-lg font-bold text-primary">
+                    {stats.topLocation ? stats.topLocation : "-"}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Lokasi Tertinggi</div>
+                </div>
+                <div className="text-center py-4">
+                  <div className="text-2xl font-bold text-primary">
+                    {stats.affectedProvinces ? stats.affectedProvinces : "-"}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Provinsi Terdampak</div>
+                </div>
+              </div>
+
+              {/* Distribusi Confidence Level */}
+              <div className="mb-6">
+                <h4 className="text-sm font-medium text-foreground mb-3">
+                  Distribusi Confidence Level
+                </h4>
+                <div className="space-y-2">
+                  {[
+                    { level: "Tinggi", range: "80-100%", bgColor: "#ef4444", dotClass: "bg-red-500", confidence: "high" },
+                    { level: "Sedang", range: "30-79%", bgColor: "#eab308", dotClass: "bg-yellow-500", confidence: "medium" },
+                    { level: "Rendah", range: "0-29%", bgColor: "#22c55e", dotClass: "bg-green-500", confidence: "low" },
+                  ].map((item) => {
+                    const count = summaryData?.confidence?.[item.confidence.toUpperCase()] ||
+                      hotspotData.features?.filter((f) => f.properties.confidence === item.confidence).length || 0;
+
+                    const confidenceData = summaryData?.confidence || {};
+                    const backendHigh = (confidenceData.HIGH || 0) + (confidenceData.NOMINAL || 0);
+                    const backendMedium = confidenceData.MEDIUM || 0;
+                    const backendLow = confidenceData.LOW || 0;
+
+                    const maxCount = Math.max(backendHigh, backendMedium, backendLow);
+                    const lineWidth = maxCount > 0 ? (count / maxCount) * 100 : 0;
+
+                    return (
+                      <div key={item.confidence} className="flex items-center">
+                        <div className="flex items-center space-x-2 min-w-0 flex-1">
+                          <div className={`w-3 h-3 rounded-full flex-shrink-0 ${item.dotClass}`}></div>
+                          <span className="text-sm text-muted-foreground truncate">
+                            {item.level} ({item.range})
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <div className="w-64 bg-secondary rounded-full h-3 overflow-hidden">
                             <div
-                              className={`w-3 h-3 rounded-full flex-shrink-0 ${item.dotClass}`}
+                              className="h-full rounded-full transition-all duration-500 ease-out"
+                              style={{ width: `${lineWidth}%`, backgroundColor: item.bgColor }}
                             ></div>
-                            <span className="dark:text-gray-300 text-sm text-gray-600 truncate">
-                              {item.level} ({item.range})
-                            </span>
+                          </div>
+                          <span className="text-sm font-medium text-foreground min-w-[3ch] text-right">
+                            {count}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Sumber Satelit */}
+              <div>
+                <h4 className="text-sm font-medium text-foreground mb-3">
+                  Sumber Satelit
+                </h4>
+                <div className="space-y-2">
+                  {(() => {
+                    const satelliteColors: Record<string, { bgColor: string; dotClass: string }> = {
+                      N: { bgColor: "#3b82f6", dotClass: "bg-blue-500" },
+                      N20: { bgColor: "#06b6d4", dotClass: "bg-cyan-500" },
+                      N21: { bgColor: "#10b981", dotClass: "bg-emerald-500" },
+                      Aqua: { bgColor: "#8b5cf6", dotClass: "bg-purple-500" },
+                      Terra: { bgColor: "#f59e0b", dotClass: "bg-amber-500" },
+                    };
+
+                    const satellitesData = summaryData?.satellites || {};
+                    const satelliteEntries = Object.entries(satellitesData);
+
+                    if (satelliteEntries.length === 0) {
+                      return (
+                        <div className="text-center py-4 text-muted-foreground text-sm">
+                          Tidak ada data satelit
+                        </div>
+                      );
+                    }
+
+                    const maxCount = Math.max(...satelliteEntries.map(([, count]) => count));
+
+                    return satelliteEntries.map(([name, count]) => {
+                      const colors = satelliteColors[name] || { bgColor: "#6b7280", dotClass: "bg-gray-500" };
+                      const lineWidth = maxCount > 0 ? (count / maxCount) * 100 : 0;
+
+                      return (
+                        <div key={name} className="flex items-center">
+                          <div className="flex items-center space-x-2 min-w-0 flex-1">
+                            <div className={`w-3 h-3 rounded-full flex-shrink-0 ${colors.dotClass}`}></div>
+                            <span className="text-sm text-muted-foreground truncate">{name}</span>
                           </div>
                           <div className="flex items-center space-x-1">
-                            <div className="w-64 dark:bg-gray-600 bg-gray-200 rounded-full h-3 overflow-hidden">
+                            <div className="w-64 bg-secondary rounded-full h-3 overflow-hidden">
                               <div
                                 className="h-full rounded-full transition-all duration-500 ease-out"
-                                style={{
-                                  width: `${lineWidth}%`,
-                                  backgroundColor: item.bgColor,
-                                }}
+                                style={{ width: `${lineWidth}%`, backgroundColor: colors.bgColor }}
                               ></div>
                             </div>
-                            <span className="dark:text-white text-sm font-medium text-gray-900 min-w-[3ch] text-right">
+                            <span className="text-sm font-medium text-foreground min-w-[3ch] text-right">
                               {count}
                             </span>
                           </div>
                         </div>
                       );
-                    })}
-                  </div>
+                    });
+                  })()}
                 </div>
-
-                                <div className="mt-6">
-                  <h4 className="dark:text-white text-sm font-medium text-gray-700 mb-3">
-                    Sumber Satelit
-                  </h4>
-                  <div className="space-y-2">
-                    {(() => {
-                      const satelliteColors: Record<
-                        string,
-                        { bgColor: string; dotClass: string }
-                      > = {
-                        N: { bgColor: "#3b82f6", dotClass: "bg-blue-500" },
-                        N20: { bgColor: "#06b6d4", dotClass: "bg-cyan-500" },
-                        N21: { bgColor: "#10b981", dotClass: "bg-emerald-500" },
-                        Aqua: { bgColor: "#8b5cf6", dotClass: "bg-purple-500" },
-                        Terra: { bgColor: "#f59e0b", dotClass: "bg-amber-500" },
-                      };
-
-                      const satellitesData = summaryData?.satellites || {};
-                      const satelliteEntries = Object.entries(satellitesData);
-
-                      if (satelliteEntries.length === 0) {
-                        return (
-                          <div className="text-center py-4 text-gray-500 text-sm">
-                            Tidak ada data satelit
-                          </div>
-                        );
-                      }
-
-                      const maxCount = Math.max(
-                        ...satelliteEntries.map(([, count]) => count),
-                      );
-
-                      return satelliteEntries.map(([name, count]) => {
-                        const colors =
-                          satelliteColors[name] || {
-                            bgColor: "#6b7280",
-                            dotClass: "bg-gray-500",
-                          };
-                        const lineWidth =
-                          maxCount > 0 ? (count / maxCount) * 100 : 0;
-
-                        return (
-                          <div key={name} className="flex items-center">
-                            <div className="flex items-center space-x-2 min-w-0 flex-1">
-                              <div
-                                className={`w-3 h-3 rounded-full flex-shrink-0 ${colors.dotClass}`}
-                              ></div>
-                              <span className="dark:text-gray-300 text-sm text-gray-600 truncate">
-                                {name}
-                              </span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <div className="w-64 dark:bg-gray-600 bg-gray-200 rounded-full h-3 overflow-hidden">
-                                <div
-                                  className="h-full rounded-full transition-all duration-500 ease-out"
-                                  style={{
-                                    width: `${lineWidth}%`,
-                                    backgroundColor: colors.bgColor,
-                                  }}
-                                ></div>
-                              </div>
-                              <span className="dark:text-white text-sm font-medium text-gray-900 min-w-[3ch] text-right">
-                                {count}
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      });
-                    })()}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-            <Suspense fallback={<StatsSkeleton />}>
+      <Suspense fallback={<StatsSkeleton />}>
         <StatsSection stats={stats} isLoading={isLoading} />
       </Suspense>
 
-            {showMitigation && (
+      {showMitigation && (
         <Suspense fallback={<CardSkeleton count={3} />}>
           <MitigationSection />
         </Suspense>

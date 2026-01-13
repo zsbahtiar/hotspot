@@ -2,7 +2,7 @@
 // StaticNavbar.astro - Static navbar for homepage (no React/JavaScript needed)
 ---
 
-<nav class="bg-white/80 backdrop-blur-xl border-b border-gray-200/60 dark:bg-gray-900/90 dark:border-gray-700/60 fixed w-full top-0 z-[99999] shadow-sm">
+<nav class="bg-background/80 backdrop-blur-xl border-b border-border/60 fixed w-full top-0 z-[99999] shadow-sm">
   <div class="max-w-7xl mx-auto px-6">
     <div class="flex justify-between items-center h-16">
       <!-- Logo -->
@@ -17,10 +17,10 @@
           />
         </div>
         <div class="min-w-0">
-          <div class="text-base font-bold text-gray-900 dark:text-white tracking-tight truncate">
+          <div class="text-base font-bold text-foreground tracking-tight truncate">
             Hotspot Karhutla
           </div>
-          <div class="text-xs text-gray-500 dark:text-gray-400 truncate">
+          <div class="text-xs text-muted-foreground truncate">
             Monitoring System
           </div>
         </div>
@@ -28,16 +28,16 @@
 
       <!-- Desktop Navigation -->
       <div class="hidden md:flex items-center space-x-2">
-        <a href="/" id="nav-home" class="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white" title="Halaman Beranda">
+        <a href="/" id="nav-home" class="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-secondary" title="Halaman Beranda">
           Beranda
         </a>
-        <a href="/map" id="nav-map" class="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white" title="Lihat Peta Hotspot">
+        <a href="/map" id="nav-map" class="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-secondary" title="Lihat Peta Hotspot">
           Peta
         </a>
-        <a href="/data" id="nav-data" class="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white" title="Lihat Data Tabel Hotspot">
+        <a href="/data" id="nav-data" class="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-secondary" title="Lihat Data Tabel Hotspot">
           Data
         </a>
-        <a href="/about" id="nav-about" class="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white" title="Tentang Sistem">
+        <a href="/about" id="nav-about" class="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-secondary" title="Tentang Sistem">
           Tentang
         </a>
       </div>
@@ -47,7 +47,7 @@
         <button
           id="theme-toggle"
           type="button"
-          class="p-2 rounded-xl hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors duration-200"
+          class="p-2 rounded-xl hover:bg-secondary text-muted-foreground transition-colors duration-200"
           aria-label="Toggle theme"
         >
           <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -62,7 +62,7 @@
         <button
           id="mobile-menu-button"
           type="button"
-          class="md:hidden p-2.5 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors duration-200"
+          class="md:hidden p-2.5 hover:bg-secondary text-muted-foreground transition-colors duration-200"
           aria-label="Toggle menu"
         >
           <svg class="w-6 h-6" id="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -78,16 +78,16 @@
     <!-- Mobile menu -->
     <div id="mobile-menu" class="hidden md:hidden pb-4">
       <div class="flex flex-col space-y-2">
-        <a href="/" id="nav-home-mobile" class="px-4 py-3 rounded-xl text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800 transition-all duration-200" title="Halaman Beranda">
+        <a href="/" id="nav-home-mobile" class="px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-all duration-200" title="Halaman Beranda">
           Beranda
         </a>
-        <a href="/map" id="nav-map-mobile" class="px-4 py-3 rounded-xl text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800 transition-all duration-200" title="Lihat Peta Hotspot">
+        <a href="/map" id="nav-map-mobile" class="px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-all duration-200" title="Lihat Peta Hotspot">
           Peta
         </a>
-        <a href="/data" id="nav-data-mobile" class="px-4 py-3 rounded-xl text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800 transition-all duration-200" title="Lihat Data Tabel Hotspot">
+        <a href="/data" id="nav-data-mobile" class="px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-all duration-200" title="Lihat Data Tabel Hotspot">
           Data
         </a>
-        <a href="/about" id="nav-about-mobile" class="px-4 py-3 rounded-xl text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-800 transition-all duration-200" title="Tentang Sistem">
+        <a href="/about" id="nav-about-mobile" class="px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-all duration-200" title="Tentang Sistem">
           Tentang
         </a>
       </div>
@@ -116,15 +116,15 @@
   // Set active state for desktop menu
   const desktopNav = document.getElementById(`nav-${activeNavId}`);
   if (desktopNav) {
-    desktopNav.classList.remove('text-gray-600', 'dark:text-gray-300');
-    desktopNav.classList.add('text-gray-900', 'dark:text-gray-100', 'font-semibold');
+    desktopNav.classList.remove('text-muted-foreground');
+    desktopNav.classList.add('text-primary', 'font-semibold');
   }
 
   // Set active state for mobile menu
   const mobileNav = document.getElementById(`nav-${activeNavId}-mobile`);
   if (mobileNav) {
-    mobileNav.classList.remove('text-gray-600', 'dark:text-gray-300');
-    mobileNav.classList.add('text-gray-900', 'dark:text-gray-100', 'font-semibold');
+    mobileNav.classList.remove('text-muted-foreground');
+    mobileNav.classList.add('text-primary', 'font-semibold');
   }
 
   // Theme toggle functionality

@@ -643,12 +643,12 @@ export default function HotspotTable() {
           <span className="inline-block ml-1 text-xs">
             {sortBy === col ? (
               sortOrder === "asc" ? (
-                <span className="text-blue-600 dark:text-blue-400">▲</span>
+                <span className="text-primary">▲</span>
               ) : (
-                <span className="text-blue-600 dark:text-blue-400">▼</span>
+                <span className="text-primary">▼</span>
               )
             ) : (
-              <span className="text-gray-300 dark:text-gray-600 text-[15px]">
+              <span className="text-muted-foreground/50 text-[15px]">
                 ⬍
               </span>
             )}
@@ -847,9 +847,9 @@ export default function HotspotTable() {
                           icon={faSpinner}
                           spin
                           size="2x"
-                          className="text-gray-600 dark:text-gray-400 mb-3"
+                          className="text-muted-foreground mb-3"
                         />
-                        <p className="text-gray-700 dark:text-gray-300">
+                        <p className="text-foreground">
                           Memuat data hotspot, mohon tunggu...
                         </p>
                       </div>
@@ -1008,7 +1008,7 @@ export default function HotspotTable() {
                   <TableRow>
                     <TableCell
                       colSpan={viewMode === "detail" ? 20 : 7}
-                      className="px-4 py-6 text-center text-gray-500 dark:text-gray-400"
+                      className="px-4 py-6 text-center text-muted-foreground"
                     >
                       Tidak ada data yang ditemukan
                     </TableCell>
@@ -1018,7 +1018,7 @@ export default function HotspotTable() {
             </Table>
           </div>
 
-                    <div className="flex justify-end items-center gap-2 p-4 border-t bg-gray-50 dark:bg-gray-800/50">
+                    <div className="flex justify-end items-center gap-2 p-4 border-t border-border bg-muted/50">
             <Button
               variant="outline"
               size="sm"

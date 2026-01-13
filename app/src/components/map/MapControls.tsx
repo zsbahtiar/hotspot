@@ -75,9 +75,8 @@ export default function MapControlPanel({
           padding: isControlPanelCollapsed ? 0 : "0.75rem",
         }}
         className={`
-          bg-card rounded-lg shadow-lg transition-all duration-300 text-card-foreground
+          bg-background border border-border rounded-lg transition-all duration-300 text-foreground
           ${isControlPanelCollapsed ? "flex items-center justify-center" : ""}
-          ${isFullscreen ? "bg-card/90" : "bg-card"}
           ${isControlPanelCollapsed ? "overflow-hidden" : ""}
         `}
       >
@@ -208,12 +207,8 @@ export default function MapControlPanel({
             </div>
 
             {showLokasiHotspot && (
-              <div
-                style={{
-                  borderTop: "1px solid #E5E7EB",
-                  paddingTop: "0.75rem",
-                }}
-              >
+              <div className="border-t border-border pt-3">
+
                 <h3
                   style={{
                     fontWeight: 500,
