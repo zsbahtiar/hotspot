@@ -10,6 +10,7 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills';
 export default defineConfig({
   integrations: [react()],
   output: 'static',
+  trailingSlash: 'never',
   // REMOVED: adapter: cloudflare() - causes 46s load time on Cloudflare Pages
   vite: {
     plugins: [
