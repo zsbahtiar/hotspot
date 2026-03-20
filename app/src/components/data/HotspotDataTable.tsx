@@ -658,9 +658,9 @@ export default function HotspotTable() {
 
   return (
     <div className="min-h-screen flex flex-col flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-      <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-4 sm:mb-6">
+      <h2 className="text-2xl font-extrabold text-[#192d17] dark:text-[#f3f7f1] mb-3 leading-tight">
         Data Hotspot
-      </h1>
+      </h2>
 
             <Card className="mb-4 sm:mb-6">
         <CardContent className="p-4 sm:p-5 lg:p-6">
