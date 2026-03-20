@@ -1,9 +1,5 @@
-const CACHE_NAME = "olap-hotspot-v2";
+const CACHE_NAME = "olap-hotspot-v3";
 const urlsToCache = [
-  "/",
-  "/about",
-  "/map",
-  "/data",
   "/assets/ipb.webp",
   "/assets/kebakaran1.webp",
   "/assets/kebakaran2.webp",
@@ -16,18 +12,35 @@ self.addEventListener("install", (event) => {
       return cache.addAll(urlsToCache);
     }),
   );
+  // Force new SW to activate immediately
+  self.skipWaiting();
 });
 
 self.addEventListener("fetch", (event) => {
+  // Skip navigation requests - let browser handle redirects normally
+  if (event.request.mode === "navigate") {
+    return;
+  }
+
+  // Only handle asset and API requests
+  const url = event.request.url;
+  const shouldHandle =
+    url.includes("/assets/") ||
+    url.includes("/src/styles/") ||
+    url.includes("fonts.googleapis.com") ||
+    url.includes("/api/v1/hotspots");
+
+  if (!shouldHandle) {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((response) => {
       if (response) {
         return response;
       }
 
-      const fetchRequest = event.request.clone();
-
-      return fetch(fetchRequest)
+      return fetch(event.request.clone())
         .then((response) => {
           if (
             !response ||
@@ -38,21 +51,14 @@ self.addEventListener("fetch", (event) => {
           }
 
           const responseToCache = response.clone();
-
           caches.open(CACHE_NAME).then((cache) => {
-            if (
-              event.request.url.includes("/assets/") ||
-              event.request.url.includes("/src/styles/") ||
-              event.request.url.includes("fonts.googleapis.com")
-            ) {
-              cache.put(event.request, responseToCache);
-            }
+            cache.put(event.request, responseToCache);
           });
 
           return response;
         })
         .catch(() => {
-          if (event.request.url.includes("/api/v1/hotspots")) {
+          if (url.includes("/api/v1/hotspots")) {
             return new Response(
               JSON.stringify({ features: [], type: "FeatureCollection" }),
               {
@@ -77,6 +83,9 @@ self.addEventListener("activate", (event) => {
           }
         }),
       );
+    }).then(() => {
+      // Take control of all clients immediately
+      return self.clients.claim();
     }),
   );
 });
