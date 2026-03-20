@@ -174,7 +174,11 @@
 
 <script>
     // Set active menu based on current path
-    const currentPath = window.location.pathname;
+    // Normalize path: remove trailing slash (except for root)
+    let currentPath = window.location.pathname;
+    if (currentPath !== "/" && currentPath.endsWith("/")) {
+        currentPath = currentPath.slice(0, -1);
+    }
 
     // Map paths to nav IDs
     const pathMap: Record<string, string> = {
@@ -185,10 +189,7 @@
     };
 
     // Get active nav ID based on current path
-    let activeNavId = pathMap[currentPath] || "home";
-    if (currentPath === "" || currentPath === "/") {
-        activeNavId = "home";
-    }
+    const activeNavId = pathMap[currentPath] || "home";
 
     // Set active state for desktop menu with underline
     const desktopNav = document.getElementById(`nav-${activeNavId}`);
