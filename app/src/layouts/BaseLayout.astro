@@ -1,268 +1,260 @@
 ---
-import '@/styles/global.css';
-import 'react-tooltip/dist/react-tooltip.css';
-import 'leaflet.markercluster/dist/MarkerCluster.css';
-import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
-import '@fortawesome/fontawesome-svg-core/styles.css';
+import "@/styles/global.css";
+import "react-tooltip/dist/react-tooltip.css";
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
+import "@fortawesome/fontawesome-svg-core/styles.css";
 
 interface Props {
-  title?: string;
-  description?: string;
+    title?: string;
+    description?: string;
 }
 
 const { title = "OLAP Hotspot", description = "" } = Astro.props;
 ---
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#ffffff" />
-    <meta name="description" content={description} />
-    <meta name="keywords" content="hotspot, karhutla, kebakaran hutan, OLAP, SIPONGI, titik panas, Indonesia" />
-    <meta name="author" content="IPB University" />
-    <meta name="robots" content="index, follow" />
-    <link rel="icon" type="image/svg+xml" href="/fire.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="dns-prefetch" href="//unpkg.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
-    <noscript><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" /></noscript>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="color-scheme" content="light dark" />
+        <meta name="theme-color" content="#ffffff" />
+        <meta name="description" content={description} />
+        <meta
+            name="keywords"
+            content="hotspot, karhutla, kebakaran hutan, OLAP, SIPONGI, titik panas, Indonesia"
+        />
+        <meta name="author" content="IPB University" />
+        <meta name="robots" content="index, follow" />
+        <link rel="icon" type="image/svg+xml" href="/assets/ipb.webp" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link rel="dns-prefetch" href="//unpkg.com" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;600;700;800;900&display=swap"
+            rel="stylesheet"
+        />
 
-    <style>
-      @font-face {
-        font-family: 'Plus Jakarta Sans';
-        font-style: normal;
-        font-weight: 400;
-        font-display: swap;
-        src: local('Plus Jakarta Sans Regular'), local('PlusJakartaSans-Regular');
-      }
-      @font-face {
-        font-family: 'Plus Jakarta Sans';
-        font-style: normal;
-        font-weight: 500;
-        font-display: swap;
-        src: local('Plus Jakarta Sans Medium'), local('PlusJakartaSans-Medium');
-      }
-      @font-face {
-        font-family: 'Plus Jakarta Sans';
-        font-style: normal;
-        font-weight: 600;
-        font-display: swap;
-        src: local('Plus Jakarta Sans SemiBold'), local('PlusJakartaSans-SemiBold');
-      }
-      @font-face {
-        font-family: 'Plus Jakarta Sans';
-        font-style: normal;
-        font-weight: 700;
-        font-display: swap;
-        src: local('Plus Jakarta Sans Bold'), local('PlusJakartaSans-Bold');
-      }
-    </style>
+        <style>
+            body {
+                font-family:
+                    "Libre Franklin", "Franklin Gothic Medium", "Arial Narrow",
+                    Arial, sans-serif;
+                -webkit-font-smoothing: antialiased;
+            }
+        </style>
 
-    <style>
-      body {
-        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-      }
-    </style>
+        <link
+            rel="preload"
+            href="/assets/ipb.webp"
+            as="image"
+            type="image/webp"
+        />
 
-    <link rel="preload" href="/assets/ipb.webp" as="image" type="image/webp" />
+        <!-- Open Graph Meta Tags -->
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={description} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={Astro.url} />
+        <meta
+            property="og:image"
+            content={`${Astro.url}/assets/kebakaran2.webp`}
+        />
+        <meta property="og:locale" content="id_ID" />
+        <meta property="og:site_name" content="OLAP Hotspot" />
 
-    <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={description} />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content={Astro.url} />
-    <meta property="og:image" content={`${Astro.url}/assets/kebakaran2.webp`} />
-    <meta property="og:locale" content="id_ID" />
-    <meta property="og:site_name" content="OLAP Hotspot" />
+        <!-- Twitter Card Meta Tags -->
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={title} />
+        <meta name="twitter:description" content={description} />
+        <meta
+            name="twitter:image"
+            content={`${Astro.url}/assets/kebakaran2.webp`}
+        />
 
-    <!-- Twitter Card Meta Tags -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={title} />
-    <meta name="twitter:description" content={description} />
-    <meta name="twitter:image" content={`${Astro.url}/assets/kebakaran2.webp`} />
+        <title>{title}</title>
 
-    <title>{title}</title>
+        <!-- Structured Data (JSON-LD) -->
+        <script type="application/ld+json">
+            {
+                "@context": "https://schema.org",
+                "@type": "WebApplication",
+                "name": "OLAP Hotspot - Sistem Pemantauan Titik Panas Karhutla",
+                "description": "Sistem Pemantauan Hotspot Karhutla bersumber dari SIPONGI+ menggunakan teknologi Spatial Online Analytical Processing untuk menganalisis titik panas karhutla di Indonesia.",
+                "url": "https://olap-hotspot.web.id",
+                "applicationCategory": "GeoApplication",
+                "operatingSystem": "Web Browser",
+                "offers": {
+                    "@type": "Offer",
+                    "price": "0",
+                    "priceCurrency": "IDR"
+                },
+                "provider": {
+                    "@type": "Organization",
+                    "name": "IPB University",
+                    "url": "https://ipb.ac.id"
+                },
+                "audience": {
+                    "@type": "Audience",
+                    "audienceType": "General Public"
+                }
+            }
+        </script>
 
-    <!-- Structured Data (JSON-LD) -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebApplication",
-      "name": "OLAP Hotspot - Sistem Pemantauan Titik Panas Karhutla",
-      "description": "Sistem Pemantauan Hotspot Karhutla bersumber dari SIPONGI+ menggunakan teknologi Spatial Online Analytical Processing untuk menganalisis titik panas karhutla di Indonesia.",
-      "url": "https://olap-hotspot.web.id",
-      "applicationCategory": "GeoApplication",
-      "operatingSystem": "Web Browser",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "IDR"
-      },
-      "provider": {
-        "@type": "Organization",
-        "name": "IPB University",
-        "url": "https://ipb.ac.id"
-      },
-      "audience": {
-        "@type": "Audience",
-        "audienceType": "General Public"
-      }
-    }
-    </script>
+        <script is:inline hoist>
+            window.global = window.globalThis = window;
+            window.process = window.process || { env: {} };
+        </script>
 
-    <script is:inline hoist>
-      window.global = window.globalThis = window;
-      window.process = window.process || { env: {} };
-    </script>
+        <script is:inline>
+            (function () {
+                const theme = localStorage.getItem("theme") || "light";
+                document.documentElement.classList.add(theme);
+            })();
+        </script>
+        <!-- Optimized resource loading -->
+        <link rel="dns-prefetch" href="//tile.openstreetmap.org" />
+        <link rel="dns-prefetch" href="//a.tile.openstreetmap.org" />
+        <link rel="dns-prefetch" href="//b.tile.openstreetmap.org" />
+        <link rel="dns-prefetch" href="//c.tile.openstreetmap.org" />
+    </head>
+    <body>
+        <style is:inline>
+            body {
+                font-family:
+                    "Libre Franklin", "Franklin Gothic Medium", "Arial Narrow",
+                    Arial, sans-serif;
+                -webkit-font-smoothing: antialiased;
+                line-height: 1.6;
+                margin: 0;
+                padding: 0;
+            }
 
-    <script is:inline>
-      (function() {
-        const theme = localStorage.getItem('theme') ||
-          (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-        document.documentElement.classList.add(theme);
-      })();
-    </script>
-  <!-- Optimized resource loading -->
-  <link rel="dns-prefetch" href="//tile.openstreetmap.org" />
-  <link rel="dns-prefetch" href="//a.tile.openstreetmap.org" />
-  <link rel="dns-prefetch" href="//b.tile.openstreetmap.org" />
-  <link rel="dns-prefetch" href="//c.tile.openstreetmap.org" />
+            .animate-spin {
+                animation: spin 1s linear infinite;
+            }
 
-  </head>
-  <body>
-    <style is:inline>
-      body {
-        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-        line-height: 1.6;
-        margin: 0;
-        padding: 0;
-      }
+            .text-center {
+                text-align: center;
+            }
 
-      .animate-spin {
-        animation: spin 1s linear infinite;
-      }
+            .flex {
+                display: flex;
+            }
 
-      .text-center {
-        text-align: center;
-      }
+            .items-center {
+                align-items: center;
+            }
 
-      .flex {
-        display: flex;
-      }
+            .justify-center {
+                justify-content: center;
+            }
 
-      .items-center {
-        align-items: center;
-      }
+            .min-h-screen {
+                min-height: 100vh;
+            }
 
-      .justify-center {
-        justify-content: center;
-      }
+            .min-h-screen {
+                min-height: 100vh;
+            }
 
-      .min-h-screen {
-        min-height: 100vh;
-      }
+            .rounded-full {
+                border-radius: 9999px;
+            }
 
-      .min-h-screen {
-        min-height: 100vh;
-      }
+            .border-b-2 {
+                border-bottom-width: 2px;
+            }
 
-      .rounded-full {
-        border-radius: 9999px;
-      }
+            .bg-green-600 {
+                background-color: #16a34a;
+            }
 
-      .border-b-2 {
-        border-bottom-width: 2px;
-      }
+            .mb-4 {
+                margin-bottom: 1rem;
+            }
 
-      .bg-green-600 {
-        background-color: #16a34a;
-      }
+            .p-8 {
+                padding: 2rem;
+            }
 
-      .mb-4 {
-        margin-bottom: 1rem;
-      }
+            .text-red-600 {
+                color: #dc2626;
+            }
 
-      .p-8 {
-        padding: 2rem;
-      }
+            .text-gray-600 {
+                color: #4b5563;
+            }
 
-      .text-red-600 {
-        color: #dc2626;
-      }
+            .font-medium {
+                font-weight: 500;
+            }
 
-      .text-gray-600 {
-        color: #4b5563;
-      }
+            .text-lg {
+                font-size: 1.125rem;
+            }
 
-      .font-medium {
-        font-weight: 500;
-      }
+            .mt-2 {
+                margin-top: 0.5rem;
+            }
 
-      .text-lg {
-        font-size: 1.125rem;
-      }
-
-      .mt-2 {
-        margin-top: 0.5rem;
-      }
-
-      @keyframes spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-      }
-    </style>
-    <slot />
-
-      </body>
+            @keyframes spin {
+                from {
+                    transform: rotate(0deg);
+                }
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+        </style>
+        <slot />
+    </body>
 </html>
 
 <style is:global>
-  .leaflet-container {
-    height: 100%;
-    width: 100%;
-    border-radius: 0.5rem;
-  }
-
-  .marker-cluster-small {
-    background-color: rgba(110, 204, 57, 0.6);
-  }
-  .marker-cluster-small div {
-    background-color: rgba(110, 204, 57, 0.8);
-  }
-
-  .marker-cluster-medium {
-    background-color: rgba(240, 194, 12, 0.6);
-  }
-  .marker-cluster-medium div {
-    background-color: rgba(240, 194, 12, 0.8);
-  }
-
-  .marker-cluster-large {
-    background-color: rgba(241, 128, 23, 0.6);
-  }
-  .marker-cluster-large div {
-    background-color: rgba(241, 128, 23, 0.8);
-  }
-
-  .marker-cluster {
-    color: white;
-    font-weight: bold;
-  }
-
-  .hotspot-popup {
-    font-family: inherit;
-  }
-
-  @keyframes spin {
-    from {
-      transform: rotate(0deg);
+    .leaflet-container {
+        height: 100%;
+        width: 100%;
+        border-radius: 0.5rem;
     }
-    to {
-      transform: rotate(360deg);
+
+    .marker-cluster-small {
+        background-color: rgba(110, 204, 57, 0.6);
     }
-  }
+    .marker-cluster-small div {
+        background-color: rgba(110, 204, 57, 0.8);
+    }
+
+    .marker-cluster-medium {
+        background-color: rgba(240, 194, 12, 0.6);
+    }
+    .marker-cluster-medium div {
+        background-color: rgba(240, 194, 12, 0.8);
+    }
+
+    .marker-cluster-large {
+        background-color: rgba(241, 128, 23, 0.6);
+    }
+    .marker-cluster-large div {
+        background-color: rgba(241, 128, 23, 0.8);
+    }
+
+    .marker-cluster {
+        color: white;
+        font-weight: bold;
+    }
+
+    .hotspot-popup {
+        font-family: inherit;
+    }
+
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
 </style>

@@ -13,60 +13,60 @@ const currentYear = new Date().getFullYear();
     title="OLAP Hotspot - Sistem Pemantauan Titik Panas Karhutla"
     description="Sistem Pemantauan Hotspot Karhutla bersumber dari SIPONGI+ menggunakan teknologi Spatial Online Analytical Processing untuk menganalisis titik panas karhutla di Indonesia."
 >
-    <link
-        rel="preload"
-        href="/assets/kebakaran2.webp"
-        as="image"
-        fetchpriority="high"
-    />
-
     <StaticNavbar />
 
-    <!-- Hero Section - Static HTML (No React Needed) -->
-    <section
-        class="relative w-full min-h-screen flex items-center justify-center"
-    >
-        <div class="absolute inset-0">
-            <img
-                src="/assets/kebakaran2.webp"
-                alt="Kebakaran Hutan"
-                class="w-full h-full object-cover object-center"
-                loading="eager"
-                fetchpriority="high"
-            />
+    <section class="section-dark pt-20 pb-12">
+        <div class="max-w-[1100px] mx-auto px-6">
             <div
-                class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent"
+                class="flex flex-col md:flex-row md:items-end md:justify-between gap-8"
             >
+                <!-- Left: Main Counter -->
+                <div>
+                    <p
+                        class="text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-[#b8c8b1] mb-2"
+                    >
+                        TOTAL TITIK PANAS {currentYear} di Indonesia
+                    </p>
+                    <div
+                        class="counter-number text-[#f3f7f1]"
+                        id="total-counter"
+                    >
+                        --
+                    </div>
+                    <p class="text-[0.74rem] text-[#b8c8b1] mt-2">
+                        Updated <span id="last-update">--</span> · Data sejak Jan 2015
+                    </p>
+                </div>
+
+                <!-- Right: Today Stats Box -->
+                <div class="pace-box min-w-[180px]">
+                    <p
+                        class="text-[0.62rem] font-semibold uppercase tracking-[0.1em] text-[#b8c8b1] mb-1"
+                    >
+                        HARI INI
+                    </p>
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-[#e4991b] text-sm">▲</span>
+                        <span
+                            class="text-3xl font-extrabold text-[#f3f7f1]"
+                            id="today-counter">--</span
+                        >
+                    </div>
+                    <p class="text-[0.72rem] text-[#b8c8b1] mt-1">
+                        <span id="today-change">--</span> vs kemarin
+                    </p>
+                </div>
             </div>
-            <div class="absolute inset-0 bg-black/20"></div>
-        </div>
 
-        <div class="relative z-10 max-w-4xl mx-auto px-6 py-16 text-center">
-            <h1
-                class="text-5xl sm:text-6xl font-bold mb-4 text-white drop-shadow-2xl"
-            >
-                <span>Sistem Pemantauan</span>
-                <br />
-                <span>Hotspot Karhutla</span>
-            </h1>
-
-            <p
-                class="text-lg sm:text-xl text-white/95 mb-8 max-w-2xl mx-auto drop-shadow-lg"
-            >
-                Situs penyedia titik panas karhutla bersumber dari NASA FIRMS
-                menggunakan teknologi Spatial Online Analytical Processing yang
-                mempermudah pengguna dalam menganalisis titik panas karhutla
-                pada suatu wilayah melalui visualisasi
-            </p>
-
-            <div class="flex flex-col sm:flex-row gap-6 justify-center mb-16">
+            <!-- Quick Actions -->
+            <div class="flex flex-wrap gap-3 mt-8">
                 <a
                     href="/map"
-                    class="inline-flex items-center justify-center px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-lg shadow-lg hover:bg-white/20 hover:shadow-xl transition-all duration-200 border border-white/20"
-                    title="Lihat Peta Persebaran Hotspot Karhutla"
+                    class="inline-flex items-center px-5 py-2.5 bg-white/10 text-[#f3f7f1] text-sm font-semibold rounded-lg hover:bg-white/15 transition-all duration-200 border border-white/15"
+                    title="Lihat Peta Persebaran Hotspot"
                 >
                     <svg
-                        class="w-5 h-5 mr-2"
+                        class="w-4 h-4 mr-2"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -82,11 +82,11 @@ const currentYear = new Date().getFullYear();
                 </a>
                 <a
                     href="/data"
-                    class="inline-flex items-center justify-center px-8 py-4 border-2 border-white/60 text-white font-semibold rounded-lg hover:bg-white hover:text-foreground transition-all duration-200"
-                    title="Lihat Data Tabel Hotspot Karhutla"
+                    class="inline-flex items-center px-5 py-2.5 bg-transparent text-[#b8c8b1] text-sm font-semibold rounded-lg hover:text-[#f3f7f1] hover:bg-white/5 transition-all duration-200 border border-white/10"
+                    title="Lihat Data Tabel"
                 >
                     <svg
-                        class="w-5 h-5 mr-2"
+                        class="w-4 h-4 mr-2"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -95,8 +95,7 @@ const currentYear = new Date().getFullYear();
                             stroke-linecap="round"
                             stroke-linejoin="round"
                             stroke-width="2"
-                            d="M9 17v1a1 1 0 001 1h4a1 1 0 001-1v-1m3-2V8a2 2 0 00-2-2H8a2 2 0 00-2 2v6m10 0v1a1 1 0 01-1 1H9a1 1 0 01-1-1v-1m4-4V4a1 1 0 00-1-1h-2a1 1 0 00-1 1v4"
-                        ></path>
+                            d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
                     </svg>
                     Lihat Data
                 </a>

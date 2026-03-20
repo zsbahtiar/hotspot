@@ -628,7 +628,7 @@ export default function HotspotTable() {
   function sortHeader(label: string, col: string) {
     return (
       <th
-        className="px-4 py-3 text-left cursor-pointer select-none"
+        className="px-3 py-3 text-left cursor-pointer select-none text-[0.65rem] font-semibold uppercase tracking-wider text-[#6b7a64] whitespace-nowrap"
         onClick={() => {
           if (sortBy === col)
             setSortOrder(sortOrder === "asc" ? "desc" : "asc");
@@ -638,19 +638,17 @@ export default function HotspotTable() {
           }
         }}
       >
-        <div className="flex items-center">
+        <div className="flex items-center gap-1">
           <span>{label}</span>
-          <span className="inline-block ml-1 text-xs">
+          <span className="text-[10px]">
             {sortBy === col ? (
               sortOrder === "asc" ? (
-                <span className="text-primary">▲</span>
+                <span className="text-[#3d6b35]">▲</span>
               ) : (
-                <span className="text-primary">▼</span>
+                <span className="text-[#3d6b35]">▼</span>
               )
             ) : (
-              <span className="text-muted-foreground/50 text-[15px]">
-                ⬍
-              </span>
+              <span className="text-[#6b7a64]/40">⬍</span>
             )}
           </span>
         </div>
@@ -794,10 +792,10 @@ export default function HotspotTable() {
             <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="text-sm">
               <TableHeader>
-                <TableRow>
-                  <TableHead className="px-4 py-3 text-left">No</TableHead>
+                <TableRow className="bg-[#f9faf8] dark:bg-[#1a221a] border-b border-[#d4ddd0] dark:border-[#2a3a28]">
+                  <TableHead className="px-3 py-3 text-left text-[0.65rem] font-semibold uppercase tracking-wider text-[#6b7a64] whitespace-nowrap">No</TableHead>
                   {viewMode === "detail" ? (
                     <>
                       {sortHeader("Tanggal", "properties.time")}
@@ -857,109 +855,104 @@ export default function HotspotTable() {
                   </TableRow>
                 ) : sortedData.length > 0 ? (
                   sortedData.map((item, index) => (
-                    <TableRow key={index}>
-                      <TableCell className="px-4 py-3">
+                    <TableRow key={index} className="border-b border-[#e8ece6] dark:border-[#2a3a28] hover:bg-[#f3f6f2] dark:hover:bg-[#1a221a] transition-colors">
+                      <TableCell className="px-3 py-3 text-[#6b7a64] text-xs">
                         {(apiPage - 1) * PAGE_SIZE + index + 1}
                       </TableCell>
 
                       {viewMode === "detail" ? (
                         <>
-                          <TableCell className="px-4 py-3">
+                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {new Date((item as HotspotFeature).properties.time).toLocaleDateString('id-ID', {
                               day: '2-digit',
                               month: 'short',
                               year: 'numeric'
                             })}
                           </TableCell>
-                          <TableCell className="px-4 py-3">
+                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {new Date((item as HotspotFeature).properties.hotspot_time).toLocaleTimeString('id-ID', {
                               hour: '2-digit',
                               minute: '2-digit'
                             })}
                           </TableCell>
-                          <TableCell className="px-4 py-3">
+                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {(item as HotspotFeature).properties.location.pulau}
                           </TableCell>
-                          <TableCell className="px-4 py-3">
+                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {
                               (item as HotspotFeature).properties.location
                                 .provinsi
                             }
                           </TableCell>
-                          <TableCell className="px-4 py-3">
+                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {
                               (item as HotspotFeature).properties.location
                                 .kab_kota
                             }
                           </TableCell>
-                          <TableCell className="px-4 py-3">
+                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {
                               (item as HotspotFeature).properties.location
                                 .kecamatan
                             }
                           </TableCell>
-                          <TableCell className="px-4 py-3">
+                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {(item as HotspotFeature).properties.location.desa}
                           </TableCell>
-                          <TableCell className="px-4 py-3">
+                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {(item as HotspotFeature).properties.satellite}
                           </TableCell>
-                          <TableCell className="px-4 py-3">
-                            <Badge
-                              variant={
-                                (item as HotspotFeature).properties
-                                  .confidence === "high"
-                                  ? "destructive"
-                                  : (item as HotspotFeature).properties
-                                        .confidence === "medium"
-                                    ? "secondary"
-                                    : "outline"
-                              }
-                            >
+                          <TableCell className="px-3 py-2.5 text-[0.8rem] whitespace-nowrap">
+                            <span className={cn(
+                              "font-medium uppercase text-[0.7rem] tracking-wide",
+                              (item as HotspotFeature).properties.confidence === "high" && "text-[#c07f10]",
+                              (item as HotspotFeature).properties.confidence === "medium" && "text-[#3d6b35]",
+                              (item as HotspotFeature).properties.confidence === "low" && "text-[#6b7a64]"
+                            )}>
                               {(item as HotspotFeature).properties.confidence}
-                            </Badge>
+                            </span>
                           </TableCell>
-                          <TableCell className="px-4 py-3">
+                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {(item as HotspotFeature).properties.hotspot_count}
                           </TableCell>
-                          <TableCell className="px-4 py-3">
+                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {(item as HotspotFeature).geometry.coordinates[1]},{" "}
                             {(item as HotspotFeature).geometry.coordinates[0]}
                           </TableCell>
-                          <TableCell className="px-4 py-3">
+                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {(item as HotspotFeature).properties.temperature !== undefined
                               ? `${(item as HotspotFeature).properties.temperature}°C`
                               : "-"}
                           </TableCell>
-                          <TableCell className="px-4 py-3">
+                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {(item as HotspotFeature).properties.humidity !== undefined
                               ? `${(item as HotspotFeature).properties.humidity?.toFixed(1)}%`
                               : "-"}
                           </TableCell>
-                          <TableCell className="px-4 py-3">
+                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {translateWeatherCondition((item as HotspotFeature).properties.weather_conditions)}
                           </TableCell>
-                          <TableCell className="px-4 py-3">
+                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {(item as HotspotFeature).properties.frp
                               ? `${(item as HotspotFeature).properties.frp?.toFixed(1)} MW`
                               : "-"}
                           </TableCell>
-                          <TableCell className="px-4 py-3">
+                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {(item as HotspotFeature).properties.brightness
                               ? `${(item as HotspotFeature).properties.brightness?.toFixed(1)} K`
                               : "-"}
                           </TableCell>
-                          <TableCell className="px-4 py-3">
+                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {(item as HotspotFeature).properties.bright_t31
                               ? `${(item as HotspotFeature).properties.bright_t31?.toFixed(1)} K`
                               : "-"}
                           </TableCell>
-                          <TableCell className="px-4 py-3">
+                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {(item as HotspotFeature).properties.bright_ti4
                               ? `${(item as HotspotFeature).properties.bright_ti4?.toFixed(1)} K`
                               : "-"}
                           </TableCell>
-                          <TableCell className="px-4 py-3">
+                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {(item as HotspotFeature).properties.bright_ti5
                               ? `${(item as HotspotFeature).properties.bright_ti5?.toFixed(1)} K`
                               : "-"}
@@ -967,37 +960,33 @@ export default function HotspotTable() {
                         </>
                       ) : (
                         <>
-                          <TableCell className="px-4 py-3">
+                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {new Date((item as AccumulatedData).tanggal).toLocaleDateString('id-ID', {
                               day: '2-digit',
                               month: 'short',
                               year: 'numeric'
                             })}
                           </TableCell>
-                          <TableCell className="px-4 py-3">
+                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {(item as AccumulatedData).satelit}
                           </TableCell>
-                          <TableCell className="px-4 py-3">
-                            <Badge
-                              variant={
-                                (item as AccumulatedData).confidence === "high"
-                                  ? "destructive"
-                                  : (item as AccumulatedData).confidence ===
-                                      "medium"
-                                    ? "secondary"
-                                    : "outline"
-                              }
-                            >
+                          <TableCell className="px-3 py-2.5 text-[0.8rem] whitespace-nowrap">
+                            <span className={cn(
+                              "font-medium uppercase text-[0.7rem] tracking-wide",
+                              (item as AccumulatedData).confidence === "high" && "text-[#c07f10]",
+                              (item as AccumulatedData).confidence === "medium" && "text-[#3d6b35]",
+                              (item as AccumulatedData).confidence === "low" && "text-[#6b7a64]"
+                            )}>
                               {(item as AccumulatedData).confidence}
-                            </Badge>
+                            </span>
                           </TableCell>
-                          <TableCell className="px-4 py-3">
+                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {(item as AccumulatedData).provinsi}
                           </TableCell>
-                          <TableCell className="px-4 py-3">
+                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {(item as AccumulatedData).kota}
                           </TableCell>
-                          <TableCell className="px-4 py-3">
+                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {(item as AccumulatedData).jumlah}
                           </TableCell>
                         </>
@@ -1018,34 +1007,44 @@ export default function HotspotTable() {
             </Table>
           </div>
 
-                    <div className="flex justify-end items-center gap-2 p-4 border-t border-border bg-muted/50">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={goToFirstPage}
-              disabled={apiPage === 1 || loading}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              <ChevronLeft className="h-4 w-4 -ml-2" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={goToPrevPage}
-              disabled={apiPage === 1 || loading}
-            >
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Sebelumnya
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={goToNextPage}
-              disabled={!hasMore || loading}
-            >
-              Selanjutnya
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
+                    <div className="flex justify-between items-center px-5 py-4 border-t border-[#d4ddd0] dark:border-[#2a3a28] bg-[#f9faf8] dark:bg-[#1a221a]">
+            {/* Page Info */}
+            <div className="text-[0.75rem] text-[#6b7a64]">
+              Halaman <span className="font-semibold text-[#192d17] dark:text-[#f3f7f1]">{apiPage}</span>
+              {totalCount > 0 && (
+                <span> · <span className="font-semibold text-[#192d17] dark:text-[#f3f7f1]">{totalCount.toLocaleString('id-ID')}</span> data</span>
+              )}
+            </div>
+
+            {/* Pagination Buttons - Pill Style */}
+            <div className="flex items-center gap-1 bg-[#f0f4ee] dark:bg-[#1a221a] rounded-full p-1 border border-[#d4ddd0] dark:border-[#2a3a28]">
+              <button
+                onClick={goToFirstPage}
+                disabled={apiPage === 1 || loading}
+                className="w-8 h-8 flex items-center justify-center rounded-full text-[#6b7a64] hover:bg-[#192d17] hover:text-[#f3f7f1] disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-[#6b7a64] disabled:cursor-not-allowed transition-all"
+                title="Halaman Pertama"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-4 w-4 -ml-2.5" />
+              </button>
+              <button
+                onClick={goToPrevPage}
+                disabled={apiPage === 1 || loading}
+                className="w-8 h-8 flex items-center justify-center rounded-full text-[#6b7a64] hover:bg-[#192d17] hover:text-[#f3f7f1] disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-[#6b7a64] disabled:cursor-not-allowed transition-all"
+                title="Sebelumnya"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <span className="px-3 text-[0.72rem] font-semibold text-[#192d17] dark:text-[#f3f7f1]">{apiPage}</span>
+              <button
+                onClick={goToNextPage}
+                disabled={!hasMore || loading}
+                className="w-8 h-8 flex items-center justify-center rounded-full text-[#6b7a64] hover:bg-[#192d17] hover:text-[#f3f7f1] disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-[#6b7a64] disabled:cursor-not-allowed transition-all"
+                title="Selanjutnya"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
           </div>
 
         </CardContent>

@@ -1,34 +1,48 @@
 ---
-import BaseLayout from '@/layouts/BaseLayout.astro';
-import StaticNavbar from '@/components/layout/StaticNavbar.astro';
-import StaticFooter from '@/components/layout/StaticFooter.astro';
-import OlapPage from '@/components/olap/OlapPage';
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import StaticNavbar from "@/components/layout/StaticNavbar.astro";
+import StaticFooter from "@/components/layout/StaticFooter.astro";
+import OlapPage from "@/components/olap/OlapPage";
 ---
 
 <BaseLayout
-  title="Peta Hotspot Karhutla - Visualisasi Geografis Real-time"
-  description="Peta interaktif hotspot kebakaran hutan dan lahan Indonesia dengan operasi OLAP (drill-down, roll-up) untuk analisis mendalam berdasarkan lokasi, waktu, confidence, dan satelit."
+    title="Peta Hotspot Karhutla - Visualisasi Geografis"
+    description="Peta interaktif hotspot kebakaran hutan dan lahan Indonesia dengan operasi OLAP (drill-down, roll-up) untuk analisis mendalam berdasarkan lokasi, waktu, confidence, dan satelit."
 >
-  <link rel="dns-prefetch" href="//tile.openstreetmap.fr" />
-  <link rel="preconnect" href="//tile.openstreetmap.fr" crossorigin />
-  <link rel="dns-prefetch" href="//raw.githubusercontent.com" />
+    <link rel="dns-prefetch" href="//tile.openstreetmap.fr" />
+    <link rel="preconnect" href="//tile.openstreetmap.fr" crossorigin />
+    <link rel="dns-prefetch" href="//raw.githubusercontent.com" />
 
-  <StaticNavbar />
+    <StaticNavbar />
 
-  <div class="min-h-screen pt-16">
-    <div class="border-b border-border/60 bg-background/80 backdrop-blur-sm">
-      <div class="max-w-7xl mx-auto px-6 py-4">
-        <div class="flex items-center space-x-2 text-sm text-muted-foreground">
-          <a href="/" class="hover:text-foreground transition-colors" title="Kembali ke Beranda">Beranda</a>
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M9 5l7 7-7 7" />
-          </svg>
-          <span class="text-foreground font-medium">Peta</span>
+    <section class="section-dark pt-20 pb-8">
+        <div class="max-w-[1100px] mx-auto px-6">
+            <!-- Breadcrumb -->
+            <div
+                class="flex items-center space-x-2 text-[0.78rem] text-[#b8c8b1] mb-4"
+            >
+                <a
+                    href="/"
+                    class="hover:text-[#f3f7f1] transition-colors"
+                    title="Kembali ke Beranda">Beranda</a
+                >
+                <span class="text-[#6b7a64]">/</span>
+                <span class="text-[#f3f7f1] font-medium">Peta</span>
+            </div>
+
+            <h1 class="text-2xl font-extrabold text-[#f3f7f1] mb-2">
+                Peta Persebaran Hotspot
+            </h1>
+            <p class="text-[0.9rem] text-[#b8c8b1] max-w-xl">
+                Visualisasi geografis titik panas karhutla dengan operasi OLAP
+                untuk analisis mendalam.
+            </p>
         </div>
-      </div>
-    </div>
-    <OlapPage client:only="react" />
-  </div>
+    </section>
 
-  <StaticFooter />
+    <div class="min-h-screen bg-[#faf8f5] dark:bg-background">
+        <OlapPage client:only="react" />
+    </div>
+
+    <StaticFooter />
 </BaseLayout>

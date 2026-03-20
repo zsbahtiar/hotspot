@@ -3,13 +3,14 @@ import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
-import cloudflare from '@astrojs/cloudflare';
+// REMOVED: cloudflare adapter - not needed for static output
+// import cloudflare from '@astrojs/cloudflare';
 
 // https://astro.build/config
 export default defineConfig({
   integrations: [react()],
   output: 'static',
-  adapter: cloudflare(),
+  // REMOVED: adapter: cloudflare() - causes 46s load time on Cloudflare Pages
   vite: {
     plugins: [
       tailwindcss(),

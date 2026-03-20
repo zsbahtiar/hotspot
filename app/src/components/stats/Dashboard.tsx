@@ -1,24 +1,326 @@
-import { useMemo, lazy, Suspense } from "react";
+import { useMemo, useEffect, lazy, Suspense, useState } from "react";
 import type { HotspotDataGeo } from "@/core/models/hotspot";
-import { formatNumber, extractTime, formatDate, translateWeatherCondition } from "@/core/utils/formatters";
 import {
-  useLatestHotspots,
-  useSummary,
-} from "@/core/hooks/useHotspotQueries";
+  formatNumber,
+  extractTime,
+  formatDate,
+  translateWeatherCondition,
+} from "@/core/utils/formatters";
+import { useLatestHotspots, useSummary } from "@/core/hooks/useHotspotQueries";
 import { Tooltip } from "react-tooltip";
 import { monthNames } from "@/core/models/time";
 import {
-  StatsSkeleton,
   ChartSkeleton,
   CardSkeleton,
 } from "@/components/common/LoadingSkeletons";
-import { Badge } from "@/components/ui/badge";
 
-const StatsSection = lazy(() => import("@/components/stats/StatsSection"));
 const MitigationSection = lazy(
   () => import("@/components/stats/MitigationSection"),
 );
 const ChartComponent = lazy(() => import("@/components/stats/Chart"));
+
+interface ReportedHotspotsSectionProps {
+  latestHotspots: any[];
+  summaryData: {
+    top_provinces: { name: string; count: number }[];
+    top_cities: { name: string; count: number }[];
+    monthly: any[];
+    confidence: Record<string, number>;
+    satellites: Record<string, number>;
+  };
+  isLoading: boolean;
+}
+
+const ReportedHotspotsSection = ({
+  latestHotspots,
+  summaryData,
+  isLoading,
+}: ReportedHotspotsSectionProps) => {
+  const [viewMode, setViewMode] = useState<"provinsi" | "kabupaten">(
+    "provinsi",
+  );
+
+  const tableData =
+    viewMode === "provinsi"
+      ? summaryData.top_provinces
+      : summaryData.top_cities;
+  const totalHotspots = tableData.reduce((sum, item) => sum + item.count, 0);
+
+  return (
+    <section className="py-10 px-6 bg-[#faf8f5] dark:bg-background">
+      <div className="max-w-[1100px] mx-auto">
+        {/* Header with Toggle */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <div>
+            <h2 className="text-xl font-extrabold text-[#192d17] dark:text-[#f3f7f1]">
+              10 Daerah Hotspot Tertinggi 2026
+            </h2>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="inline-flex rounded-lg border border-[#d4ddd0] dark:border-[#2a3a28] p-0.5 bg-white dark:bg-[#1a221a]">
+              <button
+                onClick={() => setViewMode("provinsi")}
+                className={`px-4 py-1.5 text-[0.72rem] font-semibold rounded-md transition-all ${
+                  viewMode === "provinsi"
+                    ? "bg-[#192d17] text-white"
+                    : "text-[#6b7a64] hover:text-[#192d17] dark:hover:text-[#f3f7f1]"
+                }`}
+              >
+                BY PROVINSI
+              </button>
+              <button
+                onClick={() => setViewMode("kabupaten")}
+                className={`px-4 py-1.5 text-[0.72rem] font-semibold rounded-md transition-all ${
+                  viewMode === "kabupaten"
+                    ? "bg-[#192d17] text-white"
+                    : "text-[#6b7a64] hover:text-[#192d17] dark:hover:text-[#f3f7f1]"
+                }`}
+              >
+                BY KABUPATEN
+              </button>
+            </div>
+            <span className="text-[0.72rem] text-[#6b7a64]">
+              {tableData.length} data
+            </span>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#121812] rounded-xl border border-[#d4ddd0] dark:border-[#2a3a28] overflow-hidden">
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-16">
+              <div className="w-6 h-6 border-2 border-[#d4ddd0] border-t-[#3d6b35] rounded-full animate-spin mb-3"></div>
+              <p className="text-[#6b7a64] text-sm">Memuat data...</p>
+            </div>
+          ) : tableData.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-[#f9faf8] dark:bg-[#1a221a] border-b border-[#d4ddd0] dark:border-[#2a3a28]">
+                    <th className="text-left py-3 px-5 text-[0.65rem] font-semibold uppercase tracking-wider text-[#6b7a64]">
+                      {viewMode === "provinsi" ? "PROVINSI" : "KABUPATEN"}
+                    </th>
+                    <th className="text-right py-3 px-5 text-[0.65rem] font-semibold uppercase tracking-wider text-[#6b7a64]">
+                      HOTSPOT
+                    </th>
+                    <th className="text-right py-3 px-5 text-[0.65rem] font-semibold uppercase tracking-wider text-[#6b7a64]">
+                      RUNNING TOTAL
+                    </th>
+                    <th className="text-right py-3 px-5 text-[0.65rem] font-semibold uppercase tracking-wider text-[#6b7a64]">
+                      PERSENTASE
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(() => {
+                    let runningTotal = 0;
+                    return tableData.map((item, index) => {
+                      runningTotal += item.count;
+                      const percentage =
+                        totalHotspots > 0
+                          ? (item.count / totalHotspots) * 100
+                          : 0;
+                      const isHighImpact = percentage > 10;
+
+                      return (
+                        <tr
+                          key={item.name}
+                          className={`border-b border-[#e8ece6] dark:border-[#2a3a28] last:border-b-0 hover:bg-[#f3f6f2] dark:hover:bg-[#1a221a] transition-colors ${
+                            isHighImpact ? "bg-[#fef8ed] dark:bg-[#3d3520]" : ""
+                          }`}
+                        >
+                          <td className="py-4 px-5">
+                            <div
+                              className={`flex items-start gap-3 ${isHighImpact ? "border-l-4 border-[#e4991b] pl-3 -ml-1" : ""}`}
+                            >
+                              <div>
+                                <p className="text-sm font-bold text-[#192d17] dark:text-[#f3f7f1]">
+                                  {item.name}
+                                </p>
+                                <p className="text-[0.72rem] text-[#6b7a64]">
+                                  {viewMode === "provinsi"
+                                    ? "Indonesia"
+                                    : "Provinsi"}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-4 px-5 text-right">
+                            <span className="text-sm font-bold text-[#192d17] dark:text-[#f3f7f1]">
+                              {formatNumber(item.count)}
+                            </span>
+                            <span
+                              className={`ml-2 px-1.5 py-0.5 text-[0.6rem] font-semibold rounded ${
+                                isHighImpact
+                                  ? "bg-[#c07f10]/10 text-[#c07f10]"
+                                  : "bg-[#6b7a64]/10 text-[#6b7a64]"
+                              }`}
+                            >
+                              {isHighImpact ? "HIGH" : "NORMAL"}
+                            </span>
+                          </td>
+                          <td className="py-4 px-5 text-right text-sm text-[#6b7a64]">
+                            {formatNumber(runningTotal)}
+                          </td>
+                          <td className="py-4 px-5 text-right">
+                            <span
+                              className={`text-sm font-bold ${
+                                percentage > 20
+                                  ? "text-[#c07f10]"
+                                  : percentage > 10
+                                    ? "text-[#e4991b]"
+                                    : "text-[#3d6b35]"
+                              }`}
+                            >
+                              {percentage.toFixed(1)}%
+                            </span>
+                            <p className="text-[0.65rem] text-[#6b7a64]">
+                              of {formatNumber(totalHotspots)}
+                            </p>
+                          </td>
+                        </tr>
+                      );
+                    });
+                  })()}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <p className="text-[#6b7a64] text-sm">Tidak ada data</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// Latest Hotspots Section
+interface LatestHotspotsSectionProps {
+  latestHotspots: any[];
+  isLoading: boolean;
+}
+
+const LatestHotspotsSection = ({
+  latestHotspots,
+  isLoading,
+}: LatestHotspotsSectionProps) => {
+  return (
+    <section className="py-10 px-6 bg-[#f3f6f2] dark:bg-[#1a221a]">
+      <div className="max-w-[1100px] mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <p className="text-[0.62rem] font-semibold uppercase tracking-[0.1em] text-[#6b7a64] mb-1">
+              UPDATE · TERKINI
+            </p>
+            <h2 className="text-xl font-extrabold text-[#192d17] dark:text-[#f3f7f1]">
+              Data Hotspot Terbaru
+            </h2>
+          </div>
+          <a
+            href="/data"
+            className="text-[0.75rem] font-semibold text-[#3d6b35] hover:text-[#2a4a26] dark:text-[#8fc483] dark:hover:text-[#a8d49f] transition-colors"
+          >
+            Lihat Semua →
+          </a>
+        </div>
+
+        {/* Table with Border Card */}
+        <div className="bg-white dark:bg-[#121812] rounded-xl border border-[#d4ddd0] dark:border-[#2a3a28] overflow-hidden">
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="w-6 h-6 border-2 border-[#d4ddd0] border-t-[#3d6b35] rounded-full animate-spin mb-3"></div>
+              <p className="text-[#6b7a64] text-sm">Memuat data...</p>
+            </div>
+          ) : latestHotspots.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-[#f9faf8] dark:bg-[#1a221a] border-b border-[#d4ddd0] dark:border-[#2a3a28]">
+                    <th className="text-left py-3 px-5 text-[0.65rem] font-semibold uppercase tracking-wider text-[#6b7a64]">
+                      LOKASI
+                    </th>
+                    <th className="text-left py-3 px-5 text-[0.65rem] font-semibold uppercase tracking-wider text-[#6b7a64]">
+                      WAKTU
+                    </th>
+                    <th className="text-left py-3 px-5 text-[0.65rem] font-semibold uppercase tracking-wider text-[#6b7a64]">
+                      SATELIT
+                    </th>
+                    <th className="text-right py-3 px-5 text-[0.65rem] font-semibold uppercase tracking-wider text-[#6b7a64]">
+                      CONFIDENCE
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {latestHotspots.map((hotspot, index) => {
+                    const isHigh = hotspot.confidence_class === "HIGH";
+                    return (
+                      <tr
+                        key={index}
+                        className={`border-b border-[#e8ece6] dark:border-[#2a3a28] last:border-b-0 hover:bg-[#f3f6f2] dark:hover:bg-[#1a221a] transition-colors ${
+                          isHigh ? "bg-[#fef8ed] dark:bg-[#3d3520]" : ""
+                        }`}
+                      >
+                        <td className="py-4 px-5">
+                          <div
+                            className={`${isHigh ? "border-l-4 border-[#e4991b] pl-3 -ml-1" : ""}`}
+                          >
+                            <p className="text-sm font-bold text-[#192d17] dark:text-[#f3f7f1]">
+                              {hotspot.city_name || "N/A"},{" "}
+                              {hotspot.province_name || "N/A"}
+                            </p>
+                            <p className="text-[0.72rem] text-[#6b7a64]">
+                              {hotspot.subdistrict_name || ""}
+                              {hotspot.district_name
+                                ? `, ${hotspot.district_name}`
+                                : ""}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="py-4 px-5">
+                          <p className="text-sm text-[#192d17] dark:text-[#f3f7f1]">
+                            {formatDate(hotspot.acquired_at)}
+                          </p>
+                          <p className="text-[0.72rem] text-[#6b7a64]">
+                            {extractTime(hotspot.acquired_at)}
+                          </p>
+                        </td>
+                        <td className="py-4 px-5">
+                          <span className="text-sm font-medium text-[#3d6b35] dark:text-[#8fc483]">
+                            {hotspot.satellite_name || "N/A"}
+                          </span>
+                        </td>
+                        <td className="py-4 px-5 text-right">
+                          <span
+                            className={`px-2 py-1 text-[0.65rem] font-semibold rounded ${
+                              hotspot.confidence_class === "HIGH"
+                                ? "bg-[#c07f10]/10 text-[#c07f10]"
+                                : hotspot.confidence_class === "MEDIUM"
+                                  ? "bg-[#6b7a64]/10 text-[#6b7a64]"
+                                  : "bg-[#3d6b35]/10 text-[#3d6b35]"
+                            }`}
+                          >
+                            {hotspot.confidence_class || "NOMINAL"}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-[#6b7a64] text-sm">
+                Tidak ada data hotspot terbaru
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+};
 
 interface MainProps {
   showHero?: boolean;
@@ -26,27 +328,39 @@ interface MainProps {
   currentYear?: number;
 }
 
-const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps) => {
+const Main = ({
+  showHero = true,
+  showMitigation = true,
+  currentYear,
+}: MainProps) => {
   const year = currentYear ?? 2025;
 
   const ytdDateRange = useMemo(() => {
     const now = new Date();
     const startOfYear = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
-    const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    const endOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      23,
+      59,
+      59,
+      999,
+    );
 
     const formatWithTimezone = (date: Date) => {
       const offset = -date.getTimezoneOffset();
-      const sign = offset >= 0 ? '+' : '-';
-      const hours = String(Math.floor(Math.abs(offset) / 60)).padStart(2, '0');
-      const minutes = String(Math.abs(offset) % 60).padStart(2, '0');
+      const sign = offset >= 0 ? "+" : "-";
+      const hours = String(Math.floor(Math.abs(offset) / 60)).padStart(2, "0");
+      const minutes = String(Math.abs(offset) % 60).padStart(2, "0");
       const tzOffset = `${sign}${hours}:${minutes}`;
 
       const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const hour = String(date.getHours()).padStart(2, '0');
-      const min = String(date.getMinutes()).padStart(2, '0');
-      const sec = String(date.getSeconds()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const hour = String(date.getHours()).padStart(2, "0");
+      const min = String(date.getMinutes()).padStart(2, "0");
+      const sec = String(date.getSeconds()).padStart(2, "0");
 
       return `${year}-${month}-${day}T${hour}:${min}:${sec}${tzOffset}`;
     };
@@ -167,39 +481,51 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
     }
   }, [hotspotData.features, summaryData]);
 
+  const cumulativeData = useMemo(() => {
+    let runningTotal = 0;
+    return monthlyHotspotTrends.map(([month, counts]) => {
+      runningTotal += counts.total;
+      return { month, cumulative: runningTotal };
+    });
+  }, [monthlyHotspotTrends]);
+
   const chartData = useMemo(
     () => ({
-      labels: monthlyHotspotTrends.map(([month]) => month),
+      labels: cumulativeData.map((d) => {
+        const shortMonths: Record<string, string> = {
+          Januari: "Jan",
+          Februari: "Feb",
+          Maret: "Mar",
+          April: "Apr",
+          Mei: "Mei",
+          Juni: "Jun",
+          Juli: "Jul",
+          Agustus: "Agu",
+          September: "Sep",
+          Oktober: "Okt",
+          November: "Nov",
+          Desember: "Des",
+        };
+        return shortMonths[d.month] || d.month;
+      }),
       datasets: [
         {
-          label: "Jumlah Hotspot per Bulan",
-          data: monthlyHotspotTrends.map(([, counts]) => counts.total),
-          borderColor: "#22c55e",
-          backgroundColor: "rgba(34, 197, 94, 0.1)",
+          label: "Akumulasi Hotspot",
+          data: cumulativeData.map((d) => d.cumulative),
+          borderColor: "#3d6b35",
+          backgroundColor: "rgba(61, 107, 53, 0.12)",
           borderWidth: 2,
-          pointBackgroundColor: "#22c55e",
+          pointBackgroundColor: "#3d6b35",
           pointBorderColor: "#ffffff",
-          pointBorderWidth: 1,
+          pointBorderWidth: 2,
           pointRadius: 4,
-          tension: 0.2,
-          fill: true,
-        },
-        {
-          label: "Confidence Tinggi",
-          data: monthlyHotspotTrends.map(([, counts]) => counts.highConfidence),
-          borderColor: "#ef4444",
-          backgroundColor: "rgba(239, 68, 68, 0.1)",
-          borderWidth: 2,
-          pointBackgroundColor: "#ef4444",
-          pointBorderColor: "#ffffff",
-          pointBorderWidth: 1,
-          pointRadius: 4,
-          tension: 0.2,
-          fill: true,
+          pointHoverRadius: 6,
+          tension: 0.4,
+          fill: "origin",
         },
       ],
     }),
-    [monthlyHotspotTrends],
+    [cumulativeData],
   );
 
   const stats = useMemo(() => {
@@ -220,6 +546,42 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
     };
   }, [summaryData, summaryRes]);
 
+  // Update hero counter elements
+  useEffect(() => {
+    const totalCounter = document.getElementById("total-counter");
+    const todayCounter = document.getElementById("today-counter");
+    const lastUpdate = document.getElementById("last-update");
+    const totalReports = document.getElementById("total-reports");
+    const todayChange = document.getElementById("today-change");
+    const heroChart = document.getElementById("hero-chart-container");
+
+    if (totalCounter && stats.totalHotspots) {
+      totalCounter.textContent = formatNumber(stats.totalHotspots);
+    }
+    if (todayCounter && stats.todayHotspots !== undefined) {
+      todayCounter.textContent = formatNumber(stats.todayHotspots);
+    }
+    if (lastUpdate) {
+      lastUpdate.textContent = new Date().toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
+    }
+    if (totalReports && summaryData?.monthly?.length) {
+      const total = summaryData.monthly.reduce((sum, m) => sum + m.total, 0);
+      totalReports.textContent = formatNumber(total);
+    }
+    if (todayChange && stats.todayHotspots !== undefined) {
+      // Calculate change percentage (simplified)
+      const change = stats.todayHotspots > 0 ? `+${stats.todayHotspots}` : "0";
+      todayChange.textContent = change;
+    }
+    // Hide static chart placeholder since we show chart in dashboard
+    if (heroChart) {
+      heroChart.style.display = "none";
+    }
+  }, [stats, summaryData]);
 
   const latestHotspots = latestHotspotsRes?.data?.hotspots || [];
 
@@ -307,411 +669,196 @@ const Main = ({ showHero = true, showMitigation = true, currentYear }: MainProps
         </section>
       )}
 
-      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-background">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl sm:text-5xl font-bold mb-6 text-foreground tracking-tight">
-              Data Hotspot Terkini
+      <section className="py-12 px-6 bg-[#faf8f5] dark:bg-background">
+        <div className="max-w-[1100px] mx-auto">
+          {/* Header */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-extrabold text-[#192d17] dark:text-[#f3f7f1] mb-3 leading-tight">
+              Tren Titik Panas
             </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Monitoring hotspot kebakaran hutan dan lahan Indonesia bersumber
-              dari&nbsp;
-              <a
-                href="https://firms.modaps.eosdis.nasa.gov/"
-                target="_blank"
-                rel="nofollow noopener noreferrer"
-                className="text-primary hover:underline font-medium"
-                title="NASA Fire Information for Resource Management System"
-              >
-                NASA FIRMS
-              </a>{" "}
-              dan&nbsp;
-              <a
-                href="https://www.visualcrossing.com/"
-                target="_blank"
-                rel="nofollow noopener noreferrer"
-                className="text-primary hover:underline font-medium"
-                title="Visual Crossing Weather Data & API"
-              >
-                Visual Crossing
-              </a>
+            <p className="text-[0.85rem] text-[#6b7a64] leading-relaxed max-w-2xl">
+              Data titik panas yang terdeteksi dari satelit NASA FIRMS.
+              Monitoring untuk pencegahan kebakaran hutan dan lahan di
+              Indonesia.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-0 lg:divide-x divide-border">
-            {/* Data Terbaru */}
-            <div className="lg:pr-8">
-              <div className="mb-6">
-                <h3 className="text-foreground text-xl font-semibold">
-                  Data Terbaru
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Update terkini
+          {/* Two Column Grid: Chart + Latest Hotspots */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+            {/* Left: Chart Card */}
+            <div className="bg-white dark:bg-[#121812] rounded-xl border border-[#d4ddd0] dark:border-[#2a3a28] p-5 shadow-sm h-full">
+              <div className="mb-3">
+                <p className="text-[0.62rem] font-semibold uppercase tracking-[0.1em] text-[#6b7a64] mb-1">
+                  TRENDLINE
+                </p>
+                <p className="text-sm font-bold text-[#192d17] dark:text-[#f3f7f1]">
+                  Akumulasi Titik Panas
                 </p>
               </div>
+              <div className="h-52">
+                <Suspense fallback={<ChartSkeleton />}>
+                  <ChartComponent chartData={chartData} isLoading={isLoading} />
+                </Suspense>
+              </div>
+              <p className="text-[0.7rem] text-[#9ca896] mt-3">
+                Jan {year} –{" "}
+                {new Date().toLocaleDateString("id-ID", { month: "short" })}{" "}
+                {year}
+              </p>
 
+              {/* Confidence Distribution */}
+              <div className="mt-5 pt-5 border-t border-[#e8ece6] dark:border-[#2a3a28]">
+                <p className="text-[0.62rem] font-semibold uppercase tracking-[0.1em] text-[#6b7a64] mb-3">
+                  Distribusi Confidence Level
+                </p>
+                <div className="space-y-2.5">
+                  {(() => {
+                    const confidenceData = [
+                      {
+                        key: "HIGH",
+                        label: "Tinggi",
+                        range: "80–100%",
+                        color: "#c07f10",
+                      },
+                      {
+                        key: "MEDIUM",
+                        label: "Sedang",
+                        range: "30–79%",
+                        color: "#e4991b",
+                      },
+                      {
+                        key: "LOW",
+                        label: "Rendah",
+                        range: "0–29%",
+                        color: "#709663",
+                      },
+                    ];
+                    const totalConfidence = Object.values(
+                      summaryData.confidence,
+                    ).reduce((a, b) => a + b, 0);
+
+                    return confidenceData.map(
+                      ({ key, label, range, color }) => {
+                        const count = summaryData.confidence[key] || 0;
+                        const percentage =
+                          totalConfidence > 0
+                            ? (count / totalConfidence) * 100
+                            : 0;
+
+                        return (
+                          <div key={key} className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 w-28">
+                              <span
+                                className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                                style={{ backgroundColor: color }}
+                              ></span>
+                              <span className="text-[0.72rem] text-[#4a5648] dark:text-[#b8c8b1]">
+                                {label} ({range})
+                              </span>
+                            </div>
+                            <div className="flex-1 h-4 bg-[#f3f6f2] dark:bg-[#1a221a] rounded-full overflow-hidden">
+                              <div
+                                className="h-full rounded-full transition-all duration-500"
+                                style={{
+                                  width: `${percentage}%`,
+                                  backgroundColor: color,
+                                }}
+                              ></div>
+                            </div>
+                            <span className="text-[0.75rem] font-bold text-[#192d17] dark:text-[#f3f7f1] w-14 text-right">
+                              {formatNumber(count)}
+                            </span>
+                          </div>
+                        );
+                      },
+                    );
+                  })()}
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Latest Hotspots Card */}
+            <div className="bg-white dark:bg-[#121812] rounded-xl border border-[#d4ddd0] dark:border-[#2a3a28] overflow-hidden shadow-sm flex flex-col h-full">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-[#e8ece6] dark:border-[#2a3a28]">
+                <div>
+                  <p className="text-[0.62rem] font-semibold uppercase tracking-[0.1em] text-[#6b7a64] mb-1">
+                    UPDATE · TERKINI
+                  </p>
+                  <p className="text-sm font-bold text-[#192d17] dark:text-[#f3f7f1]">
+                    Data Hotspot Terbaru
+                  </p>
+                </div>
+                <a
+                  href="/data"
+                  className="text-[0.72rem] font-semibold text-[#3d6b35] hover:text-[#2a4a26] dark:text-[#8fc483] dark:hover:text-[#a8d49f] transition-colors"
+                >
+                  Lihat Semua →
+                </a>
+              </div>
               {isLoading ? (
-                <div className="flex flex-col items-center justify-center py-16">
-                  <div className="w-8 h-8 border-2 border-muted border-t-primary rounded-full animate-spin mb-4"></div>
-                  <p className="text-muted-foreground text-lg font-medium">
+                <div className="flex flex-col items-center justify-center py-16 flex-1">
+                  <div className="w-5 h-5 border-2 border-[#d4ddd0] border-t-[#3d6b35] rounded-full animate-spin mb-2"></div>
+                  <p className="text-[#6b7a64] text-[0.75rem]">
                     Memuat data...
                   </p>
                 </div>
               ) : latestHotspots.length > 0 ? (
-                <div className="space-y-4">
-                  {latestHotspots.map((hotspot, index) => (
-                    <div
-                      key={index}
-                      className={`py-5 ${
-                        index < latestHotspots.length - 1 ? "border-b border-border" : ""
-                      }`}
-                    >
-                      <div className="grid grid-cols-[100px_1fr] gap-x-4 gap-y-3 text-sm">
-                        <span className="font-medium text-muted-foreground uppercase tracking-wide">
-                          Tanggal
-                        </span>
-                        <span className="text-foreground font-medium text-right">
-                          {formatDate(hotspot.acquired_at)}
-                        </span>
-
-                        <span className="font-medium text-muted-foreground uppercase tracking-wide">
-                          Waktu
-                        </span>
-                        <span className="text-foreground font-medium text-right">
-                          {extractTime(hotspot.acquired_at)}
-                        </span>
-
-                        <span className="font-medium text-muted-foreground uppercase tracking-wide">
-                          Sumber
-                        </span>
-                        <span className="text-foreground font-medium text-right">
-                          {hotspot.satellite_name || "N/A"}
-                        </span>
-
-                        <span className="font-medium text-muted-foreground uppercase tracking-wide">
-                          Lokasi
-                        </span>
-                        <span className="text-foreground text-right leading-relaxed">
-                          {hotspot.subdistrict_name || "N/A"}, {hotspot.district_name || "N/A"}
-                          <br />
-                          {hotspot.city_name || "N/A"}, {hotspot.province_name || "N/A"}
-                        </span>
-
-                        <span className="font-medium text-muted-foreground uppercase tracking-wide">
-                          Confidence
-                        </span>
-                        <span className="text-foreground font-medium text-right">
-                          {hotspot.confidence_class === "HIGH" ? (
-                            <Badge variant="destructive">HIGH</Badge>
-                          ) : (
-                            hotspot.confidence_class || "NOMINAL"
-                          )}
-                        </span>
-                      </div>
-                      {hotspot.weather_conditions && (
-                        <div className="mt-3">
-                          <div className="grid grid-cols-[100px_1fr] gap-x-4 gap-y-2 text-sm">
-                            <span className="font-medium text-muted-foreground uppercase tracking-wide">
-                              Cuaca
-                            </span>
-                            <span className="text-foreground font-medium text-right">
-                              {translateWeatherCondition(hotspot.weather_conditions)}
-                            </span>
-
-                            <span className="text-muted-foreground">Suhu</span>
-                            <span className="text-foreground text-right">{hotspot.temperature}°C</span>
-
-                            <span className="text-muted-foreground">Kelembaban</span>
-                            <span className="text-foreground text-right">{hotspot.humidity}%</span>
-
-                            <span className="text-muted-foreground">Angin</span>
-                            <span className="text-foreground text-right">{hotspot.wind_speed} km/h</span>
-
-                            <span className="text-muted-foreground">Hujan</span>
-                            <span className="text-foreground text-right">{hotspot.precipitation} mm</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-16">
-                  <div className="w-16 h-16 bg-secondary rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <svg
-                      className="w-8 h-8 text-muted-foreground"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-                      />
-                    </svg>
-                  </div>
-                  <p className="text-muted-foreground font-medium">
-                    Tidak ada data hotspot
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Statistik Hotspot */}
-            <div className="lg:pl-8 pt-8 lg:pt-0 border-t lg:border-t-0 border-border">
-              <div className="mb-6">
-                <h3 className="text-foreground text-xl font-semibold">
-                  Statistik Hotspot
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Analitik data hotspot Tahun <span suppressHydrationWarning>{year}</span>
-                </p>
-              </div>
-
-              {/* Chart */}
-              <div className="bg-secondary rounded-xl h-64 flex items-center justify-center mb-6">
-                <Suspense fallback={<ChartSkeleton />}>
-                  <ChartComponent
-                    chartData={chartData}
-                    isLoading={isLoading}
-                  />
-                </Suspense>
-              </div>
-
-              {/* Top Provinsi & Kabupaten */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div className="border-l-4 border-primary pl-4">
-                  <h5 className="text-sm font-medium text-foreground mb-2">
-                    Top Provinsi
-                  </h5>
-                  <div className="space-y-1">
-                    {summaryData?.top_provinces?.length > 0 &&
-                      summaryData.top_provinces.map((province) => (
-                        <div key={province.name} className="flex justify-between text-xs">
-                          <span className="text-muted-foreground">{province.name}</span>
-                          <span className="font-medium text-foreground">{province.count}</span>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-                <div className="border-l-4 border-primary pl-4">
-                  <h5 className="text-sm font-medium text-foreground mb-2">
-                    Top Kabupaten
-                  </h5>
-                  <div className="space-y-1">
-                    {summaryData?.top_cities?.length > 0 &&
-                      summaryData.top_cities.map((city) => (
-                        <div key={city.name} className="flex justify-between text-xs">
-                          <span className="text-muted-foreground">{city.name}</span>
-                          <span className="font-medium text-foreground">{city.count}</span>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Analisis Waktu */}
-              <div className="border-l-4 border-primary pl-4 mb-6">
-                <h5 className="text-sm font-medium text-foreground mb-3">
-                  Analisis Waktu
-                </h5>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-sm font-medium text-foreground mb-1">Periode</div>
-                    <div className="text-xs text-muted-foreground">
-                      {summaryData?.monthly?.length > 0 ? (() => {
-                        const firstMonth = new Date(summaryData.monthly[0].month);
-                        const lastMonth = new Date(summaryData.monthly[summaryData.monthly.length - 1].month);
-                        const startDate = new Date(firstMonth.getFullYear(), firstMonth.getMonth(), 1);
-                        const endDate = new Date(lastMonth.getFullYear(), lastMonth.getMonth() + 1, 0);
-                        return `${startDate.toLocaleDateString("id-ID")} - ${endDate.toLocaleDateString("id-ID")}`;
-                      })() : "Tidak ada data"}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium text-foreground mb-1">Rata-rata per Hari</div>
-                    <div className="text-xs text-muted-foreground">
-                      {summaryData?.monthly?.length > 0 ? (() => {
-                        const totalHotspots = summaryData.monthly.reduce((sum, month) => sum + month.total, 0);
-                        const firstMonth = new Date(summaryData.monthly[0].month);
-                        const startDate = new Date(firstMonth.getFullYear(), firstMonth.getMonth(), 1);
-                        const endDate = new Date();
-                        const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-                        return Math.round(totalHotspots / daysDiff);
-                      })() : 0} hotspot
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Distribusi Bulanan */}
-              <div className="mb-6">
-                <h5 className="text-sm font-medium text-foreground mb-3">
-                  Distribusi Bulanan
-                </h5>
-                <div className="grid grid-cols-3 gap-2 text-center">
-                  {summaryData?.monthly?.length > 0 ? (
-                    summaryData.monthly.map((monthData) => {
-                      const date = new Date(monthData.month);
-                      const monthIndex = date.getMonth();
-                      const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
-                      const displayMonth = monthNames[monthIndex];
-
-                      return (
-                        <div key={monthData.month} className="bg-secondary p-2 rounded">
-                          <div className="text-xs text-muted-foreground">{displayMonth}</div>
-                          <div className="text-sm font-medium text-foreground">{monthData.total}</div>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div className="col-span-3 text-center py-4 text-muted-foreground text-sm">
-                      Tidak ada data
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Summary Stats */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="text-center py-4 border-b border-r border-border">
-                  <div className="text-2xl font-bold text-primary">
-                    {stats.totalHotspots ? formatNumber(stats.totalHotspots) : "-"}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Jumlah Hotspot</div>
-                </div>
-                <div className="text-center py-4 border-b border-border">
-                  <div className="text-2xl font-bold text-primary">
-                    {stats.highConfidence ? formatNumber(stats.highConfidence) : "-"}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Confidence Tinggi</div>
-                </div>
-                <div className="text-center py-4 border-r border-border">
-                  <div className="text-lg font-bold text-primary">
-                    {stats.topLocation ? stats.topLocation : "-"}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Lokasi Tertinggi</div>
-                </div>
-                <div className="text-center py-4">
-                  <div className="text-2xl font-bold text-primary">
-                    {stats.affectedProvinces ? stats.affectedProvinces : "-"}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Provinsi Terdampak</div>
-                </div>
-              </div>
-
-              {/* Distribusi Confidence Level */}
-              <div className="mb-6">
-                <h4 className="text-sm font-medium text-foreground mb-3">
-                  Distribusi Confidence Level
-                </h4>
-                <div className="space-y-2">
-                  {[
-                    { level: "Tinggi", range: "80-100%", bgColor: "#ef4444", dotClass: "bg-red-500", confidence: "high" },
-                    { level: "Sedang", range: "30-79%", bgColor: "#eab308", dotClass: "bg-yellow-500", confidence: "medium" },
-                    { level: "Rendah", range: "0-29%", bgColor: "#22c55e", dotClass: "bg-green-500", confidence: "low" },
-                  ].map((item) => {
-                    const count = summaryData?.confidence?.[item.confidence.toUpperCase()] ||
-                      hotspotData.features?.filter((f) => f.properties.confidence === item.confidence).length || 0;
-
-                    const confidenceData = summaryData?.confidence || {};
-                    const backendHigh = (confidenceData.HIGH || 0) + (confidenceData.NOMINAL || 0);
-                    const backendMedium = confidenceData.MEDIUM || 0;
-                    const backendLow = confidenceData.LOW || 0;
-
-                    const maxCount = Math.max(backendHigh, backendMedium, backendLow);
-                    const lineWidth = maxCount > 0 ? (count / maxCount) * 100 : 0;
-
+                <div className="divide-y divide-[#e8ece6] dark:divide-[#2a3a28] flex-1 flex flex-col">
+                  {latestHotspots.slice(0, 5).map((hotspot, index) => {
+                    const isHigh = hotspot.confidence_class === "HIGH";
                     return (
-                      <div key={item.confidence} className="flex items-center">
-                        <div className="flex items-center space-x-2 min-w-0 flex-1">
-                          <div className={`w-3 h-3 rounded-full flex-shrink-0 ${item.dotClass}`}></div>
-                          <span className="text-sm text-muted-foreground truncate">
-                            {item.level} ({item.range})
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <div className="w-64 bg-secondary rounded-full h-3 overflow-hidden">
-                            <div
-                              className="h-full rounded-full transition-all duration-500 ease-out"
-                              style={{ width: `${lineWidth}%`, backgroundColor: item.bgColor }}
-                            ></div>
+                      <div
+                        key={index}
+                        className={`px-5 py-4 hover:bg-[#f3f6f2] dark:hover:bg-[#1a221a] transition-colors flex-1 flex items-center ${
+                          isHigh ? "bg-[#fef8ed] dark:bg-[#3d3520]" : ""
+                        }`}
+                      >
+                        <div
+                          className={`w-full ${isHigh ? "border-l-3 border-[#e4991b] pl-3 -ml-1" : ""}`}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0 flex-1">
+                              <p className="text-[0.8rem] font-bold text-[#192d17] dark:text-[#f3f7f1] truncate">
+                                {hotspot.city_name || "N/A"},{" "}
+                                {hotspot.province_name || "N/A"}
+                              </p>
+                              <p className="text-[0.68rem] text-[#6b7a64] truncate">
+                                {formatDate(hotspot.acquired_at)} ·{" "}
+                                {extractTime(hotspot.acquired_at)}
+                              </p>
+                            </div>
+                            <span
+                              className={`flex-shrink-0 px-1.5 py-0.5 text-[0.6rem] font-semibold rounded ${
+                                hotspot.confidence_class === "HIGH"
+                                  ? "bg-[#c07f10]/10 text-[#c07f10]"
+                                  : hotspot.confidence_class === "MEDIUM"
+                                    ? "bg-[#6b7a64]/10 text-[#6b7a64]"
+                                    : "bg-[#3d6b35]/10 text-[#3d6b35]"
+                              }`}
+                            >
+                              {hotspot.confidence_class || "NOMINAL"}
+                            </span>
                           </div>
-                          <span className="text-sm font-medium text-foreground min-w-[3ch] text-right">
-                            {count}
-                          </span>
                         </div>
                       </div>
                     );
                   })}
                 </div>
-              </div>
-
-              {/* Sumber Satelit */}
-              <div>
-                <h4 className="text-sm font-medium text-foreground mb-3">
-                  Sumber Satelit
-                </h4>
-                <div className="space-y-2">
-                  {(() => {
-                    const satelliteColors: Record<string, { bgColor: string; dotClass: string }> = {
-                      N: { bgColor: "#3b82f6", dotClass: "bg-blue-500" },
-                      N20: { bgColor: "#06b6d4", dotClass: "bg-cyan-500" },
-                      N21: { bgColor: "#10b981", dotClass: "bg-emerald-500" },
-                      Aqua: { bgColor: "#8b5cf6", dotClass: "bg-purple-500" },
-                      Terra: { bgColor: "#f59e0b", dotClass: "bg-amber-500" },
-                    };
-
-                    const satellitesData = summaryData?.satellites || {};
-                    const satelliteEntries = Object.entries(satellitesData);
-
-                    if (satelliteEntries.length === 0) {
-                      return (
-                        <div className="text-center py-4 text-muted-foreground text-sm">
-                          Tidak ada data satelit
-                        </div>
-                      );
-                    }
-
-                    const maxCount = Math.max(...satelliteEntries.map(([, count]) => count));
-
-                    return satelliteEntries.map(([name, count]) => {
-                      const colors = satelliteColors[name] || { bgColor: "#6b7280", dotClass: "bg-gray-500" };
-                      const lineWidth = maxCount > 0 ? (count / maxCount) * 100 : 0;
-
-                      return (
-                        <div key={name} className="flex items-center">
-                          <div className="flex items-center space-x-2 min-w-0 flex-1">
-                            <div className={`w-3 h-3 rounded-full flex-shrink-0 ${colors.dotClass}`}></div>
-                            <span className="text-sm text-muted-foreground truncate">{name}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <div className="w-64 bg-secondary rounded-full h-3 overflow-hidden">
-                              <div
-                                className="h-full rounded-full transition-all duration-500 ease-out"
-                                style={{ width: `${lineWidth}%`, backgroundColor: colors.bgColor }}
-                              ></div>
-                            </div>
-                            <span className="text-sm font-medium text-foreground min-w-[3ch] text-right">
-                              {count}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    });
-                  })()}
+              ) : (
+                <div className="text-center py-16 flex-1 flex items-center justify-center">
+                  <p className="text-[#6b7a64] text-[0.8rem]">Tidak ada data</p>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
       </section>
 
-      <Suspense fallback={<StatsSkeleton />}>
-        <StatsSection stats={stats} isLoading={isLoading} />
-      </Suspense>
+      <ReportedHotspotsSection
+        latestHotspots={latestHotspots}
+        summaryData={summaryData}
+        isLoading={isLoading}
+      />
 
       {showMitigation && (
         <Suspense fallback={<CardSkeleton count={3} />}>

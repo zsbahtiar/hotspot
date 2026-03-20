@@ -1,165 +1,244 @@
 ---
-// StaticNavbar.astro - Static navbar for homepage (no React/JavaScript needed)
+
 ---
 
-<nav class="bg-background/80 backdrop-blur-xl border-b border-border/60 fixed w-full top-0 z-[99999] shadow-sm">
-  <div class="max-w-7xl mx-auto px-6">
-    <div class="flex justify-between items-center h-16">
-      <!-- Logo -->
-      <a href="/" class="flex items-center space-x-3 min-w-0 group" title="OLAP Hotspot - Beranda">
-        <div class="relative">
-          <img
-            src="/assets/ipb.webp"
-            alt="Logo"
-            width="32"
-            height="32"
-            class="flex-shrink-0 rounded-lg transition-transform duration-200 group-hover:scale-105"
-          />
+<nav class="section-dark fixed w-full top-0 z-[99999]">
+    <div class="max-w-[1100px] mx-auto px-6">
+        <div class="flex justify-between items-center h-14">
+            <!-- Logo - Text only -->
+            <a href="/" class="flex items-center min-w-0">
+                <span class="text-base font-bold text-[#f3f7f1] tracking-tight">
+                    Hotspot Karhutla
+                </span>
+            </a>
+
+            <!-- Desktop Navigation -->
+            <div class="hidden md:flex items-center space-x-6">
+                <a
+                    href="/"
+                    id="nav-home"
+                    class="nav-link text-sm font-medium text-[#b8c8b1] hover:text-[#f3f7f1] transition-colors duration-200"
+                >
+                    Beranda
+                </a>
+                <a
+                    href="/map"
+                    id="nav-map"
+                    class="nav-link text-sm font-medium text-[#b8c8b1] hover:text-[#f3f7f1] transition-colors duration-200"
+                >
+                    Peta
+                </a>
+                <a
+                    href="/data"
+                    id="nav-data"
+                    class="nav-link text-sm font-medium text-[#b8c8b1] hover:text-[#f3f7f1] transition-colors duration-200"
+                >
+                    Data
+                </a>
+                <a
+                    href="/about"
+                    id="nav-about"
+                    class="nav-link text-sm font-medium text-[#b8c8b1] hover:text-[#f3f7f1] transition-colors duration-200"
+                >
+                    Tentang
+                </a>
+            </div>
+
+            <!-- Theme Toggle + Mobile Menu Button -->
+            <div class="flex items-center space-x-2">
+                <button
+                    id="theme-toggle"
+                    type="button"
+                    class="p-2 rounded-full hover:bg-white/10 text-[#b8c8b1] hover:text-[#f3f7f1] transition-colors duration-200"
+                    aria-label="Toggle theme"
+                >
+                    <svg
+                        class="w-5 h-5 hidden dark:block"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+                        ></path>
+                    </svg>
+                    <svg
+                        class="w-5 h-5 dark:hidden"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+                        ></path>
+                    </svg>
+                </button>
+
+                <!-- Mobile menu button -->
+                <button
+                    id="mobile-menu-button"
+                    type="button"
+                    class="md:hidden p-2 hover:bg-white/10 text-[#b8c8b1] hover:text-[#f3f7f1] transition-colors duration-200 rounded-full"
+                    aria-label="Toggle menu"
+                >
+                    <svg
+                        class="w-6 h-6"
+                        id="menu-icon"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                    <svg
+                        class="w-6 h-6 hidden"
+                        id="close-icon"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
         </div>
-        <div class="min-w-0">
-          <div class="text-base font-bold text-foreground tracking-tight truncate">
-            Hotspot Karhutla
-          </div>
-          <div class="text-xs text-muted-foreground truncate">
-            Monitoring System
-          </div>
+
+        <!-- Mobile menu -->
+        <div
+            id="mobile-menu"
+            class="hidden md:hidden pb-4 border-t border-white/10 mt-2 pt-3"
+        >
+            <div class="flex flex-col space-y-1">
+                <a
+                    href="/"
+                    id="nav-home-mobile"
+                    class="px-4 py-2.5 text-sm font-medium text-[#b8c8b1] hover:text-[#f3f7f1] hover:bg-white/5 rounded-lg transition-all duration-200"
+                >
+                    Beranda
+                </a>
+                <a
+                    href="/map"
+                    id="nav-map-mobile"
+                    class="px-4 py-2.5 text-sm font-medium text-[#b8c8b1] hover:text-[#f3f7f1] hover:bg-white/5 rounded-lg transition-all duration-200"
+                >
+                    Peta
+                </a>
+                <a
+                    href="/data"
+                    id="nav-data-mobile"
+                    class="px-4 py-2.5 text-sm font-medium text-[#b8c8b1] hover:text-[#f3f7f1] hover:bg-white/5 rounded-lg transition-all duration-200"
+                >
+                    Data
+                </a>
+                <a
+                    href="/about"
+                    id="nav-about-mobile"
+                    class="px-4 py-2.5 text-sm font-medium text-[#b8c8b1] hover:text-[#f3f7f1] hover:bg-white/5 rounded-lg transition-all duration-200"
+                >
+                    Tentang
+                </a>
+            </div>
         </div>
-      </a>
-
-      <!-- Desktop Navigation -->
-      <div class="hidden md:flex items-center space-x-2">
-        <a href="/" id="nav-home" class="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-secondary" title="Halaman Beranda">
-          Beranda
-        </a>
-        <a href="/map" id="nav-map" class="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-secondary" title="Lihat Peta Hotspot">
-          Peta
-        </a>
-        <a href="/data" id="nav-data" class="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-secondary" title="Lihat Data Tabel Hotspot">
-          Data
-        </a>
-        <a href="/about" id="nav-about" class="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-secondary" title="Tentang Sistem">
-          Tentang
-        </a>
-      </div>
-
-      <!-- Theme Toggle + Mobile Menu Button -->
-      <div class="flex items-center space-x-2">
-        <button
-          id="theme-toggle"
-          type="button"
-          class="p-2 rounded-xl hover:bg-secondary text-muted-foreground transition-colors duration-200"
-          aria-label="Toggle theme"
-        >
-          <svg class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
-          </svg>
-          <svg class="w-5 h-5 dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-          </svg>
-        </button>
-
-        <!-- Mobile menu button -->
-        <button
-          id="mobile-menu-button"
-          type="button"
-          class="md:hidden p-2.5 hover:bg-secondary text-muted-foreground transition-colors duration-200"
-          aria-label="Toggle menu"
-        >
-          <svg class="w-6 h-6" id="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-          </svg>
-          <svg class="w-6 h-6 hidden" id="close-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-        </button>
-      </div>
     </div>
-
-    <!-- Mobile menu -->
-    <div id="mobile-menu" class="hidden md:hidden pb-4">
-      <div class="flex flex-col space-y-2">
-        <a href="/" id="nav-home-mobile" class="px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-all duration-200" title="Halaman Beranda">
-          Beranda
-        </a>
-        <a href="/map" id="nav-map-mobile" class="px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-all duration-200" title="Lihat Peta Hotspot">
-          Peta
-        </a>
-        <a href="/data" id="nav-data-mobile" class="px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-all duration-200" title="Lihat Data Tabel Hotspot">
-          Data
-        </a>
-        <a href="/about" id="nav-about-mobile" class="px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-all duration-200" title="Tentang Sistem">
-          Tentang
-        </a>
-      </div>
-    </div>
-  </div>
 </nav>
 
+<style>
+    .nav-link.active {
+        color: #f3f7f1;
+        position: relative;
+    }
+    .nav-link.active::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: -4px;
+        height: 2px;
+        background-color: #f3f7f1;
+    }
+</style>
+
 <script>
-  // Set active menu based on current path
-  const currentPath = window.location.pathname;
+    // Set active menu based on current path
+    const currentPath = window.location.pathname;
 
-  // Map paths to nav IDs
-  const pathMap = {
-    '/': 'home',
-    '/map': 'map',
-    '/data': 'data',
-    '/about': 'about'
-  };
+    // Map paths to nav IDs
+    const pathMap: Record<string, string> = {
+        "/": "home",
+        "/map": "map",
+        "/data": "data",
+        "/about": "about",
+    };
 
-  // Get active nav ID based on current path
-  let activeNavId = pathMap[currentPath] || 'home';
-  if (currentPath === '' || currentPath === '/') {
-    activeNavId = 'home';
-  }
+    // Get active nav ID based on current path
+    let activeNavId = pathMap[currentPath] || "home";
+    if (currentPath === "" || currentPath === "/") {
+        activeNavId = "home";
+    }
 
-  // Set active state for desktop menu
-  const desktopNav = document.getElementById(`nav-${activeNavId}`);
-  if (desktopNav) {
-    desktopNav.classList.remove('text-muted-foreground');
-    desktopNav.classList.add('text-primary', 'font-semibold');
-  }
+    // Set active state for desktop menu with underline
+    const desktopNav = document.getElementById(`nav-${activeNavId}`);
+    if (desktopNav) {
+        desktopNav.classList.remove("text-[#b8c8b1]");
+        desktopNav.classList.add("active", "text-[#f3f7f1]");
+    }
 
-  // Set active state for mobile menu
-  const mobileNav = document.getElementById(`nav-${activeNavId}-mobile`);
-  if (mobileNav) {
-    mobileNav.classList.remove('text-muted-foreground');
-    mobileNav.classList.add('text-primary', 'font-semibold');
-  }
+    // Set active state for mobile menu
+    const mobileNav = document.getElementById(`nav-${activeNavId}-mobile`);
+    if (mobileNav) {
+        mobileNav.classList.remove("text-[#b8c8b1]");
+        mobileNav.classList.add("text-[#f3f7f1]", "bg-white/5");
+    }
 
-  // Theme toggle functionality
-  const themeToggle = document.getElementById('theme-toggle');
-  if (themeToggle) {
-    themeToggle.addEventListener('click', () => {
-      const html = document.documentElement;
-      const currentTheme = html.classList.contains('dark') ? 'dark' : 'light';
-      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    // Theme toggle functionality
+    const themeToggle = document.getElementById("theme-toggle");
+    if (themeToggle) {
+        themeToggle.addEventListener("click", () => {
+            const html = document.documentElement;
+            const currentTheme = html.classList.contains("dark")
+                ? "dark"
+                : "light";
+            const newTheme = currentTheme === "dark" ? "light" : "dark";
 
-      html.classList.remove(currentTheme);
-      html.classList.add(newTheme);
-      localStorage.setItem('theme', newTheme);
-    });
-  }
+            html.classList.remove(currentTheme);
+            html.classList.add(newTheme);
+            localStorage.setItem("theme", newTheme);
+        });
+    }
 
-  // Mobile menu toggle
-  const mobileMenuButton = document.getElementById('mobile-menu-button');
-  const mobileMenu = document.getElementById('mobile-menu');
-  const menuIcon = document.getElementById('menu-icon');
-  const closeIcon = document.getElementById('close-icon');
+    // Mobile menu toggle
+    const mobileMenuButton = document.getElementById("mobile-menu-button");
+    const mobileMenu = document.getElementById("mobile-menu");
+    const menuIcon = document.getElementById("menu-icon");
+    const closeIcon = document.getElementById("close-icon");
 
-  if (mobileMenuButton && mobileMenu) {
-    mobileMenuButton.addEventListener('click', () => {
-      const isHidden = mobileMenu.classList.contains('hidden');
+    if (mobileMenuButton && mobileMenu) {
+        mobileMenuButton.addEventListener("click", () => {
+            const isHidden = mobileMenu.classList.contains("hidden");
 
-      if (isHidden) {
-        mobileMenu.classList.remove('hidden');
-        menuIcon?.classList.add('hidden');
-        closeIcon?.classList.remove('hidden');
-      } else {
-        mobileMenu.classList.add('hidden');
-        menuIcon?.classList.remove('hidden');
-        closeIcon?.classList.add('hidden');
-      }
-    });
-  }
+            if (isHidden) {
+                mobileMenu.classList.remove("hidden");
+                menuIcon?.classList.add("hidden");
+                closeIcon?.classList.remove("hidden");
+            } else {
+                mobileMenu.classList.add("hidden");
+                menuIcon?.classList.remove("hidden");
+                closeIcon?.classList.add("hidden");
+            }
+        });
+    }
 </script>

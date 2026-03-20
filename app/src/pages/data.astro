@@ -1,31 +1,44 @@
 ---
-import BaseLayout from '@/layouts/BaseLayout.astro';
-import StaticNavbar from '@/components/layout/StaticNavbar.astro';
-import StaticFooter from '@/components/layout/StaticFooter.astro';
-import HotspotDataTableWithTheme from '@/components/HotspotDataTableWithTheme';
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import StaticNavbar from "@/components/layout/StaticNavbar.astro";
+import StaticFooter from "@/components/layout/StaticFooter.astro";
+import HotspotDataTableWithTheme from "@/components/HotspotDataTableWithTheme";
 ---
 
 <BaseLayout
-  title="Data Hotspot - Tabel Data Karhutla Indonesia"
-  description="Akses data hotspot kebakaran hutan dan lahan Indonesia dalam format tabel dengan filter, sorting, dan export Excel/CSV. Data bersumber dari SIPONGI+ Kementerian LHK."
+    title="Data Hotspot - Tabel Data Karhutla Indonesia"
+    description="Akses data hotspot kebakaran hutan dan lahan Indonesia dalam format tabel dengan filter, sorting, dan export Excel/CSV. Data bersumber dari SIPONGI+ Kementerian LHK."
 >
+    <StaticNavbar />
 
-  <StaticNavbar />
-  <main class="min-h-screen flex flex-col bg-background pt-16">
-    <div class="border-b border-border/60 bg-background/80 backdrop-blur-sm">
-      <div class="max-w-7xl mx-auto px-6 py-4">
-        <div class="flex items-center space-x-2 text-sm text-muted-foreground">
-          <a href="/" class="hover:text-foreground transition-colors" title="Kembali ke Beranda">Beranda</a>
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width={2} d="M9 5l7 7-7 7" />
-          </svg>
-          <span class="text-foreground font-medium">Data Hotspot</span>
+    <section class="section-dark pt-20 pb-8">
+        <div class="max-w-[1100px] mx-auto px-6">
+            <!-- Breadcrumb -->
+            <div
+                class="flex items-center space-x-2 text-[0.78rem] text-[#b8c8b1] mb-4"
+            >
+                <a
+                    href="/"
+                    class="hover:text-[#f3f7f1] transition-colors"
+                    title="Kembali ke Beranda">Beranda</a
+                >
+                <span class="text-[#6b7a64]">/</span>
+                <span class="text-[#f3f7f1] font-medium">Data Hotspot</span>
+            </div>
+
+            <h1 class="text-2xl font-extrabold text-[#f3f7f1] mb-2">
+                Data Tabel Hotspot
+            </h1>
+            <p class="text-[0.9rem] text-[#b8c8b1] max-w-xl">
+                Data titik panas karhutla dengan filter lokasi, tanggal, dan
+                tingkat confidence. Export ke Excel atau CSV.
+            </p>
         </div>
-      </div>
-    </div>
+    </section>
 
-    <HotspotDataTableWithTheme client:idle />
-  </main>
+    <main class="min-h-screen flex flex-col bg-[#faf8f5] dark:bg-background">
+        <HotspotDataTableWithTheme client:idle />
+    </main>
 
-  <StaticFooter />
+    <StaticFooter />
 </BaseLayout>

@@ -152,17 +152,28 @@ export function DateRangePicker({
             "flex gap-1 p-3",
             isMobile ? "flex-row flex-wrap border-b" : "flex-col border-r min-w-[140px]"
           )}>
-            {presetOptions.map((preset) => (
-              <Button
-                key={preset.label}
-                variant="ghost"
-                size="sm"
-                onClick={() => handlePresetClick(preset)}
-                className={cn("text-sm font-normal", isMobile ? "text-xs px-2" : "justify-start")}
-              >
-                {preset.label}
-              </Button>
-            ))}
+            {presetOptions.map((preset) => {
+              const presetValue = preset.getValue();
+              const isSelected = tempRange?.from && tempRange?.to &&
+                presetValue.from.toDateString() === tempRange.from.toDateString() &&
+                presetValue.to?.toDateString() === tempRange.to?.toDateString();
+              return (
+                <button
+                  key={preset.label}
+                  type="button"
+                  onClick={() => handlePresetClick(preset)}
+                  className={cn(
+                    "rounded-md px-3 py-1.5 text-sm font-normal transition-colors text-left",
+                    isMobile ? "text-xs px-2" : "w-full",
+                    isSelected
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-accent hover:text-accent-foreground"
+                  )}
+                >
+                  {preset.label}
+                </button>
+              );
+            })}
           </div>
 
                     <div className="p-3">

@@ -1,10 +1,13 @@
-const CACHE_NAME = "olap-hotspot-v1";
+const CACHE_NAME = "olap-hotspot-v2";
 const urlsToCache = [
   "/",
   "/about",
+  "/map",
+  "/data",
   "/assets/ipb.webp",
-  "/src/styles/global.css",
-  "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap",
+  "/assets/kebakaran1.webp",
+  "/assets/kebakaran2.webp",
+  "https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;600;700;800;900&display=swap",
 ];
 
 self.addEventListener("install", (event) => {

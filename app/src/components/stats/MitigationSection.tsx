@@ -1,25 +1,25 @@
 const MitigationSection = () => {
   return (
-    <section className="py-20 px-4 sm:px-6 lg:px-8 bg-secondary">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-foreground">
+    <section className="py-12 px-6 bg-[#f3f6f2] dark:bg-[#1a221a]">
+      <div className="max-w-[1100px] mx-auto">
+        <div className="mb-8">
+          <h2 className="text-xl font-extrabold text-[#192d17] dark:text-[#f3f7f1] mb-2">
             Upaya Mitigasi Kebakaran
           </h2>
-          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-[0.85rem] text-[#6b7a64] max-w-2xl">
             Penyelenggaraan pencegahan, pemadaman, dan penanganan pasca karhutla
             berdasarkan Permen LHK Nomor 32 Tahun 2016
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-0 md:divide-x divide-border">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Pencegahan */}
-          <div className="px-6 md:px-8">
-            <div className="mb-6">
-              <div className="text-primary mb-4">
+          <div className="bg-white dark:bg-[#121812] rounded-xl border border-[#d4ddd0] dark:border-[#2a3a28] p-5">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-[#3d6b35]/10 flex items-center justify-center">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-10 w-10"
+                  className="h-5 w-5 text-[#3d6b35]"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -32,49 +32,48 @@ const MitigationSection = () => {
                   />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-foreground">Pencegahan</h3>
+              <h3 className="text-sm font-bold text-[#192d17] dark:text-[#f3f7f1]">
+                Pencegahan
+              </h3>
             </div>
-            <ul className="space-y-3 text-muted-foreground">
-              <li className="flex items-start">
-                <svg className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>Pemberdayaan masyarakat</span>
-              </li>
-              <li className="flex items-start">
-                <svg className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>Penyadartahuan pengurangan resiko karhutla</span>
-              </li>
-              <li className="flex items-start">
-                <svg className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>Kesiapsiagaan</span>
-              </li>
-              <li className="flex items-start">
-                <svg className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>Pelaksanaan peringatan dini</span>
-              </li>
-              <li className="flex items-start">
-                <svg className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>Patroli pencegahan</span>
-              </li>
+            <ul className="space-y-2">
+              {[
+                "Pemberdayaan masyarakat",
+                "Penyadartahuan pengurangan resiko",
+                "Kesiapsiagaan",
+                "Pelaksanaan peringatan dini",
+                "Patroli pencegahan",
+              ].map((item) => (
+                <li
+                  key={item}
+                  className="flex items-start text-[0.78rem] text-[#6b7a64]"
+                >
+                  <svg
+                    className="h-4 w-4 text-[#3d6b35] mr-2 mt-0.5 flex-shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                  <span>{item}</span>
+                </li>
+              ))}
             </ul>
           </div>
 
           {/* Pemadaman */}
-          <div className="px-6 md:px-8 pt-8 md:pt-0 border-t md:border-t-0 border-border">
-            <div className="mb-6">
-              <div className="text-primary mb-4">
+          <div className="bg-white dark:bg-[#121812] rounded-xl border border-[#d4ddd0] dark:border-[#2a3a28] p-5">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-[#c07f10]/10 flex items-center justify-center">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-10 w-10"
+                  className="h-5 w-5 text-[#c07f10]"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -93,61 +92,50 @@ const MitigationSection = () => {
                   />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-foreground">Pemadaman</h3>
+              <h3 className="text-sm font-bold text-[#192d17] dark:text-[#f3f7f1]">
+                Pemadaman
+              </h3>
             </div>
-            <ul className="space-y-3 text-muted-foreground">
-              <li className="flex items-start">
-                <svg className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>Deteksi dini</span>
-              </li>
-              <li className="flex items-start">
-                <svg className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>Pemadaman awal</span>
-              </li>
-              <li className="flex items-start">
-                <svg className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>Koordinasi pemadaman</span>
-              </li>
-              <li className="flex items-start">
-                <svg className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>Mobilisasi pemadaman</span>
-              </li>
-              <li className="flex items-start">
-                <svg className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>Pemadaman lanjutan</span>
-              </li>
-              <li className="flex items-start">
-                <svg className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>Demobilisasi pemadaman</span>
-              </li>
-              <li className="flex items-start">
-                <svg className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>Evakuasi dan penyelamatan</span>
-              </li>
+            <ul className="space-y-2">
+              {[
+                "Deteksi dini",
+                "Pemadaman awal",
+                "Koordinasi pemadaman",
+                "Mobilisasi pemadaman",
+                "Pemadaman lanjutan",
+                "Demobilisasi pemadaman",
+                "Evakuasi dan penyelamatan",
+              ].map((item) => (
+                <li
+                  key={item}
+                  className="flex items-start text-[0.78rem] text-[#6b7a64]"
+                >
+                  <svg
+                    className="h-4 w-4 text-[#c07f10] mr-2 mt-0.5 flex-shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                  <span>{item}</span>
+                </li>
+              ))}
             </ul>
           </div>
 
           {/* Penanganan Pasca Karhutla */}
-          <div className="px-6 md:px-8 pt-8 md:pt-0 border-t md:border-t-0 border-border">
-            <div className="mb-6">
-              <div className="text-primary mb-4">
+          <div className="bg-white dark:bg-[#121812] rounded-xl border border-[#d4ddd0] dark:border-[#2a3a28] p-5">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-[#709663]/10 flex items-center justify-center">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-10 w-10"
+                  className="h-5 w-5 text-[#709663]"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -160,33 +148,37 @@ const MitigationSection = () => {
                   />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-foreground">Penanganan Pasca</h3>
+              <h3 className="text-sm font-bold text-[#192d17] dark:text-[#f3f7f1]">
+                Penanganan Pasca
+              </h3>
             </div>
-            <ul className="space-y-3 text-muted-foreground">
-              <li className="flex items-start">
-                <svg className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>Pengawasan areal bekas terbakar</span>
-              </li>
-              <li className="flex items-start">
-                <svg className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>Inventarisasi luas karhutla</span>
-              </li>
-              <li className="flex items-start">
-                <svg className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>Penaksiran kerugian</span>
-              </li>
-              <li className="flex items-start">
-                <svg className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>Koordinasi penanganan pasca karhutla</span>
-              </li>
+            <ul className="space-y-2">
+              {[
+                "Pengawasan areal bekas terbakar",
+                "Inventarisasi luas karhutla",
+                "Penaksiran kerugian",
+                "Koordinasi penanganan pasca",
+              ].map((item) => (
+                <li
+                  key={item}
+                  className="flex items-start text-[0.78rem] text-[#6b7a64]"
+                >
+                  <svg
+                    className="h-4 w-4 text-[#709663] mr-2 mt-0.5 flex-shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                  <span>{item}</span>
+                </li>
+              ))}
             </ul>
           </div>
         </div>

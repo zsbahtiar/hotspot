@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef, useEffect } from "react";
 import {
   Chart as ChartJS,
   Tooltip as ChartTooltip,
@@ -7,11 +7,11 @@ import {
   LinearScale,
   LineElement,
   PointElement,
+  Filler,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import { formatNumber } from "@/core/utils/formatters";
-import { Skeleton } from "@/components/ui/skeleton";
 
 ChartJS.register(
   ChartTooltip,
@@ -21,6 +21,7 @@ ChartJS.register(
   LineElement,
   PointElement,
   ChartDataLabels,
+  Filler,
 );
 
 interface ChartData {
@@ -52,61 +53,89 @@ const ChartComponent = ({ chartData, isLoading }: ChartComponentProps) => {
       maintainAspectRatio: false,
       layout: {
         padding: {
-          top: 25,
-          bottom: 5,
+          top: 10,
+          bottom: 0,
+          left: 0,
+          right: 10,
         },
+      },
+      interaction: {
+        intersect: false,
+        mode: "index" as const,
       },
       scales: {
         x: {
+          grid: {
+            display: false,
+          },
+          border: {
+            display: false,
+          },
           ticks: {
-            maxRotation: 45,
+            maxRotation: 0,
             minRotation: 0,
             font: {
-              size: 12,
+              size: 9,
+              family: "'Libre Franklin', sans-serif",
             },
+            color: "#9ca896",
+            padding: 8,
           },
         },
         y: {
           beginAtZero: true,
+          position: "left" as const,
+          border: {
+            display: false,
+          },
+          grid: {
+            color: "rgba(212, 221, 208, 0.4)",
+            drawTicks: false,
+          },
           ticks: {
+            maxTicksLimit: 5,
+            font: {
+              size: 9,
+              family: "'Libre Franklin', sans-serif",
+            },
+            color: "#9ca896",
+            padding: 10,
             callback: function (tickValue: string | number) {
-              return typeof tickValue === "number"
-                ? tickValue.toLocaleString("id-ID")
-                : tickValue;
+              if (typeof tickValue === "number") {
+                if (tickValue >= 1000) {
+                  return (tickValue / 1000).toFixed(1) + "K";
+                }
+                return tickValue.toString();
+              }
+              return tickValue;
             },
           },
         },
       },
       plugins: {
         legend: {
-          position: "bottom" as const,
-          labels: {
-            boxWidth: 12,
-            padding: 5,
-          },
+          display: false,
         },
         tooltip: {
+          backgroundColor: "white",
+          titleColor: "#192d17",
+          bodyColor: "#192d17",
+          borderColor: "#d4ddd0",
+          borderWidth: 1,
+          padding: 10,
+          cornerRadius: 6,
+          displayColors: false,
           callbacks: {
-            label: function (context: any) {
-              return `${context.label}: ${formatNumber(context.raw as number)} hotspot`;
+            title: function (context: any) {
+              return context[0].label + ": " + formatNumber(context[0].raw as number);
+            },
+            label: function () {
+              return "";
             },
           },
         },
         datalabels: {
-          display: true,
-          color: (context: any) => {
-            const isDark = document.documentElement.classList.contains("dark");
-            return isDark ? "#e5e7eb" : "#1f2937";
-          },
-          anchor: "end" as const,
-          align: "top" as const,
-          offset: 8,
-          formatter: (value: number) => formatNumber(value),
-          font: {
-            weight: "bold" as const,
-            size: 11,
-          },
-          clamp: true,
+          display: false,
         },
       },
     }),
@@ -115,10 +144,9 @@ const ChartComponent = ({ chartData, isLoading }: ChartComponentProps) => {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 space-y-4 w-full">
-        <Skeleton className="h-4 w-3/4 mx-auto" />
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-4 w-1/2 mx-auto" />
+      <div className="flex flex-col items-center justify-center h-full w-full">
+        <div className="w-5 h-5 border-2 border-[#d4ddd0] border-t-[#3d6b35] rounded-full animate-spin mb-2"></div>
+        <p className="text-[0.75rem] text-[#6b7a64]">Memuat grafik...</p>
       </div>
     );
   }
@@ -126,13 +154,13 @@ const ChartComponent = ({ chartData, isLoading }: ChartComponentProps) => {
   if (chartData?.datasets?.[0].data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full w-full">
-        <p className="text-muted-foreground">Tidak ada data untuk grafik</p>
+        <p className="text-[0.8rem] text-[#6b7a64]">Tidak ada data untuk grafik</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full h-full p-4">
+    <div className="w-full h-full">
       <Line data={chartData} options={chartOptions} />
     </div>
   );
