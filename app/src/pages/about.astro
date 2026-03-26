@@ -13,8 +13,12 @@ import StaticFooter from "@/components/layout/StaticFooter.astro";
     <!-- Hero Header -->
     <section class="section-dark pt-20 pb-8">
         <div class="max-w-[1100px] mx-auto px-6">
-            <div class="flex items-center space-x-2 text-[0.78rem] text-[#b8c8b1] mb-4">
-                <a href="/" class="hover:text-[#f3f7f1] transition-colors">Beranda</a>
+            <div
+                class="flex items-center space-x-2 text-[0.78rem] text-[#b8c8b1] mb-4"
+            >
+                <a href="/" class="hover:text-[#f3f7f1] transition-colors"
+                    >Beranda</a
+                >
                 <span class="text-[#6b7a64]">/</span>
                 <span class="text-[#f3f7f1] font-medium">Tentang</span>
             </div>
@@ -22,258 +26,786 @@ import StaticFooter from "@/components/layout/StaticFooter.astro";
                 Tentang Sistem
             </h1>
             <p class="text-[0.9rem] text-[#b8c8b1] max-w-xl">
-                Platform analisis data hotspot kebakaran hutan dengan teknologi Spatial Online Analytical Processing untuk monitoring di seluruh Indonesia.
+                Platform analisis data hotspot kebakaran hutan dengan teknologi
+                Spatial Online Analytical Processing untuk monitoring di seluruh
+                Indonesia.
             </p>
         </div>
     </section>
 
     <main class="bg-[#faf8f5] dark:bg-background">
-
         <!-- Apa Itu Hotspot Karhutla Section -->
-        <section class="py-6 lg:py-8 px-6 bg-[#f3f6f2] dark:bg-[#1a221a]">
+        <section class="py-6 lg:py-8 px-6">
             <div class="max-w-[1100px] mx-auto">
-                <h2 class="text-2xl font-extrabold text-[#192d17] dark:text-[#f3f7f1] mb-3 leading-tight">
+                <h2
+                    class="text-2xl font-extrabold text-[#192d17] dark:text-[#f3f7f1] mb-3 leading-tight"
+                >
                     Apa Itu Hotspot Karhutla?
                 </h2>
-                <p class="text-sm text-[#4a5648] dark:text-[#b8c8b1] leading-relaxed max-w-3xl mb-4">
-                    <strong>Hotspot Karhutla</strong> adalah sistem pemantauan dan analisis data historikal titik panas kebakaran hutan dan lahan di Indonesia. Data bersumber dari
-                    <a href="https://firms.modaps.eosdis.nasa.gov/" target="_blank" rel="noopener" class="text-[#3d6b35] dark:text-[#8fc483] hover:underline font-semibold">NASA FIRMS</a> dan
-                    <a href="https://www.visualcrossing.com/" target="_blank" rel="noopener" class="text-[#3d6b35] dark:text-[#8fc483] hover:underline font-semibold">Visual Crossing</a>,
-                    yang dikelola dalam data warehouse dengan skema bintang.
+                <p
+                    class="text-sm text-[#4a5648] dark:text-[#b8c8b1] leading-relaxed max-w-3xl mb-4"
+                >
+                    <strong>Hotspot Karhutla</strong> adalah sistem pemantauan dan
+                    analisis data historikal titik panas kebakaran hutan dan lahan
+                    di Indonesia. Data bersumber dari
+                    <a
+                        href="https://firms.modaps.eosdis.nasa.gov/"
+                        target="_blank"
+                        rel="noopener"
+                        class="text-[#3d6b35] dark:text-[#8fc483] hover:underline font-semibold"
+                        >NASA FIRMS</a
+                    > dan
+                    <a
+                        href="https://www.visualcrossing.com/"
+                        target="_blank"
+                        rel="noopener"
+                        class="text-[#3d6b35] dark:text-[#8fc483] hover:underline font-semibold"
+                        >Visual Crossing</a
+                    >, yang dikelola dalam data warehouse dengan skema bintang.
                 </p>
-                <p class="text-sm text-[#4a5648] dark:text-[#b8c8b1] leading-relaxed max-w-3xl mb-4">
-                    Sistem ini menggunakan teknologi <strong>OLAP</strong> (Online Analytical Processing) untuk mengelola data secara multidimensi berdasarkan lokasi, waktu, confidence, dan satelit — mendukung analisis data kompleks dari berbagai perspektif.
+                <p
+                    class="text-sm text-[#4a5648] dark:text-[#b8c8b1] leading-relaxed max-w-3xl mb-4"
+                >
+                    Sistem ini menggunakan teknologi <strong>OLAP</strong> (Online
+                    Analytical Processing) untuk mengelola data secara multidimensi
+                    berdasarkan lokasi, waktu, confidence, dan satelit — mendukung
+                    analisis data kompleks dari berbagai perspektif.
                 </p>
-                <p class="text-sm text-[#4a5648] dark:text-[#b8c8b1] leading-relaxed max-w-3xl">
-                    Hasil analisis ditampilkan dalam bentuk tabel, grafik interaktif, dan peta visualisasi geografis untuk analisis mendalam.
+                <p
+                    class="text-sm text-[#4a5648] dark:text-[#b8c8b1] leading-relaxed max-w-3xl"
+                >
+                    Hasil analisis ditampilkan dalam bentuk tabel, grafik
+                    interaktif, dan peta visualisasi geografis untuk analisis
+                    mendalam.
                 </p>
             </div>
         </section>
 
-        <!-- Fitur Unggulan Section -->
+        <!-- Fitur Section -->
         <section class="py-16 px-6">
             <div class="max-w-[1100px] mx-auto">
-                <h2 class="text-2xl font-extrabold text-[#192d17] dark:text-[#f3f7f1] mb-3 leading-tight">
-                    Fitur Unggulan
+                <h2
+                    class="text-2xl font-extrabold text-[#192d17] dark:text-[#f3f7f1] mb-3 leading-tight"
+                >
+                    Fitur
                 </h2>
 
                 <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <!-- Feature 1 -->
-                    <div class="bg-white dark:bg-[#1a221a] border border-[#d4ddd0] dark:border-[#2a3a28] rounded-lg p-6">
-                        <div class="w-10 h-10 bg-[#3d6b35] rounded-lg flex items-center justify-center mb-4">
-                            <svg class="w-5 h-5 text-[#f3f7f1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    <!-- Feature 1: Dashboard -->
+                    <div
+                        style="background-color: #d4dad1; border-radius: 1.5rem;"
+                        class="p-8 flex flex-col min-h-[450px]"
+                    >
+                        <h3
+                            style="color: #2d3a2e;"
+                            class="text-xl font-medium mb-6"
+                        >
+                            Dashboard
+                        </h3>
+                        <p
+                            style="color: #4a5648;"
+                            class="text-sm leading-relaxed"
+                        >
+                            <strong>Visualisasi interaktif</strong> dengan operasi
+                            OLAP untuk analisis data hotspot secara mendalam.
+                        </p>
+                        <div class="flex-1 flex items-end justify-center pt-6">
+                            <svg
+                                class="w-full max-w-[240px] h-auto"
+                                viewBox="0 0 200 140"
+                                fill="none"
+                            >
+                                <rect
+                                    x="10"
+                                    y="70"
+                                    width="35"
+                                    height="60"
+                                    rx="6"
+                                    fill="#4ade80"></rect>
+                                <rect
+                                    x="55"
+                                    y="45"
+                                    width="35"
+                                    height="85"
+                                    rx="6"
+                                    fill="#22c55e"></rect>
+                                <rect
+                                    x="100"
+                                    y="20"
+                                    width="35"
+                                    height="110"
+                                    rx="6"
+                                    fill="#16a34a"></rect>
+                                <rect
+                                    x="145"
+                                    y="55"
+                                    width="35"
+                                    height="75"
+                                    rx="6"
+                                    fill="#15803d"></rect>
+                                <circle cx="27" cy="58" r="8" fill="#fbbf24"
+                                ></circle>
+                                <circle cx="72" cy="33" r="8" fill="#fbbf24"
+                                ></circle>
+                                <circle cx="117" cy="8" r="8" fill="#fbbf24"
+                                ></circle>
+                                <path
+                                    d="M27 58 L72 33 L117 8"
+                                    stroke="#fbbf24"
+                                    stroke-width="3"
+                                    stroke-linecap="round"></path>
                             </svg>
                         </div>
-                        <h3 class="text-lg font-bold text-[#192d17] dark:text-[#f3f7f1] mb-2">Dashboard Interaktif</h3>
-                        <p class="text-sm text-[#6b7a64] dark:text-[#b8c8b1]">
-                            Visualisasi data hotspot dengan operasi OLAP untuk analisis mendalam.
-                        </p>
                     </div>
 
-                    <!-- Feature 2 -->
-                    <div class="bg-white dark:bg-[#1a221a] border border-[#d4ddd0] dark:border-[#2a3a28] rounded-lg p-6">
-                        <div class="w-10 h-10 bg-[#3d6b35] rounded-lg flex items-center justify-center mb-4">
-                            <svg class="w-5 h-5 text-[#f3f7f1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                    <!-- Feature 2: Peta -->
+                    <div
+                        style="background-color: #e5d8e8; border-radius: 1.5rem;"
+                        class="p-8 flex flex-col min-h-[450px]"
+                    >
+                        <h3
+                            style="color: #2d3a2e;"
+                            class="text-xl font-medium mb-6"
+                        >
+                            Peta Interaktif
+                        </h3>
+                        <p
+                            style="color: #4a5648;"
+                            class="text-sm leading-relaxed"
+                        >
+                            <strong>Pemetaan geografis</strong> hotspot dengan clustering
+                            dan visualisasi distribusi titik panas.
+                        </p>
+                        <div class="flex-1 flex items-end justify-center pt-6">
+                            <svg
+                                class="w-full max-w-[240px] h-auto"
+                                viewBox="0 0 200 140"
+                                fill="none"
+                            >
+                                <ellipse
+                                    cx="100"
+                                    cy="120"
+                                    rx="90"
+                                    ry="15"
+                                    fill="#f9a8d4"
+                                    opacity="0.5"></ellipse>
+                                <path
+                                    d="M20 100 Q60 70 100 85 T180 60"
+                                    stroke="#f472b6"
+                                    stroke-width="4"
+                                    fill="none"></path>
+                                <path
+                                    d="M30 85 Q80 50 130 70 T190 45"
+                                    stroke="#ec4899"
+                                    stroke-width="3"
+                                    fill="none"></path>
+                                <circle
+                                    cx="55"
+                                    cy="55"
+                                    r="16"
+                                    fill="#ef4444"
+                                    opacity="0.9"></circle>
+                                <circle
+                                    cx="90"
+                                    cy="35"
+                                    r="10"
+                                    fill="#f97316"
+                                    opacity="0.9"></circle>
+                                <circle
+                                    cx="130"
+                                    cy="50"
+                                    r="20"
+                                    fill="#ef4444"
+                                    opacity="0.9"></circle>
+                                <circle
+                                    cx="165"
+                                    cy="30"
+                                    r="12"
+                                    fill="#f97316"
+                                    opacity="0.9"></circle>
+                                <rect
+                                    x="75"
+                                    y="10"
+                                    width="40"
+                                    height="25"
+                                    rx="5"
+                                    fill="#3b82f6"></rect>
+                                <path
+                                    d="M95 35 L95 50"
+                                    stroke="#3b82f6"
+                                    stroke-width="3"></path>
                             </svg>
                         </div>
-                        <h3 class="text-lg font-bold text-[#192d17] dark:text-[#f3f7f1] mb-2">Peta Interaktif</h3>
-                        <p class="text-sm text-[#6b7a64] dark:text-[#b8c8b1]">
-                            Pemetaan geografis hotspot dengan clustering dan visualisasi distribusi titik panas.
-                        </p>
                     </div>
 
-                    <!-- Feature 3 -->
-                    <div class="bg-white dark:bg-[#1a221a] border border-[#d4ddd0] dark:border-[#2a3a28] rounded-lg p-6">
-                        <div class="w-10 h-10 bg-[#3d6b35] rounded-lg flex items-center justify-center mb-4">
-                            <svg class="w-5 h-5 text-[#f3f7f1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                    <!-- Feature 3: Filter -->
+                    <div
+                        style="background-color: #e8e6e3; border-radius: 1.5rem;"
+                        class="p-8 flex flex-col min-h-[450px]"
+                    >
+                        <h3
+                            style="color: #2d3a2e;"
+                            class="text-xl font-medium mb-6"
+                        >
+                            Filter Dinamis
+                        </h3>
+                        <p
+                            style="color: #4a5648;"
+                            class="text-sm leading-relaxed"
+                        >
+                            <strong>Pemfilteran multidimensi</strong> berdasarkan
+                            lokasi, waktu, confidence, dan satelit.
+                        </p>
+                        <div class="flex-1 flex items-end justify-center pt-6">
+                            <svg
+                                class="w-full max-w-[240px] h-auto"
+                                viewBox="0 0 200 140"
+                                fill="none"
+                            >
+                                <path
+                                    d="M30 15 L170 15 L130 70 L130 130 L70 130 L70 70 Z"
+                                    fill="#a5b4fc"
+                                    stroke="#6366f1"
+                                    stroke-width="3"></path>
+                                <ellipse
+                                    cx="100"
+                                    cy="15"
+                                    rx="75"
+                                    ry="18"
+                                    fill="#c7d2fe"
+                                    stroke="#6366f1"
+                                    stroke-width="3"></ellipse>
+                                <circle cx="55" cy="20" r="6" fill="#22c55e"
+                                ></circle>
+                                <circle cx="80" cy="12" r="6" fill="#ef4444"
+                                ></circle>
+                                <circle cx="105" cy="22" r="6" fill="#3b82f6"
+                                ></circle>
+                                <circle cx="130" cy="14" r="6" fill="#22c55e"
+                                ></circle>
+                                <circle cx="150" cy="20" r="6" fill="#fbbf24"
+                                ></circle>
+                                <circle cx="90" cy="100" r="5" fill="#22c55e"
+                                ></circle>
+                                <circle cx="110" cy="105" r="5" fill="#22c55e"
+                                ></circle>
                             </svg>
                         </div>
-                        <h3 class="text-lg font-bold text-[#192d17] dark:text-[#f3f7f1] mb-2">Filter Dinamis</h3>
-                        <p class="text-sm text-[#6b7a64] dark:text-[#b8c8b1]">
-                            Pemfilteran multidimensi berdasarkan lokasi, waktu, confidence, dan satelit.
-                        </p>
                     </div>
 
-                    <!-- Feature 4 -->
-                    <div class="bg-white dark:bg-[#1a221a] border border-[#d4ddd0] dark:border-[#2a3a28] rounded-lg p-6">
-                        <div class="w-10 h-10 bg-[#3d6b35] rounded-lg flex items-center justify-center mb-4">
-                            <svg class="w-5 h-5 text-[#f3f7f1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    <!-- Feature 4: Export -->
+                    <div
+                        style="background-color: #e8dfd4; border-radius: 1.5rem;"
+                        class="p-8 flex flex-col min-h-[450px]"
+                    >
+                        <h3
+                            style="color: #2d3a2e;"
+                            class="text-xl font-medium mb-6"
+                        >
+                            Ekspor Data
+                        </h3>
+                        <p
+                            style="color: #4a5648;"
+                            class="text-sm leading-relaxed"
+                        >
+                            <strong>Unduh data</strong> hotspot dalam format Excel
+                            (.xlsx) dan CSV untuk analisis lanjutan.
+                        </p>
+                        <div class="flex-1 flex items-end justify-center pt-6">
+                            <svg
+                                class="w-full max-w-[240px] h-auto"
+                                viewBox="0 0 200 140"
+                                fill="none"
+                            >
+                                <rect
+                                    x="20"
+                                    y="10"
+                                    width="95"
+                                    height="115"
+                                    rx="8"
+                                    fill="#fde68a"
+                                    stroke="#f59e0b"
+                                    stroke-width="3"></rect>
+                                <rect
+                                    x="35"
+                                    y="30"
+                                    width="65"
+                                    height="10"
+                                    rx="3"
+                                    fill="#f59e0b"></rect>
+                                <rect
+                                    x="35"
+                                    y="50"
+                                    width="45"
+                                    height="8"
+                                    rx="3"
+                                    fill="#fbbf24"></rect>
+                                <rect
+                                    x="35"
+                                    y="65"
+                                    width="55"
+                                    height="8"
+                                    rx="3"
+                                    fill="#fbbf24"></rect>
+                                <rect
+                                    x="35"
+                                    y="80"
+                                    width="40"
+                                    height="8"
+                                    rx="3"
+                                    fill="#fbbf24"></rect>
+                                <path
+                                    d="M120 50 L120 115 L180 115 L180 72 L158 50 Z"
+                                    fill="#22c55e"
+                                    stroke="#16a34a"
+                                    stroke-width="3"></path>
+                                <path
+                                    d="M158 50 L158 72 L180 72"
+                                    fill="#bbf7d0"
+                                    stroke="#16a34a"
+                                    stroke-width="3"></path>
+                                <text
+                                    x="127"
+                                    y="92"
+                                    font-size="14"
+                                    fill="white"
+                                    font-weight="bold">XLSX</text
+                                >
                             </svg>
                         </div>
-                        <h3 class="text-lg font-bold text-[#192d17] dark:text-[#f3f7f1] mb-2">Ekspor Data</h3>
-                        <p class="text-sm text-[#6b7a64] dark:text-[#b8c8b1]">
-                            Unduh data hotspot dalam format Excel dan CSV dengan tampilan detail atau akumulasi.
-                        </p>
                     </div>
 
-                    <!-- Feature 5 -->
-                    <div class="bg-white dark:bg-[#1a221a] border border-[#d4ddd0] dark:border-[#2a3a28] rounded-lg p-6">
-                        <div class="w-10 h-10 bg-[#3d6b35] rounded-lg flex items-center justify-center mb-4">
-                            <svg class="w-5 h-5 text-[#f3f7f1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                    <!-- Feature 5: Tabel -->
+                    <div
+                        style="background-color: #dce4dd; border-radius: 1.5rem;"
+                        class="p-8 flex flex-col min-h-[450px]"
+                    >
+                        <h3
+                            style="color: #2d3a2e;"
+                            class="text-xl font-medium mb-6"
+                        >
+                            Tabel Data
+                        </h3>
+                        <p
+                            style="color: #4a5648;"
+                            class="text-sm leading-relaxed"
+                        >
+                            <strong>Tampilan tabel</strong> dengan mode detail dan
+                            akumulasi, sorting, dan filter multidimensi.
+                        </p>
+                        <div class="flex-1 flex items-end justify-center pt-6">
+                            <svg
+                                class="w-full max-w-[240px] h-auto"
+                                viewBox="0 0 200 140"
+                                fill="none"
+                            >
+                                <rect
+                                    x="15"
+                                    y="15"
+                                    width="170"
+                                    height="110"
+                                    rx="10"
+                                    fill="white"
+                                    stroke="#3b82f6"
+                                    stroke-width="3"></rect>
+                                <rect
+                                    x="15"
+                                    y="15"
+                                    width="170"
+                                    height="28"
+                                    rx="10"
+                                    fill="#3b82f6"></rect>
+                                <line
+                                    x1="70"
+                                    y1="43"
+                                    x2="70"
+                                    y2="125"
+                                    stroke="#bfdbfe"
+                                    stroke-width="2"></line>
+                                <line
+                                    x1="130"
+                                    y1="43"
+                                    x2="130"
+                                    y2="125"
+                                    stroke="#bfdbfe"
+                                    stroke-width="2"></line>
+                                <line
+                                    x1="15"
+                                    y1="70"
+                                    x2="185"
+                                    y2="70"
+                                    stroke="#bfdbfe"
+                                    stroke-width="2"></line>
+                                <line
+                                    x1="15"
+                                    y1="97"
+                                    x2="185"
+                                    y2="97"
+                                    stroke="#bfdbfe"
+                                    stroke-width="2"></line>
+                                <circle cx="42" cy="56" r="7" fill="#22c55e"
+                                ></circle>
+                                <circle cx="42" cy="83" r="7" fill="#f97316"
+                                ></circle>
+                                <circle cx="42" cy="110" r="7" fill="#22c55e"
+                                ></circle>
+                                <rect
+                                    x="85"
+                                    y="52"
+                                    width="35"
+                                    height="8"
+                                    rx="3"
+                                    fill="#93c5fd"></rect>
+                                <rect
+                                    x="85"
+                                    y="79"
+                                    width="28"
+                                    height="8"
+                                    rx="3"
+                                    fill="#93c5fd"></rect>
+                                <rect
+                                    x="85"
+                                    y="106"
+                                    width="40"
+                                    height="8"
+                                    rx="3"
+                                    fill="#93c5fd"></rect>
                             </svg>
                         </div>
-                        <h3 class="text-lg font-bold text-[#192d17] dark:text-[#f3f7f1] mb-2">Tabel Data</h3>
-                        <p class="text-sm text-[#6b7a64] dark:text-[#b8c8b1]">
-                            Tampilan tabel dengan mode detail dan akumulasi, sorting, dan filter multidimensi.
-                        </p>
                     </div>
 
-                    <!-- Feature 6 -->
-                    <div class="bg-white dark:bg-[#1a221a] border border-[#d4ddd0] dark:border-[#2a3a28] rounded-lg p-6">
-                        <div class="w-10 h-10 bg-[#3d6b35] rounded-lg flex items-center justify-center mb-4">
-                            <svg class="w-5 h-5 text-[#f3f7f1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    <!-- Feature 6: Update -->
+                    <div
+                        style="background-color: #ddd8e4; border-radius: 1.5rem;"
+                        class="p-8 flex flex-col min-h-[450px]"
+                    >
+                        <h3
+                            style="color: #2d3a2e;"
+                            class="text-xl font-medium mb-6"
+                        >
+                            Update Berkala
+                        </h3>
+                        <p
+                            style="color: #4a5648;"
+                            class="text-sm leading-relaxed"
+                        >
+                            <strong>Data diperbarui</strong> secara berkala dari NASA
+                            FIRMS untuk analisis terkini.
+                        </p>
+                        <div class="flex-1 flex items-end justify-center pt-6">
+                            <svg
+                                class="w-full max-w-[240px] h-auto"
+                                viewBox="0 0 200 140"
+                                fill="none"
+                            >
+                                <circle
+                                    cx="100"
+                                    cy="75"
+                                    r="45"
+                                    fill="none"
+                                    stroke="#d8b4fe"
+                                    stroke-width="10"></circle>
+                                <path
+                                    d="M100 38 A37 37 0 1 1 63 75"
+                                    fill="none"
+                                    stroke="#a855f7"
+                                    stroke-width="10"
+                                    stroke-linecap="round"></path>
+                                <path d="M100 26 L100 48 L84 37" fill="#a855f7"
+                                ></path>
+                                <circle cx="100" cy="75" r="22" fill="#f3e8ff"
+                                ></circle>
+                                <path
+                                    d="M90 75 L97 82 L112 64"
+                                    stroke="#7c3aed"
+                                    stroke-width="5"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"></path>
+                                <rect
+                                    x="148"
+                                    y="18"
+                                    width="42"
+                                    height="30"
+                                    rx="6"
+                                    fill="#fef3c7"
+                                    stroke="#f59e0b"
+                                    stroke-width="2"></rect>
+                                <text
+                                    x="156"
+                                    y="39"
+                                    font-size="13"
+                                    fill="#f59e0b"
+                                    font-weight="bold">24h</text
+                                >
+                                <circle cx="35" cy="40" r="10" fill="#fbbf24"
+                                ></circle>
+                                <circle cx="155" cy="120" r="8" fill="#60a5fa"
+                                ></circle>
                             </svg>
                         </div>
-                        <h3 class="text-lg font-bold text-[#192d17] dark:text-[#f3f7f1] mb-2">Update Berkala</h3>
-                        <p class="text-sm text-[#6b7a64] dark:text-[#b8c8b1]">
-                            Data hotspot diperbarui secara berkala dari NASA FIRMS untuk analisis terkini.
-                        </p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Operasi OLAP Section -->
-        <section class="py-16 px-6 bg-[#f3f6f2] dark:bg-[#1a221a]">
-            <div class="max-w-[1100px] mx-auto">
-                <h2 class="text-2xl font-extrabold text-[#192d17] dark:text-[#f3f7f1] mb-3 leading-tight">
-                    Operasi OLAP
-                </h2>
-
-                <div class="grid md:grid-cols-2 gap-6">
-                    <!-- Drill-down -->
-                    <div class="bg-white dark:bg-[#121812] border-l-4 border-[#3d6b35] p-6 rounded-r-lg">
-                        <h3 class="text-lg font-bold text-[#192d17] dark:text-[#f3f7f1] mb-2">Drill-down</h3>
-                        <p class="text-sm text-[#6b7a64] dark:text-[#b8c8b1] mb-3">
-                            Navigasi dari data umum ke data yang lebih detail.
-                        </p>
-                        <p class="text-xs text-[#9a7b4f] dark:text-[#c9a66b] font-medium">
-                            Contoh: pulau → provinsi → kabupaten/kota → kecamatan → desa
-                        </p>
-                    </div>
-
-                    <!-- Roll-up -->
-                    <div class="bg-white dark:bg-[#121812] border-l-4 border-[#3d6b35] p-6 rounded-r-lg">
-                        <h3 class="text-lg font-bold text-[#192d17] dark:text-[#f3f7f1] mb-2">Roll-up</h3>
-                        <p class="text-sm text-[#6b7a64] dark:text-[#b8c8b1] mb-3">
-                            Mengagregasi data dari detail ke ringkasan.
-                        </p>
-                        <p class="text-xs text-[#9a7b4f] dark:text-[#c9a66b] font-medium">
-                            Contoh: desa → kecamatan → kabupaten/kota → provinsi → pulau
-                        </p>
-                    </div>
-
-                    <!-- Slice -->
-                    <div class="bg-white dark:bg-[#121812] border-l-4 border-[#c07f10] p-6 rounded-r-lg">
-                        <h3 class="text-lg font-bold text-[#192d17] dark:text-[#f3f7f1] mb-2">Slice</h3>
-                        <p class="text-sm text-[#6b7a64] dark:text-[#b8c8b1] mb-3">
-                            Memilih satu dimensi dari cube untuk membuat subset data.
-                        </p>
-                        <p class="text-xs text-[#9a7b4f] dark:text-[#c9a66b] font-medium">
-                            Contoh: filtering berdasarkan confidence
-                        </p>
-                    </div>
-
-                    <!-- Dice -->
-                    <div class="bg-white dark:bg-[#121812] border-l-4 border-[#c07f10] p-6 rounded-r-lg">
-                        <h3 class="text-lg font-bold text-[#192d17] dark:text-[#f3f7f1] mb-2">Dice</h3>
-                        <p class="text-sm text-[#6b7a64] dark:text-[#b8c8b1] mb-3">
-                            Memilih subset data dengan beberapa nilai pada berbagai dimensi.
-                        </p>
-                        <p class="text-xs text-[#9a7b4f] dark:text-[#c9a66b] font-medium">
-                            Contoh: filtering berdasarkan confidence dan satelit
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Struktur Data Section -->
+        <!-- Struktur Data & Operasi Section -->
         <section class="py-16 px-6">
             <div class="max-w-[1100px] mx-auto">
-                <h2 class="text-2xl font-extrabold text-[#192d17] dark:text-[#f3f7f1] mb-3 leading-tight">
-                    Struktur Data
+                <h2
+                    class="text-2xl font-extrabold text-[#192d17] dark:text-[#f3f7f1] mb-6 leading-tight"
+                >
+                    Struktur Data & Operasi
                 </h2>
-                <p class="text-sm text-[#4a5648] dark:text-[#b8c8b1] leading-relaxed max-w-3xl mb-8">
-                    Struktur data menggunakan pendekatan <strong>skema bintang</strong> dengan tabel fakta utama dan beberapa tabel dimensi:
-                </p>
 
-                <!-- Fact Table -->
-                <div class="mb-8">
-                    <div class="flex flex-col md:flex-row rounded-lg overflow-hidden">
-                        <div class="md:w-1/3 bg-[#192d17] p-6 flex flex-col justify-center">
-                            <h3 class="text-lg font-bold text-[#f3f7f1] mb-2">Tabel Fakta Hotspot</h3>
-                            <p class="text-sm text-[#b8c8b1]">Tabel utama</p>
-                        </div>
-                        <div class="md:w-2/3 bg-white dark:bg-[#1a221a] border border-[#d4ddd0] dark:border-[#2a3a28] p-6">
-                            <p class="text-sm text-[#4a5648] dark:text-[#b8c8b1]">
-                                Menyimpan catatan kejadian hotspot dengan atribut utama seperti jumlah titik, tingkat confidence, serta referensi ke dimensi terkait.
+                <!-- Main card container -->
+                <div
+                    class="struktur-card"
+                    style="background-color: #ffffff; border: 1px solid #e5e5e5; border-radius: 20px; padding: 48px;"
+                >
+                    <!-- Top: Schema Info -->
+                    <div class="flex flex-col md:flex-row gap-10">
+                        <!-- Left: Description -->
+                        <div class="md:w-1/2">
+                            <svg
+                                class="struktur-icon w-12 h-12 text-[#192d17] mb-5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="1.5"
+                                    d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"
+                                ></path>
+                            </svg>
+                            <h3
+                                class="struktur-title text-xl font-semibold text-[#192d17] mb-3 leading-snug"
+                            >
+                                Skema Galaxy dengan dua tabel fakta
+                            </h3>
+                            <p
+                                class="struktur-desc text-sm text-[#6b7a64] leading-relaxed"
+                            >
+                                Data hotspot dan cuaca disimpan dalam tabel
+                                fakta terpisah, namun berbagi dimensi lokasi dan
+                                periode untuk analisis lintas domain.
                             </p>
                         </div>
-                    </div>
-                </div>
 
-                <!-- Dimensions Grid -->
-                <div class="grid md:grid-cols-2 gap-6">
-                    <!-- Dimensi Lokasi -->
-                    <div class="bg-white dark:bg-[#1a221a] border border-[#d4ddd0] dark:border-[#2a3a28] rounded-lg p-6">
-                        <h4 class="text-base font-bold text-[#192d17] dark:text-[#f3f7f1] mb-3">Dimensi Lokasi</h4>
-                        <p class="text-sm text-[#6b7a64] dark:text-[#b8c8b1]">
-                            Meliputi pulau, provinsi, kabupaten/kota, kecamatan, dan desa.
-                        </p>
+                        <!-- Right: Stacked items -->
+                        <div class="md:w-1/2 flex flex-col gap-3">
+                            <!-- Fakta Hotspot -->
+                            <div
+                                class="struktur-item"
+                                style="border: 1px solid #e5e5e5; border-radius: 12px; padding: 16px 20px;"
+                            >
+                                <h4
+                                    class="struktur-item-title text-sm font-semibold text-[#192d17]"
+                                >
+                                    Fakta Hotspot
+                                </h4>
+                                <p
+                                    class="struktur-item-desc text-xs text-[#6b7a64] mt-1.5"
+                                >
+                                    FRP, brightness, koordinat
+                                </p>
+                            </div>
+
+                            <!-- Fakta Weather -->
+                            <div
+                                class="struktur-item"
+                                style="border: 1px solid #e5e5e5; border-radius: 12px; padding: 16px 20px;"
+                            >
+                                <h4
+                                    class="struktur-item-title text-sm font-semibold text-[#192d17]"
+                                >
+                                    Fakta Weather
+                                </h4>
+                                <p
+                                    class="struktur-item-desc text-xs text-[#6b7a64] mt-1.5"
+                                >
+                                    Suhu, kelembaban, curah hujan
+                                </p>
+                            </div>
+
+                            <!-- Dimensi Bersama -->
+                            <div
+                                class="struktur-item"
+                                style="border: 1px solid #e5e5e5; border-radius: 12px; padding: 16px 20px;"
+                            >
+                                <h4
+                                    class="struktur-item-title text-sm font-semibold text-[#192d17]"
+                                >
+                                    Dimensi Bersama
+                                </h4>
+                                <p
+                                    class="struktur-item-desc text-xs text-[#6b7a64] mt-1.5"
+                                >
+                                    Lokasi &amp; Periode
+                                </p>
+                            </div>
+
+                            <!-- Dimensi Spesifik -->
+                            <div
+                                class="struktur-item"
+                                style="border: 1px solid #e5e5e5; border-radius: 12px; padding: 16px 20px;"
+                            >
+                                <h4
+                                    class="struktur-item-title text-sm font-semibold text-[#192d17]"
+                                >
+                                    Dimensi Spesifik
+                                </h4>
+                                <p
+                                    class="struktur-item-desc text-xs text-[#6b7a64] mt-1.5"
+                                >
+                                    Confidence, Satelit, Kondisi
+                                </p>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Dimensi Waktu -->
-                    <div class="bg-white dark:bg-[#1a221a] border border-[#d4ddd0] dark:border-[#2a3a28] rounded-lg p-6">
-                        <h4 class="text-base font-bold text-[#192d17] dark:text-[#f3f7f1] mb-3">Dimensi Waktu</h4>
-                        <p class="text-sm text-[#6b7a64] dark:text-[#b8c8b1]">
-                            Meliputi tahun, semester, kuartal, bulan, minggu, dan hari.
-                        </p>
+                    <!-- Divider -->
+                    <div
+                        class="struktur-divider my-10"
+                        style="border-top: 1px solid #e5e5e5;"
+                    >
                     </div>
 
-                    <!-- Dimensi Confidence -->
-                    <div class="bg-white dark:bg-[#1a221a] border border-[#d4ddd0] dark:border-[#2a3a28] rounded-lg p-6">
-                        <h4 class="text-base font-bold text-[#192d17] dark:text-[#f3f7f1] mb-3">Dimensi Confidence</h4>
-                        <p class="text-sm text-[#6b7a64] dark:text-[#b8c8b1] mb-3">
-                            Tingkat kepercayaan berdasarkan Peraturan Menteri LHK No. 8 Tahun 2018:
-                        </p>
-                        <ul class="space-y-1 text-sm text-[#4a5648] dark:text-[#b8c8b1]">
-                            <li class="flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-[#709663]"></span>
-                                <span><strong>Low</strong> (Rendah): 0 – 29</span>
-                            </li>
-                            <li class="flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-[#c07f10]"></span>
-                                <span><strong>Medium</strong> (Sedang): 30 – 79</span>
-                            </li>
-                            <li class="flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-[#192d17] dark:bg-[#f3f7f1]"></span>
-                                <span><strong>High</strong> (Tinggi): 80 – 100</span>
-                            </li>
-                        </ul>
-                    </div>
+                    <!-- Bottom: OLAP Operations (Mirrored Layout) -->
+                    <div class="flex flex-col md:flex-row gap-10">
+                        <!-- Left: Stacked OLAP cards -->
+                        <div class="md:w-1/2 flex flex-col gap-3">
+                            <!-- Drill-down -->
+                            <div
+                                class="struktur-item"
+                                style="border: 1px solid #e5e5e5; border-radius: 12px; padding: 16px 20px;"
+                            >
+                                <h4
+                                    class="struktur-item-title text-sm font-semibold text-[#192d17]"
+                                >
+                                    Drill-down
+                                </h4>
+                                <p
+                                    class="struktur-item-desc text-xs text-[#6b7a64] mt-1.5"
+                                >
+                                    Navigasi dari umum ke detail
+                                </p>
+                                <p
+                                    class="text-xs text-[#c07f10] dark:text-[#f5b84d] mt-2"
+                                >
+                                    pulau → provinsi → kab/kota → desa
+                                </p>
+                            </div>
 
-                    <!-- Dimensi Satelit -->
-                    <div class="bg-white dark:bg-[#1a221a] border border-[#d4ddd0] dark:border-[#2a3a28] rounded-lg p-6">
-                        <h4 class="text-base font-bold text-[#192d17] dark:text-[#f3f7f1] mb-3">Dimensi Satelit</h4>
-                        <p class="text-sm text-[#6b7a64] dark:text-[#b8c8b1]">
-                            Sumber data satelit: NASA-SNPP, NASA-MODIS, NASA-NOAA20.
-                        </p>
+                            <!-- Roll-up -->
+                            <div
+                                class="struktur-item"
+                                style="border: 1px solid #e5e5e5; border-radius: 12px; padding: 16px 20px;"
+                            >
+                                <h4
+                                    class="struktur-item-title text-sm font-semibold text-[#192d17]"
+                                >
+                                    Roll-up
+                                </h4>
+                                <p
+                                    class="struktur-item-desc text-xs text-[#6b7a64] mt-1.5"
+                                >
+                                    Agregasi dari detail ke ringkasan
+                                </p>
+                                <p
+                                    class="text-xs text-[#c07f10] dark:text-[#f5b84d] mt-2"
+                                >
+                                    desa → kab/kota → provinsi → pulau
+                                </p>
+                            </div>
+
+                            <!-- Slice -->
+                            <div
+                                class="struktur-item"
+                                style="border: 1px solid #e5e5e5; border-radius: 12px; padding: 16px 20px;"
+                            >
+                                <h4
+                                    class="struktur-item-title text-sm font-semibold text-[#192d17]"
+                                >
+                                    Slice
+                                </h4>
+                                <p
+                                    class="struktur-item-desc text-xs text-[#6b7a64] mt-1.5"
+                                >
+                                    Filter satu dimensi
+                                </p>
+                                <p
+                                    class="text-xs text-[#c07f10] dark:text-[#f5b84d] mt-2"
+                                >
+                                    confidence = high
+                                </p>
+                            </div>
+
+                            <!-- Dice -->
+                            <div
+                                class="struktur-item"
+                                style="border: 1px solid #e5e5e5; border-radius: 12px; padding: 16px 20px;"
+                            >
+                                <h4
+                                    class="struktur-item-title text-sm font-semibold text-[#192d17]"
+                                >
+                                    Dice
+                                </h4>
+                                <p
+                                    class="struktur-item-desc text-xs text-[#6b7a64] mt-1.5"
+                                >
+                                    Filter multi dimensi
+                                </p>
+                                <p
+                                    class="text-xs text-[#c07f10] dark:text-[#f5b84d] mt-2"
+                                >
+                                    confidence = high + satelit = VIIRS
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Right: Description -->
+                        <div class="md:w-1/2">
+                            <!-- Icon -->
+                            <svg
+                                class="struktur-icon w-12 h-12 text-[#192d17] mb-5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="1.5"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
+                                ></path>
+                            </svg>
+                            <h3
+                                class="struktur-title text-xl font-semibold text-[#192d17] mb-3 leading-snug"
+                            >
+                                Navigasi data multidimensi
+                            </h3>
+                            <p
+                                class="struktur-desc text-sm text-[#6b7a64] leading-relaxed"
+                            >
+                                Operasi OLAP memungkinkan eksplorasi data dari
+                                berbagai sudut pandang — memperbesar detail,
+                                meringkas agregat, atau memfilter dimensi
+                                tertentu untuk menemukan insight.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
 
         <!-- Visual Cards Section -->
-        <section class="py-16 px-6 bg-[#f3f6f2] dark:bg-[#1a221a]">
+        <section class="py-16 px-6">
             <div class="max-w-[1100px] mx-auto">
-                <h2 class="text-2xl font-extrabold text-[#192d17] dark:text-[#f3f7f1] mb-3 leading-tight">
+                <h2
+                    class="text-2xl font-extrabold text-[#192d17] dark:text-[#f3f7f1] mb-3 leading-tight"
+                >
                     Teknologi & Sumber Data
                 </h2>
 
@@ -287,37 +819,60 @@ import StaticFooter from "@/components/layout/StaticFooter.astro";
                                 class="w-full h-64 md:h-full object-cover"
                             />
                         </div>
-                        <div class="md:w-1/2 bg-[#3d6b35] dark:bg-[#2a4a26] p-8 flex flex-col justify-center">
+                        <div
+                            class="md:w-1/2 bg-[#3d6b35] dark:bg-[#2a4a26] p-8 flex flex-col justify-center"
+                        >
                             <h3 class="text-lg font-bold text-[#f3f7f1] mb-3">
                                 Sumber Data Satelit
                             </h3>
                             <p class="text-sm text-[#d4e5cf] leading-relaxed">
-                                Data titik panas bersumber dari NASA FIRMS (Fire Information for Resource Management System)
-                                yang mendeteksi hotspot menggunakan satelit MODIS dan VIIRS. Data tersedia dari
-                                <strong class="text-[#f3f7f1]">Januari 2015</strong> hingga saat ini dan diperbarui secara berkala.
+                                Data titik panas bersumber dari NASA FIRMS (Fire
+                                Information for Resource Management System) yang
+                                mendeteksi hotspot menggunakan satelit MODIS dan
+                                VIIRS. Data tersedia dari
+                                <strong class="text-[#f3f7f1]"
+                                    >Januari 2015</strong
+                                > hingga saat ini dan diperbarui secara berkala.
                             </p>
                         </div>
                     </div>
 
                     <!-- Card 2 -->
                     <div class="flex flex-col md:flex-row-reverse">
-                    <div class="md:w-1/2">
-                        <div class="w-full h-64 md:h-full bg-[#e5ede2] flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-24 h-24 text-[#3d6b35] opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                            </svg>
+                        <div class="md:w-1/2">
+                            <div
+                                class="w-full h-64 md:h-full bg-[#e5ede2] flex items-center justify-center"
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    class="w-24 h-24 text-[#3d6b35] opacity-40"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="1.5"
+                                        d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
+                                    ></path>
+                                </svg>
+                            </div>
                         </div>
-                    </div>
-                    <div class="md:w-1/2 bg-[#3d6b35] dark:bg-[#2a4a26] p-8 flex flex-col justify-center">
-                        <h3 class="text-lg font-bold text-[#f3f7f1] mb-3">
-                            Visualisasi Peta Interaktif
-                        </h3>
-                        <p class="text-sm text-[#d4e5cf] leading-relaxed">
-                            Peta interaktif memungkinkan pengguna melihat persebaran hotspot di seluruh
-                            wilayah Indonesia. Filter berdasarkan provinsi, kabupaten, waktu, dan tingkat
-                            confidence untuk analisis yang lebih mendalam.
-                        </p>
-                    </div>
+                        <div
+                            class="md:w-1/2 bg-[#3d6b35] dark:bg-[#2a4a26] p-8 flex flex-col justify-center"
+                        >
+                            <h3 class="text-lg font-bold text-[#f3f7f1] mb-3">
+                                Visualisasi Peta Interaktif
+                            </h3>
+                            <p class="text-sm text-[#d4e5cf] leading-relaxed">
+                                Peta interaktif memungkinkan pengguna melihat
+                                persebaran hotspot di seluruh wilayah Indonesia.
+                                Filter berdasarkan provinsi, kabupaten, waktu,
+                                dan tingkat confidence untuk analisis yang lebih
+                                mendalam.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -326,23 +881,44 @@ import StaticFooter from "@/components/layout/StaticFooter.astro";
         <!-- Tim Section -->
         <section class="py-16 px-6">
             <div class="max-w-[1100px] mx-auto">
-                <h2 class="text-2xl font-extrabold text-[#192d17] dark:text-[#f3f7f1] mb-3 leading-tight">
+                <h2
+                    class="text-2xl font-extrabold text-[#192d17] dark:text-[#f3f7f1] mb-3 leading-tight"
+                >
                     Tim Pengembang
                 </h2>
 
                 <div class="grid md:grid-cols-2 gap-8 mb-8">
                     <!-- Pengembang Saat Ini -->
-                    <div class="bg-white dark:bg-[#1a221a] border border-[#d4ddd0] dark:border-[#2a3a28] rounded-lg p-6">
-                        <p class="text-sm font-semibold text-[#9a7b4f] dark:text-[#c9a66b] uppercase tracking-wide mb-4">Pembimbing Saat Ini</p>
-                        <ul class="space-y-3 text-sm text-[#192d17] dark:text-[#f3f7f1]">
-                            <li>Prof. Dr. Imas Sukaesih Sitanggang, S.Si., M.Kom.</li>
+                    <div
+                        class="bg-white dark:bg-[#1a221a] border border-[#d4ddd0] dark:border-[#2a3a28] rounded-lg p-6"
+                    >
+                        <p
+                            class="text-sm font-semibold text-[#9a7b4f] dark:text-[#c9a66b] uppercase tracking-wide mb-4"
+                        >
+                            Pembimbing Saat Ini
+                        </p>
+                        <ul
+                            class="space-y-3 text-sm text-[#192d17] dark:text-[#f3f7f1]"
+                        >
+                            <li>
+                                Prof. Dr. Imas Sukaesih Sitanggang, S.Si.,
+                                M.Kom.
+                            </li>
                             <li>Dr. Eng. Annisa, M.Kom</li>
                         </ul>
                     </div>
 
-                    <div class="bg-white dark:bg-[#1a221a] border border-[#d4ddd0] dark:border-[#2a3a28] rounded-lg p-6">
-                        <p class="text-sm font-semibold text-[#9a7b4f] dark:text-[#c9a66b] uppercase tracking-wide mb-4">Pengembang Saat Ini</p>
-                        <ul class="space-y-3 text-sm text-[#192d17] dark:text-[#f3f7f1]">
+                    <div
+                        class="bg-white dark:bg-[#1a221a] border border-[#d4ddd0] dark:border-[#2a3a28] rounded-lg p-6"
+                    >
+                        <p
+                            class="text-sm font-semibold text-[#9a7b4f] dark:text-[#c9a66b] uppercase tracking-wide mb-4"
+                        >
+                            Pengembang Saat Ini
+                        </p>
+                        <ul
+                            class="space-y-3 text-sm text-[#192d17] dark:text-[#f3f7f1]"
+                        >
                             <li class="flex items-center gap-2">
                                 Zam Zam Saeful Bahtiar
                                 <a
@@ -351,8 +927,15 @@ import StaticFooter from "@/components/layout/StaticFooter.astro";
                                     rel="noopener"
                                     class="text-[#6b7a64] hover:text-[#192d17] dark:hover:text-[#f3f7f1]"
                                 >
-                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                        <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"></path>
+                                    <svg
+                                        class="w-4 h-4"
+                                        fill="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
+                                            clip-rule="evenodd"></path>
                                     </svg>
                                 </a>
                             </li>
@@ -361,18 +944,35 @@ import StaticFooter from "@/components/layout/StaticFooter.astro";
                 </div>
 
                 <!-- Pengembang Awal -->
-                <div class="bg-[#f3f6f2] dark:bg-[#121812] border border-[#d4ddd0] dark:border-[#2a3a28] rounded-lg p-6">
-                    <p class="text-sm font-semibold text-[#6b7a64] uppercase tracking-wide mb-4">Pengembang Awal & Kontributor</p>
+                <div
+                    class="bg-[#f3f6f2] dark:bg-[#121812] border border-[#d4ddd0] dark:border-[#2a3a28] rounded-lg p-6"
+                >
+                    <p
+                        class="text-sm font-semibold text-[#6b7a64] uppercase tracking-wide mb-4"
+                    >
+                        Pengembang Awal & Kontributor
+                    </p>
                     <div class="grid md:grid-cols-2 gap-6">
                         <div>
-                            <p class="text-xs text-[#9a7b4f] dark:text-[#c9a66b] font-medium mb-2">Pembimbing Awal</p>
+                            <p
+                                class="text-xs text-[#9a7b4f] dark:text-[#c9a66b] font-medium mb-2"
+                            >
+                                Pembimbing Awal
+                            </p>
                             <ul class="space-y-1 text-sm text-[#6b7a64]">
-                                <li>Prof. Dr. Imas Sukaesih Sitanggang, S.Si., M.Kom.</li>
+                                <li>
+                                    Prof. Dr. Imas Sukaesih Sitanggang, S.Si.,
+                                    M.Kom.
+                                </li>
                                 <li>Dr. Hendra Rahmawan, S.Kom., M.T.</li>
                             </ul>
                         </div>
                         <div>
-                            <p class="text-xs text-[#9a7b4f] dark:text-[#c9a66b] font-medium mb-2">Pengembang</p>
+                            <p
+                                class="text-xs text-[#9a7b4f] dark:text-[#c9a66b] font-medium mb-2"
+                            >
+                                Pengembang
+                            </p>
                             <ul class="space-y-1 text-sm text-[#6b7a64]">
                                 <li>Lee Roy Akbar, S.Kom. — Back-end</li>
                                 <li>Nechita Samantha, S.Kom — Front-end</li>
@@ -382,7 +982,6 @@ import StaticFooter from "@/components/layout/StaticFooter.astro";
                 </div>
             </div>
         </section>
-
     </main>
 
     <StaticFooter />

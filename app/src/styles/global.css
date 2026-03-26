@@ -258,6 +258,32 @@
 }
 
 @layer components {
+    /* Feature card styles */
+    .feature-card-green {
+        background-color: #d1fae5;
+        border-radius: 1.5rem;
+    }
+    .feature-card-pink {
+        background-color: #fce7f3;
+        border-radius: 1.5rem;
+    }
+    .feature-card-indigo {
+        background-color: #e0e7ff;
+        border-radius: 1.5rem;
+    }
+    .feature-card-amber {
+        background-color: #fef3c7;
+        border-radius: 1.5rem;
+    }
+    .feature-card-blue {
+        background-color: #dbeafe;
+        border-radius: 1.5rem;
+    }
+    .feature-card-purple {
+        background-color: #f3e8ff;
+        border-radius: 1.5rem;
+    }
+
     /* Fixed dark sections (header, counter, footer) - doesn't change with theme */
     .section-dark {
         background: linear-gradient(135deg, #192d17 0%, #1e3a1a 100%);
@@ -392,4 +418,37 @@
     .source-link::after {
         content: " ↗";
     }
+}
+
+/* Struktur Data section - dark mode overrides (outside layer for higher specificity) */
+.dark .struktur-card {
+    background-color: #1a221a !important;
+    border-color: #2a3a28 !important;
+}
+
+.dark .struktur-item {
+    border-color: #2a3a28 !important;
+}
+
+.dark .struktur-icon {
+    color: #f3f7f1 !important;
+}
+
+.dark .struktur-title,
+.dark .struktur-item-title {
+    color: #f3f7f1 !important;
+}
+
+.dark .struktur-desc,
+.dark .struktur-item-desc {
+    color: #b8c8b1 !important;
+}
+
+.dark .struktur-divider {
+    border-color: #2a3a28 !important;
+}
+
+.dark .struktur-item[style*="background: #f8faf7"],
+.dark .struktur-item[style*="background: #fefcf8"] {
+    background: #1e261e !important;
 }
