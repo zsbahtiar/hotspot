@@ -789,7 +789,7 @@ export default function HotspotTable() {
         </CardContent>
       </Card>
 
-            <Card>
+            <Card className="rounded-xl border-[#d4ddd0] dark:border-[#2a3a28] overflow-hidden">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table className="text-sm">
@@ -854,105 +854,101 @@ export default function HotspotTable() {
                     </TableCell>
                   </TableRow>
                 ) : sortedData.length > 0 ? (
-                  sortedData.map((item, index) => (
-                    <TableRow key={index} className="border-b border-[#e8ece6] dark:border-[#2a3a28] hover:bg-[#f3f6f2] dark:hover:bg-[#1a221a] transition-colors">
-                      <TableCell className="px-3 py-3 text-[#6b7a64] text-xs">
+                  sortedData.map((item, index) => {
+                    const confidenceValue = viewMode === "detail"
+                      ? (item as HotspotFeature).properties.confidence
+                      : (item as AccumulatedData).confidence;
+                    const isHigh = confidenceValue?.toLowerCase() === "high";
+                    return (
+                    <TableRow key={index} className={cn(
+                      "border-b border-[#e8ece6] dark:border-[#2a3a28] hover:bg-[#f3f6f2] dark:hover:bg-[#1a221a] transition-colors",
+                      isHigh && "bg-[#fef8ed] dark:bg-[#3d3520]"
+                    )}>
+                      <TableCell className="px-3 py-3 text-sm text-[#6b7a64]">
                         {(apiPage - 1) * PAGE_SIZE + index + 1}
                       </TableCell>
 
                       {viewMode === "detail" ? (
                         <>
-                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
-                            {new Date((item as HotspotFeature).properties.time).toLocaleDateString('id-ID', {
-                              day: '2-digit',
-                              month: 'short',
-                              year: 'numeric'
-                            })}
+                          <TableCell className="px-3 py-3">
+                            <div className={cn(isHigh && "border-l-4 border-[#e4991b] pl-3 -ml-1")}>
+                              <span className="text-sm text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
+                                {new Date((item as HotspotFeature).properties.time).toLocaleDateString('id-ID', {
+                                  day: '2-digit',
+                                  month: 'short',
+                                  year: 'numeric'
+                                })}
+                              </span>
+                            </div>
                           </TableCell>
-                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
+                          <TableCell className="px-3 py-3 text-sm text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {new Date((item as HotspotFeature).properties.hotspot_time).toLocaleTimeString('id-ID', {
                               hour: '2-digit',
                               minute: '2-digit'
                             })}
                           </TableCell>
-                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
+                          <TableCell className="px-3 py-3 text-sm text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {(item as HotspotFeature).properties.location.pulau}
                           </TableCell>
-                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
-                            {
-                              (item as HotspotFeature).properties.location
-                                .provinsi
-                            }
+                          <TableCell className="px-3 py-3 text-sm text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
+                            {(item as HotspotFeature).properties.location.provinsi}
                           </TableCell>
-                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
-                            {
-                              (item as HotspotFeature).properties.location
-                                .kab_kota
-                            }
+                          <TableCell className="px-3 py-3 text-sm text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
+                            {(item as HotspotFeature).properties.location.kab_kota}
                           </TableCell>
-                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
-                            {
-                              (item as HotspotFeature).properties.location
-                                .kecamatan
-                            }
+                          <TableCell className="px-3 py-3 text-sm text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
+                            {(item as HotspotFeature).properties.location.kecamatan}
                           </TableCell>
-                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
+                          <TableCell className="px-3 py-3 text-sm text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {(item as HotspotFeature).properties.location.desa}
                           </TableCell>
-                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
+                          <TableCell className="px-3 py-3 text-sm text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {(item as HotspotFeature).properties.satellite}
                           </TableCell>
-                          <TableCell className="px-3 py-2.5 text-[0.8rem] whitespace-nowrap">
-                            <span className={cn(
-                              "font-medium uppercase text-[0.7rem] tracking-wide",
-                              (item as HotspotFeature).properties.confidence === "high" && "text-[#c07f10]",
-                              (item as HotspotFeature).properties.confidence === "medium" && "text-[#3d6b35]",
-                              (item as HotspotFeature).properties.confidence === "low" && "text-[#6b7a64]"
-                            )}>
-                              {(item as HotspotFeature).properties.confidence}
-                            </span>
+                          <TableCell className="px-3 py-3 text-sm text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap uppercase">
+                            {(item as HotspotFeature).properties.confidence}
                           </TableCell>
-                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
+                          <TableCell className="px-3 py-3 text-sm text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {(item as HotspotFeature).properties.hotspot_count}
                           </TableCell>
-                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
+                          <TableCell className="px-3 py-3 text-sm text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {(item as HotspotFeature).geometry.coordinates[1]},{" "}
                             {(item as HotspotFeature).geometry.coordinates[0]}
                           </TableCell>
-                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
+                          <TableCell className="px-3 py-3 text-sm text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {(item as HotspotFeature).properties.temperature !== undefined
                               ? `${(item as HotspotFeature).properties.temperature}°C`
                               : "-"}
                           </TableCell>
-                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
+                          <TableCell className="px-3 py-3 text-sm text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {(item as HotspotFeature).properties.humidity !== undefined
                               ? `${(item as HotspotFeature).properties.humidity?.toFixed(1)}%`
                               : "-"}
                           </TableCell>
-                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
+                          <TableCell className="px-3 py-3 text-sm text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {translateWeatherCondition((item as HotspotFeature).properties.weather_conditions)}
                           </TableCell>
-                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
+                          <TableCell className="px-3 py-3 text-sm text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {(item as HotspotFeature).properties.frp
                               ? `${(item as HotspotFeature).properties.frp?.toFixed(1)} MW`
                               : "-"}
                           </TableCell>
-                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
+                          <TableCell className="px-3 py-3 text-sm text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {(item as HotspotFeature).properties.brightness
                               ? `${(item as HotspotFeature).properties.brightness?.toFixed(1)} K`
                               : "-"}
                           </TableCell>
-                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
+                          <TableCell className="px-3 py-3 text-sm text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {(item as HotspotFeature).properties.bright_t31
                               ? `${(item as HotspotFeature).properties.bright_t31?.toFixed(1)} K`
                               : "-"}
                           </TableCell>
-                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
+                          <TableCell className="px-3 py-3 text-sm text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {(item as HotspotFeature).properties.bright_ti4
                               ? `${(item as HotspotFeature).properties.bright_ti4?.toFixed(1)} K`
                               : "-"}
                           </TableCell>
-                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
+                          <TableCell className="px-3 py-3 text-sm text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {(item as HotspotFeature).properties.bright_ti5
                               ? `${(item as HotspotFeature).properties.bright_ti5?.toFixed(1)} K`
                               : "-"}
@@ -960,39 +956,36 @@ export default function HotspotTable() {
                         </>
                       ) : (
                         <>
-                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
-                            {new Date((item as AccumulatedData).tanggal).toLocaleDateString('id-ID', {
-                              day: '2-digit',
-                              month: 'short',
-                              year: 'numeric'
-                            })}
+                          <TableCell className="px-3 py-3">
+                            <div className={cn(isHigh && "border-l-4 border-[#e4991b] pl-3 -ml-1")}>
+                              <span className="text-sm text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
+                                {new Date((item as AccumulatedData).tanggal).toLocaleDateString('id-ID', {
+                                  day: '2-digit',
+                                  month: 'short',
+                                  year: 'numeric'
+                                })}
+                              </span>
+                            </div>
                           </TableCell>
-                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
+                          <TableCell className="px-3 py-3 text-sm text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {(item as AccumulatedData).satelit}
                           </TableCell>
-                          <TableCell className="px-3 py-2.5 text-[0.8rem] whitespace-nowrap">
-                            <span className={cn(
-                              "font-medium uppercase text-[0.7rem] tracking-wide",
-                              (item as AccumulatedData).confidence === "high" && "text-[#c07f10]",
-                              (item as AccumulatedData).confidence === "medium" && "text-[#3d6b35]",
-                              (item as AccumulatedData).confidence === "low" && "text-[#6b7a64]"
-                            )}>
-                              {(item as AccumulatedData).confidence}
-                            </span>
+                          <TableCell className="px-3 py-3 text-sm text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap uppercase">
+                            {(item as AccumulatedData).confidence}
                           </TableCell>
-                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
+                          <TableCell className="px-3 py-3 text-sm text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {(item as AccumulatedData).provinsi}
                           </TableCell>
-                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
+                          <TableCell className="px-3 py-3 text-sm text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {(item as AccumulatedData).kota}
                           </TableCell>
-                          <TableCell className="px-3 py-2.5 text-[0.8rem] text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
+                          <TableCell className="px-3 py-3 text-sm text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
                             {(item as AccumulatedData).jumlah}
                           </TableCell>
                         </>
                       )}
                     </TableRow>
-                  ))
+                  )})
                 ) : (
                   <TableRow>
                     <TableCell
