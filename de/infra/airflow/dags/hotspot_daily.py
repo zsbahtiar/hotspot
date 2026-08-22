@@ -1,45 +1,46 @@
+import asyncio
+import os
+import shutil
+import sys
+import traceback
 from datetime import datetime, timedelta
+
+import polars as pl
+import redis
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-import sys
-import os
-import asyncio
-import traceback
-import shutil
-import polars as pl
 
-sys.path.insert(0, '/opt/airflow')
+from src.config import settings
 
+sys.path.insert(0, "/opt/airflow")
+
+from src.etl.loader import ClickHouseLoader
 from src.etl.staging_extractor import StagingExtractor
 from src.etl.transformer import HotspotTransformer
-from src.etl.loader import ClickHouseLoader
-from src.utils.logging import setup_logging, get_logger
-from src.etl.loader import ClickHouseLoader
-
+from src.utils.logging import get_logger, setup_logging
 
 setup_logging()
 logger = get_logger(__name__)
 
 dag = DAG(
-    'hotspot_daily',
+    "hotspot_daily",
     default_args={
-        'owner': 'zsbahtiar',
-        'depends_on_past': False,
-        'retries': 3,
-        'retry_delay': timedelta(minutes=5),
+        "owner": "zsbahtiar",
+        "depends_on_past": False,
+        "retries": 3,
+        "retry_delay": timedelta(minutes=5),
     },
-    description='Complete ETL: Extract Staging Transform Dimensional Hotspot Schema',
+    description="Complete ETL: Extract Staging Transform Dimensional Hotspot Schema",
     schedule_interval=timedelta(minutes=15),
     start_date=datetime(2015, 1, 1),
     catchup=False,
     max_active_runs=1,
-    tags=['hotspot', 'etl', 'daily'],
+    tags=["hotspot", "etl", "daily"],
 )
 
 
-
 def extract_to_staging(**context):
-    date_str = datetime.now().strftime('%Y-%m-%d')
+    date_str = datetime.now().strftime("%Y-%m-%d")
 
     logger.info(f"Starting staging extraction for {date_str} (today)")
 
@@ -60,15 +61,17 @@ def extract_to_staging(**context):
             for table_name, df in staging_data.items():
                 file_path = f"{staging_dir}/{table_name}.csv"
 
-                df.write_csv(file_path, quote_style='always')
+                df.write_csv(file_path, quote_style="always")
                 staging_files[table_name] = file_path
                 logger.info(f"Saved {table_name} with {len(df)} records to {file_path}")
 
             batch_metadata = extractor.get_batch_metadata()
-            batch_metadata['staging_files'] = staging_files
-            batch_metadata['staging_dir'] = staging_dir
+            batch_metadata["staging_files"] = staging_files
+            batch_metadata["staging_dir"] = staging_dir
 
-            logger.info(f"Staging extraction completed. Batch: {batch_metadata['batch_id']}")
+            logger.info(
+                f"Staging extraction completed. Batch: {batch_metadata['batch_id']}"
+            )
             return batch_metadata
 
         except Exception as e:
@@ -78,10 +81,11 @@ def extract_to_staging(**context):
 
     return asyncio.run(_extract())
 
-def load_staging_to_clickhouse(**context):
-    date_str = datetime.now().strftime('%Y-%m-%d')
 
-    batch_metadata = context['task_instance'].xcom_pull(task_ids='extract_to_staging')
+def load_staging_to_clickhouse(**context):
+    date_str = datetime.now().strftime("%Y-%m-%d")
+
+    batch_metadata = context["task_instance"].xcom_pull(task_ids="extract_to_staging")
     if not batch_metadata:
         logger.error("No batch metadata found, cannot load staging data")
         return None
@@ -93,7 +97,7 @@ def load_staging_to_clickhouse(**context):
         loader = ClickHouseLoader()
 
         try:
-            staging_files = batch_metadata.get('staging_files', {})
+            staging_files = batch_metadata.get("staging_files", {})
             tables_loaded = []
 
             for table_name, file_path in staging_files.items():
@@ -105,15 +109,17 @@ def load_staging_to_clickhouse(**context):
                     await loader.load_staging_table(table_name, df)
 
                     tables_loaded.append(f"{table_name}: {len(df)} records")
-                    logger.info(f"Successfully loaded {table_name} with {len(df)} records")
+                    logger.info(
+                        f"Successfully loaded {table_name} with {len(df)} records"
+                    )
                 else:
                     logger.warning(f"Staging file not found: {file_path}")
 
             logger.info(f"Staging load completed: {tables_loaded}")
             return {
-                'batch_id': batch_metadata['batch_id'],
-                'tables_loaded': tables_loaded,
-                'status': 'loaded_to_staging'
+                "batch_id": batch_metadata["batch_id"],
+                "tables_loaded": tables_loaded,
+                "status": "loaded_to_staging",
             }
 
         except Exception as e:
@@ -129,13 +135,15 @@ def load_staging_to_clickhouse(**context):
 
 
 def transform_to_hotspot(**context):
-    date_str = datetime.now().strftime('%Y-%m-%d')
+    date_str = datetime.now().strftime("%Y-%m-%d")
 
-    load_result = context['task_instance'].xcom_pull(task_ids='load_staging_to_clickhouse')
+    load_result = context["task_instance"].xcom_pull(
+        task_ids="load_staging_to_clickhouse"
+    )
     if not load_result:
         logger.error("No staging load result found, cannot transform to hotspot")
         return None
-    batch_id = load_result['batch_id']
+    batch_id = load_result["batch_id"]
 
     logger.info(f"Starting hotspot transformation for {date_str}, batch: {batch_id}")
 
@@ -153,11 +161,11 @@ def transform_to_hotspot(**context):
             tables_loaded = []
 
             dimension_order = [
-                ('dim_period', 'load_dimension_insert_only'),
-                ('dim_location', 'load_dimension_upsert', 'id'),
-                ('dim_satellite', 'load_dimension_small'),
-                ('dim_confidence', 'load_dimension_small'),
-                ('dim_weather_condition', 'load_dimension_small')
+                ("dim_period", "load_dimension_insert_only"),
+                ("dim_location", "load_dimension_upsert", "id"),
+                ("dim_satellite", "load_dimension_small"),
+                ("dim_confidence", "load_dimension_small"),
+                ("dim_weather_condition", "load_dimension_small"),
             ]
 
             for dim_config in dimension_order:
@@ -167,16 +175,18 @@ def transform_to_hotspot(**context):
                     if not df.is_empty():
                         logger.info(f"Loading {table_name} with {len(df)} records")
 
-                        if dim_config[1] == 'load_dimension_insert_only':
+                        if dim_config[1] == "load_dimension_insert_only":
                             await loader.load_dimension_insert_only(table_name, df)
-                        elif dim_config[1] == 'load_dimension_upsert':
-                            await loader.load_dimension_upsert(table_name, df, dim_config[2])
-                        elif dim_config[1] == 'load_dimension_small':
+                        elif dim_config[1] == "load_dimension_upsert":
+                            await loader.load_dimension_upsert(
+                                table_name, df, dim_config[2]
+                            )
+                        elif dim_config[1] == "load_dimension_small":
                             await loader.load_dimension_small(table_name, df)
 
                         tables_loaded.append(f"{table_name}: {len(df)} records")
 
-            fact_tables = ['fact_hotspot', 'fact_weather']
+            fact_tables = ["fact_hotspot", "fact_weather"]
             for table_name in fact_tables:
                 if table_name in dimensional_data:
                     df = dimensional_data[table_name]
@@ -187,9 +197,9 @@ def transform_to_hotspot(**context):
 
             logger.info(f"Hotspot transformation completed: {tables_loaded}")
             return {
-                'batch_id': batch_id,
-                'tables_loaded': tables_loaded,
-                'status': 'hotspot_loaded'
+                "batch_id": batch_id,
+                "tables_loaded": tables_loaded,
+                "status": "hotspot_loaded",
             }
 
         except Exception as e:
@@ -203,19 +213,24 @@ def transform_to_hotspot(**context):
         logger.error(f"AsyncIO error: {e}")
         raise
 
-def data_quality_check(**context):
-    date_str = datetime.now().strftime('%Y-%m-%d')
 
-    transform_result = context['task_instance'].xcom_pull(task_ids='transform_to_hotspot')
+def data_quality_check(**context):
+    date_str = datetime.now().strftime("%Y-%m-%d")
+
+    transform_result = context["task_instance"].xcom_pull(
+        task_ids="transform_to_hotspot"
+    )
     if not transform_result:
         logger.warning("No hotspot transform result, checking staging only")
-        load_result = context['task_instance'].xcom_pull(task_ids='load_staging_to_clickhouse')
+        load_result = context["task_instance"].xcom_pull(
+            task_ids="load_staging_to_clickhouse"
+        )
         if not load_result:
             logger.error("No data found in pipeline")
             return "FAILED"
-        batch_id = load_result['batch_id']
+        batch_id = load_result["batch_id"]
     else:
-        batch_id = transform_result['batch_id']
+        batch_id = transform_result["batch_id"]
 
     logger.info(f"Running complete data quality checks for {date_str}")
     logger.info(f"Checking batch: {batch_id}")
@@ -225,9 +240,9 @@ def data_quality_check(**context):
 
         try:
             checks_passed = 0
-            total_checks = 9 
+            total_checks = 9
 
-            staging_tables = ['staging_hotspot', 'staging_weather']
+            staging_tables = ["staging_hotspot", "staging_weather"]
             for table in staging_tables:
                 try:
                     count = await loader.get_table_count(table)
@@ -237,7 +252,13 @@ def data_quality_check(**context):
                 except Exception as e:
                     logger.warning(f"Could not check {table}: {e}")
 
-            dimension_tables = ['dim_period', 'dim_location', 'dim_satellite', 'dim_confidence', 'dim_weather_condition']
+            dimension_tables = [
+                "dim_period",
+                "dim_location",
+                "dim_satellite",
+                "dim_confidence",
+                "dim_weather_condition",
+            ]
             for table in dimension_tables:
                 try:
                     count = await loader.get_table_count(table)
@@ -247,7 +268,7 @@ def data_quality_check(**context):
                 except Exception as e:
                     logger.warning(f"Could not check {table}: {e}")
 
-            fact_tables = ['fact_hotspot', 'fact_weather']
+            fact_tables = ["fact_hotspot", "fact_weather"]
             for table in fact_tables:
                 try:
                     count = await loader.get_table_count(table)
@@ -258,13 +279,17 @@ def data_quality_check(**context):
                     logger.warning(f"Could not check {table}: {e}")
 
             success_rate = (checks_passed / total_checks) * 100
-            logger.info(f"Data quality check: {checks_passed}/{total_checks} passed ({success_rate:.1f}%)")
+            logger.info(
+                f"Data quality check: {checks_passed}/{total_checks} passed ({success_rate:.1f}%)"
+            )
 
-            if checks_passed >= 8:  
+            if checks_passed >= 8:
                 logger.info("Data quality checks passed!")
                 return "SUCCESS"
             elif checks_passed >= 5:
-                logger.warning(f"Partial success: {checks_passed}/{total_checks} checks passed")
+                logger.warning(
+                    f"Partial success: {checks_passed}/{total_checks} checks passed"
+                )
                 return "PARTIAL"
             else:
                 logger.error("Data quality checks failed!")
@@ -276,17 +301,18 @@ def data_quality_check(**context):
 
     return asyncio.run(_check())
 
-def cleanup_staging_temp_files(**context):
-    date_str = datetime.now().strftime('%Y-%m-%d')
 
-    batch_metadata = context['task_instance'].xcom_pull(task_ids='extract_to_staging')
+def cleanup_staging_temp_files(**context):
+    date_str = datetime.now().strftime("%Y-%m-%d")
+
+    batch_metadata = context["task_instance"].xcom_pull(task_ids="extract_to_staging")
     if not batch_metadata:
         logger.warning("No batch metadata found, skipping cleanup")
         return
 
     logger.info(f"Cleaning up staging temp files for {date_str}")
 
-    staging_dir = batch_metadata.get('staging_dir')
+    staging_dir = batch_metadata.get("staging_dir")
     files_cleaned = 0
 
     if staging_dir and os.path.exists(staging_dir):
@@ -299,34 +325,102 @@ def cleanup_staging_temp_files(**context):
 
     logger.info(f"Staging cleanup completed: {files_cleaned} directories removed")
 
+
+def invalidate_api_cache(**context):
+    transform_result = context["task_instance"].xcom_pull(
+        task_ids="transform_to_hotspot"
+    )
+
+    if not transform_result:
+        logger.info("No transform result, skipping cache invalidation")
+        return {"status": "skipped", "reason": "no_transform_result"}
+
+    tables_loaded = transform_result.get("tables_loaded", [])
+    if not tables_loaded:
+        logger.info("No tables loaded, skipping cache invalidation")
+        return {"status": "skipped", "reason": "no_tables_loaded"}
+
+    logger.info(
+        f"New data detected ({len(tables_loaded)} tables), invalidating API cache"
+    )
+
+    try:
+        r = redis.Redis(
+            host=settings.redis_host,
+            port=settings.redis_port,
+            db=settings.redis_db,
+            decode_responses=True,
+        )
+
+        master_key = "api_cache_keys"
+        cache_keys = r.smembers(master_key)
+
+        if not cache_keys:
+            logger.info("No cache keys found to invalidate")
+            return {"status": "no_cache", "keys_deleted": 0}
+
+        keys_deleted = 0
+        for key in cache_keys:
+            try:
+                r.delete(key)
+                keys_deleted += 1
+                logger.info(f"Deleted cache key: {key}")
+            except Exception as e:
+                logger.warning(f"Failed to delete cache key {key}: {e}")
+
+        r.delete(master_key)
+        logger.info(f"Deleted master key: {master_key}")
+
+        logger.info(f"API cache invalidation completed: {keys_deleted} keys deleted")
+        return {"status": "success", "keys_deleted": keys_deleted}
+
+    except Exception as e:
+        logger.error(f"API cache invalidation failed: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        return {"status": "failed", "error": str(e)}
+
+
 extract_to_staging_task = PythonOperator(
-    task_id='extract_to_staging',
+    task_id="extract_to_staging",
     python_callable=extract_to_staging,
     dag=dag,
 )
 
 load_staging_task = PythonOperator(
-    task_id='load_staging_to_clickhouse',
+    task_id="load_staging_to_clickhouse",
     python_callable=load_staging_to_clickhouse,
     dag=dag,
 )
 
 transform_hotspot_task = PythonOperator(
-    task_id='transform_to_hotspot',
+    task_id="transform_to_hotspot",
     python_callable=transform_to_hotspot,
     dag=dag,
 )
 
 data_quality_task = PythonOperator(
-    task_id='data_quality_check',
+    task_id="data_quality_check",
     python_callable=data_quality_check,
     dag=dag,
 )
 
 cleanup_staging_task = PythonOperator(
-    task_id='cleanup_staging_temp_files',
+    task_id="cleanup_staging_temp_files",
     python_callable=cleanup_staging_temp_files,
     dag=dag,
 )
 
-extract_to_staging_task >> load_staging_task >> transform_hotspot_task >> data_quality_task >> cleanup_staging_task
+invalidate_cache_task = PythonOperator(
+    task_id="invalidate_api_cache",
+    python_callable=invalidate_api_cache,
+    dag=dag,
+)
+
+(
+    extract_to_staging_task
+    >> load_staging_task
+    >> transform_hotspot_task
+    >> data_quality_task
+    >> cleanup_staging_task
+    >> invalidate_cache_task
+)

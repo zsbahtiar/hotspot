@@ -1,13 +1,15 @@
-import polars as pl
-from datetime import datetime
-import pytz
 import asyncio
+from datetime import datetime
 from typing import Dict, Optional
+
+import polars as pl
+import pytz
 from ulid import ULID
-from src.etl.clients import NASAFIRMSClient, LocationService, WeatherService
+
+from src.config import settings
+from src.etl.clients import LocationService, NASAFIRMSClient, WeatherService
 from src.etl.loader import ClickHouseLoader
 from src.utils.logging import get_logger
-from src.config import settings
 
 logger = get_logger(__name__)
 
@@ -146,6 +148,19 @@ class StagingExtractor:
                     normalized_df = df.select(
                         [pl.col(col).cast(pl.Utf8).alias(col) for col in df.columns]
                     )
+
+                    if "source_api" in normalized_df.columns and "satellite" in normalized_df.columns:
+                        normalized_df = normalized_df.with_columns(
+                            pl.when(pl.col("source_api").str.contains("NOAA21"))
+                            .then(pl.lit("N21"))
+                            .when(pl.col("source_api").str.contains("NOAA20"))
+                            .then(pl.lit("N20"))
+                            .when(pl.col("source_api").str.contains("SNPP"))
+                            .then(pl.lit("N"))
+                            .otherwise(pl.col("satellite"))
+                            .alias("satellite")
+                        )
+
                     normalized_dfs.append(normalized_df)
 
                 combined_df = pl.concat(normalized_dfs, how="diagonal")
@@ -202,27 +217,31 @@ class StagingExtractor:
 
         try:
             unique_coords = hotspot_df.select(["latitude", "longitude"]).unique()
-            coord_records = unique_coords.to_dicts()
 
-            logger.info(f"Geocoding {len(coord_records)} unique coordinates")
-
-            location_data = await location_service.get_location_bulk(coord_records)
-
-            if location_data:
-                location_df = pl.DataFrame(location_data)
-
-                location_df = location_df.with_columns(
-                    [pl.lit(None).cast(pl.Utf8).alias("id")]
+            cached_coords = await self._load_cached_coords(loader, unique_coords)
+            if cached_coords.is_empty():
+                new_coords = unique_coords
+            else:
+                new_coords = unique_coords.join(
+                    cached_coords, on=["latitude", "longitude"], how="anti"
                 )
 
-                location_ids = [str(ULID()) for _ in range(len(location_df))]
-                location_df = location_df.with_columns(
-                    [pl.Series("id", location_ids, dtype=pl.Utf8)]
-                ).select(
-                    [
-                        "id",
-                        "latitude",
-                        "longitude",
+            logger.info(
+                f"{cached_coords.height} coords already cached, "
+                f"geocoding {new_coords.height} new coordinates"
+            )
+
+            valid_frames = []
+            if not cached_coords.is_empty():
+                valid_frames.append(cached_coords.select(["latitude", "longitude"]))
+
+            if not new_coords.is_empty():
+                location_data = await location_service.get_location_bulk(
+                    new_coords.to_dicts()
+                )
+
+                if location_data:
+                    region_cols = [
                         "province_code",
                         "province_name",
                         "city_code",
@@ -232,22 +251,134 @@ class StagingExtractor:
                         "subdistrict_code",
                         "subdistrict_name",
                     ]
-                )
 
-                await loader.load_dimension_composite_key(
-                    "dim_location", location_df, ["latitude", "longitude"]
-                )
-                logger.info(
-                    f"Loaded {len(location_df)} location records to dim_location"
-                )
-                return location_df
-            else:
+                    coord_region_df = pl.DataFrame(location_data).select(
+                        ["latitude", "longitude"] + region_cols
+                    )
+
+                    region_map = await self._load_existing_regions(
+                        loader, region_cols
+                    )
+
+                    unique_regions = coord_region_df.select(region_cols).unique()
+                    region_ids = []
+                    for row in unique_regions.iter_rows(named=True):
+                        key = tuple(row[c] for c in region_cols)
+                        if key not in region_map:
+                            region_map[key] = str(ULID())
+                        region_ids.append(region_map[key])
+
+                    dim_region_df = unique_regions.with_columns(
+                        [pl.Series("id", region_ids, dtype=pl.Utf8)]
+                    ).select(["id"] + region_cols)
+
+                    await loader.load_dimension_composite_key(
+                        "dim_location", dim_region_df, region_cols
+                    )
+                    logger.info(
+                        f"Loaded {len(dim_region_df)} region records to dim_location"
+                    )
+
+                    coord_region_df = coord_region_df.with_columns(
+                        [
+                            pl.struct(region_cols)
+                            .map_elements(
+                                lambda r: region_map[
+                                    tuple(r[c] for c in region_cols)
+                                ],
+                                return_dtype=pl.Utf8,
+                            )
+                            .alias("location_id")
+                        ]
+                    )
+
+                    cache_df = coord_region_df.select(
+                        ["latitude", "longitude", "location_id"]
+                    )
+                    await loader.load_dimension_composite_key(
+                        "geo_coordinate_cache", cache_df, ["latitude", "longitude"]
+                    )
+                    logger.info(
+                        f"Cached {len(cache_df)} new coordinate-to-region mappings"
+                    )
+
+                    valid_frames.append(
+                        coord_region_df.select(["latitude", "longitude"])
+                    )
+
+            if not valid_frames:
                 logger.warning("No location data retrieved")
                 return None
+
+            return pl.concat(valid_frames, how="vertical").unique(
+                subset=["latitude", "longitude"]
+            )
 
         except Exception as e:
             logger.error(f"Error extracting and loading location data: {e}")
             return None
+
+    async def _load_cached_coords(
+        self, loader: ClickHouseLoader, coords_df: pl.DataFrame
+    ) -> pl.DataFrame:
+        empty = pl.DataFrame(
+            {"latitude": [], "longitude": []},
+            schema={"latitude": pl.Utf8, "longitude": pl.Utf8},
+        )
+        if coords_df.is_empty():
+            return empty
+
+        found = []
+        batch_size = 1000
+        for start in range(0, len(coords_df), batch_size):
+            batch = coords_df[start : start + batch_size]
+            lat_list = ",".join(
+                f"'{r['latitude']}'" for r in batch.iter_rows(named=True)
+            )
+            lon_list = ",".join(
+                f"'{r['longitude']}'" for r in batch.iter_rows(named=True)
+            )
+            res = await loader.execute_query(
+                f"SELECT latitude, longitude FROM geo_coordinate_cache "
+                f"WHERE latitude IN ({lat_list}) AND longitude IN ({lon_list}) "
+                f"FORMAT TabSeparated"
+            )
+            if res.strip():
+                for line in res.strip().split("\n"):
+                    parts = line.split("\t")
+                    if len(parts) >= 2:
+                        found.append((parts[0], parts[1]))
+
+        if not found:
+            return empty
+
+        return pl.DataFrame(
+            {
+                "latitude": [f[0] for f in found],
+                "longitude": [f[1] for f in found],
+            },
+            schema={"latitude": pl.Utf8, "longitude": pl.Utf8},
+        ).unique(subset=["latitude", "longitude"])
+
+    async def _load_existing_regions(
+        self, loader: ClickHouseLoader, region_cols: list
+    ) -> Dict[tuple, str]:
+        region_map = {}
+        try:
+            cols_str = ", ".join(region_cols)
+            result = await loader.execute_query(
+                f"SELECT {cols_str}, id FROM dim_location FORMAT TabSeparated"
+            )
+            if result.strip():
+                for line in result.strip().split("\n"):
+                    parts = line.split("\t")
+                    if len(parts) == len(region_cols) + 1:
+                        key = tuple(parts[: len(region_cols)])
+                        region_map[key] = parts[-1]
+            logger.info(f"Loaded {len(region_map)} existing regions for reuse")
+        except Exception as e:
+            logger.warning(f"Could not load existing regions: {e}")
+        return region_map
 
     async def _extract_raw_weather_data(
         self, hotspot_df: pl.DataFrame

@@ -146,7 +146,7 @@ class ClickHouseLoader:
             if result.strip():
                 import io
 
-                existing_df = pl.read_csv(io.StringIO(result))
+                existing_df = pl.read_csv(io.StringIO(result), infer_schema_length=0)
 
                 for col in key_cols:
                     if col in existing_df.columns and col in df.columns:

@@ -1,0 +1,14 @@
+[Unit]
+Description=ClickHouse Backup to Cloudflare R2
+After=docker.service
+Wants=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/clickhouse-backup/backup.sh
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=clickhouse-backup
+
+[Install]
+WantedBy=multi-user.target

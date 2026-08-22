@@ -1,12 +1,18 @@
-import polars as pl
-from typing import Dict
-import pytz
 import io
+from typing import Dict
+
+import polars as pl
+import pytz
 from ulid import ULID
-from src.utils.logging import get_logger
+
 from src.etl.loader import ClickHouseLoader
+from src.utils.logging import get_logger
 
 logger = get_logger(__name__)
+
+
+def derive_product(version) -> str:
+    return "NRT" if "NRT" in str(version).upper() else "SP"
 
 
 class IDMappings:
@@ -15,6 +21,7 @@ class IDMappings:
         self.confidence_map = {}
         self.time_map = {}
         self.weather_condition_map = {}
+        self.satellite_map = {}
         self.loader = None
 
     async def load_existing_locations(self):
@@ -95,6 +102,32 @@ class IDMappings:
         except Exception as e:
             logger.warning(f"Could not load existing confidence: {e}")
 
+    async def load_existing_satellites(self):
+        if not self.loader:
+            return
+
+        try:
+            query = """
+            SELECT satellite_name, instrument, product, id
+            FROM dim_satellite
+            """
+            result = await self.loader.execute_query(query)
+
+            if result.strip():
+                for line in result.strip().split("\n"):
+                    parts = line.split("\t")
+                    if len(parts) >= 4:
+                        satellite_name = parts[0].strip()
+                        instrument = parts[1].strip()
+                        product = parts[2].strip()
+                        satellite_id = parts[3].strip()
+                        key = f"{satellite_name}_{instrument}_{product}"
+                        self.satellite_map[key] = satellite_id
+
+            logger.info(f"Loaded {len(self.satellite_map)} existing satellites for reuse")
+        except Exception as e:
+            logger.warning(f"Could not load existing satellites: {e}")
+
     async def get_period_id_for_date(self, date_value: str) -> str:
         if not self.loader:
             if date_value not in self.time_map:
@@ -137,6 +170,12 @@ class IDMappings:
             self.confidence_map[key] = str(ULID())
         return self.confidence_map[key]
 
+    def get_satellite_id(self, satellite: str, instrument: str, product: str) -> str:
+        key = f"{satellite}_{instrument}_{product}"
+        if key not in self.satellite_map:
+            self.satellite_map[key] = str(ULID())
+        return self.satellite_map[key]
+
     def get_time_id(self, timestamp_str: str) -> str:
         key = timestamp_str
         if key not in self.time_map:
@@ -166,6 +205,7 @@ class HotspotTransformer:
         await self.id_mappings.load_existing_locations()
         await self.id_mappings.load_existing_weather_conditions()
         await self.id_mappings.load_existing_confidence()
+        await self.id_mappings.load_existing_satellites()
 
         logger.info(f"Starting hotspot transformation for batch: {batch_id}")
 
@@ -339,11 +379,24 @@ class HotspotTransformer:
 
         satellite_df = staging_hotspot.select(
             ["satellite", "instrument", "version"]
-        ).unique()
+        ).with_columns(
+            [
+                pl.col("version")
+                .map_elements(derive_product, return_dtype=pl.Utf8)
+                .alias("product")
+            ]
+        ).unique(subset=["satellite", "instrument", "product"])
 
         dim_satellite = satellite_df.with_columns(
             [
-                (pl.col("satellite") + "_" + pl.col("instrument")).alias("id"),
+                pl.struct(["satellite", "instrument", "product"])
+                .map_elements(
+                    lambda row: self.id_mappings.get_satellite_id(
+                        row["satellite"], row["instrument"], row["product"]
+                    ),
+                    return_dtype=pl.Utf8,
+                )
+                .alias("id"),
                 pl.col("satellite").alias("satellite_name"),
                 pl.when(pl.col("instrument") == "MODIS")
                 .then(pl.lit(1000))
@@ -369,6 +422,7 @@ class HotspotTransformer:
                 "id",
                 "satellite_name",
                 "instrument",
+                "product",
                 "version",
                 "spatial_resolution_m",
                 "temporal_resolution_hours",
@@ -401,7 +455,7 @@ class HotspotTransformer:
                     pl.when(pl.col("confidence").cast(pl.Int32, strict=False) >= 80)
                     .then(pl.lit("HIGH"))
                     .when(pl.col("confidence").cast(pl.Int32, strict=False) >= 30)
-                    .then(pl.lit("NOMINAL"))
+                    .then(pl.lit("MEDIUM"))
                     .otherwise(pl.lit("LOW"))
                 )
                 .when(pl.col("instrument") == "VIIRS")
@@ -409,7 +463,7 @@ class HotspotTransformer:
                     pl.when(pl.col("confidence").is_in(["h", "high"]))
                     .then(pl.lit("HIGH"))
                     .when(pl.col("confidence").is_in(["n", "nominal"]))
-                    .then(pl.lit("NOMINAL"))
+                    .then(pl.lit("MEDIUM"))
                     .otherwise(pl.lit("LOW"))
                 )
                 .otherwise(pl.lit("UNKNOWN"))
@@ -439,9 +493,9 @@ class HotspotTransformer:
                 .otherwise(pl.lit(0.0))
                 .alias("confidence_score"),
                 pl.when(pl.col("instrument") == "MODIS")
-                .then(pl.lit("MODIS confidence percentage (0-100)"))
+                .then(pl.lit("MODIS confidence percentage (0-100), standarisasi Permen LHK No. 8/2018"))
                 .when(pl.col("instrument") == "VIIRS")
-                .then(pl.lit("VIIRS confidence category (low/nominal/high)"))
+                .then(pl.lit("VIIRS confidence category (low/nominal/high) mapped to LOW/MEDIUM/HIGH per Permen LHK No. 8/2018"))
                 .otherwise(pl.lit("Unknown confidence format"))
                 .alias("description"),
             ]
@@ -537,14 +591,48 @@ class HotspotTransformer:
             logger.warning("No fact_hotspot records with valid location_id")
             return pl.DataFrame()
 
+        fact_df = fact_df.with_columns(
+            [
+                pl.col("version")
+                .map_elements(derive_product, return_dtype=pl.Utf8)
+                .alias("product")
+            ]
+        )
+
+        before_dedup_count = len(fact_df)
+        fact_df = fact_df.sort(
+            by=pl.when(pl.col("product") == "SP").then(0).otherwise(1)
+        ).unique(
+            subset=[
+                "latitude",
+                "longitude",
+                "acq_date",
+                "acq_time",
+                "satellite",
+                "instrument",
+            ],
+            keep="first",
+        )
+        deduped_count = before_dedup_count - len(fact_df)
+
+        if deduped_count > 0:
+            logger.info(
+                f"Deduplicated {deduped_count} fact_hotspot records preferring SP over NRT"
+            )
+
         hotspot_ids = [str(ULID()) for _ in range(len(fact_df))]
 
         fact_hotspot = fact_df.with_columns(
             [
                 pl.Series("id", hotspot_ids, dtype=pl.Utf8),
-                (pl.col("satellite") + "_" + pl.col("instrument")).alias(
-                    "satellite_id"
-                ),
+                pl.struct(["satellite", "instrument", "product"])
+                .map_elements(
+                    lambda row: self.id_mappings.get_satellite_id(
+                        row["satellite"], row["instrument"], row["product"]
+                    ),
+                    return_dtype=pl.Utf8,
+                )
+                .alias("satellite_id"),
                 pl.struct(["confidence", "instrument"])
                 .map_elements(
                     lambda row: self.id_mappings.get_confidence_id(
@@ -699,8 +787,8 @@ class HotspotTransformer:
                 )
 
                 query = f"""
-                SELECT latitude, longitude, id as location_id
-                FROM dim_location
+                SELECT latitude, longitude, location_id
+                FROM geo_coordinate_cache
                 WHERE latitude IN ({lat_list})
                   AND longitude IN ({lon_list})
                 """

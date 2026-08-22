@@ -109,7 +109,7 @@ def process_month_data(**context):
             return None
 
         line_count = len(result.split("\n")) if result else 0
-        record_count = max(0, line_count - 1)  # Exclude header
+        record_count = max(0, line_count - 1)
         logger.info(
             f"Query response received: {record_count} records, {len(result)} characters"
         )
@@ -170,13 +170,7 @@ def process_month_data(**context):
         locations, weather_data = await asyncio.gather(location_task, weather_task)
 
         if locations:
-            for location in locations:
-                location["id"] = str(ULID())
-
-            column_order = [
-                "id",
-                "latitude",
-                "longitude",
+            region_cols = [
                 "province_code",
                 "province_name",
                 "city_code",
@@ -187,11 +181,55 @@ def process_month_data(**context):
                 "subdistrict_name",
             ]
 
-            location_df = pl.DataFrame(locations).select(column_order)
-            await loader.load_dimension_composite_key(
-                "dim_location", location_df, ["latitude", "longitude"]
+            coord_region_df = pl.DataFrame(locations).select(
+                ["latitude", "longitude"] + region_cols
             )
-            logger.info(f"Loaded {len(location_df)} locations")
+
+            region_map = {}
+            cols_str = ", ".join(region_cols)
+            existing = await loader.execute_query(
+                f"SELECT {cols_str}, id FROM dim_location FORMAT TabSeparated"
+            )
+            if existing.strip():
+                for line in existing.strip().split("\n"):
+                    parts = line.split("\t")
+                    if len(parts) == len(region_cols) + 1:
+                        region_map[tuple(parts[: len(region_cols)])] = parts[-1]
+
+            unique_regions = coord_region_df.select(region_cols).unique()
+            region_ids = []
+            for row in unique_regions.iter_rows(named=True):
+                key = tuple(row[c] for c in region_cols)
+                if key not in region_map:
+                    region_map[key] = str(ULID())
+                region_ids.append(region_map[key])
+
+            dim_region_df = unique_regions.with_columns(
+                [pl.Series("id", region_ids, dtype=pl.Utf8)]
+            ).select(["id"] + region_cols)
+            await loader.load_dimension_composite_key(
+                "dim_location", dim_region_df, region_cols
+            )
+
+            coord_region_df = coord_region_df.with_columns(
+                [
+                    pl.struct(region_cols)
+                    .map_elements(
+                        lambda r: region_map[tuple(r[c] for c in region_cols)],
+                        return_dtype=pl.Utf8,
+                    )
+                    .alias("location_id")
+                ]
+            )
+            cache_df = coord_region_df.select(
+                ["latitude", "longitude", "location_id"]
+            )
+            await loader.load_dimension_composite_key(
+                "geo_coordinate_cache", cache_df, ["latitude", "longitude"]
+            )
+            logger.info(
+                f"Loaded {len(dim_region_df)} regions, cached {len(cache_df)} coordinates"
+            )
 
         if weather_data:
             for weather in weather_data:

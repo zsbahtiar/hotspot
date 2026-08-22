@@ -1,0 +1,716 @@
+basePath: /
+definitions:
+  domain.DistributionCount:
+    properties:
+      count:
+        type: integer
+      name:
+        type: string
+    type: object
+  domain.ErrorResponse:
+    properties:
+      error:
+        type: string
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  domain.FilterOption:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  domain.GeoJSON:
+    properties:
+      features:
+        items:
+          $ref: '#/definitions/domain.GeoJSONFeature'
+        type: array
+      pagination:
+        $ref: '#/definitions/domain.Pagination'
+      type:
+        type: string
+    type: object
+  domain.GeoJSONFeature:
+    properties:
+      geometry:
+        $ref: '#/definitions/domain.GeoJSONGeometry'
+      properties:
+        $ref: '#/definitions/domain.GeoJSONFeatureProps'
+      type:
+        type: string
+    type: object
+  domain.GeoJSONFeatureProps:
+    properties:
+      acquired_at:
+        type: string
+      bright_t31:
+        type: number
+      bright_ti4:
+        type: number
+      bright_ti5:
+        type: number
+      brightness:
+        type: number
+      cloud_coverage:
+        type: integer
+      confidence:
+        type: string
+      confidence_class:
+        type: string
+      frp:
+        type: number
+      hotspot_count:
+        type: integer
+      hotspot_time:
+        type: string
+      humidity:
+        type: number
+      id:
+        type: string
+      instrument:
+        type: string
+      location:
+        $ref: '#/definitions/domain.Location'
+      precipitation:
+        type: number
+      pressure:
+        type: integer
+      product:
+        type: string
+      satellite:
+        type: string
+      satellite_name:
+        type: string
+      solar_radiation:
+        type: number
+      temperature:
+        type: integer
+      time:
+        type: string
+      uv_index:
+        type: integer
+      visibility:
+        type: integer
+      weather_conditions:
+        type: string
+      weather_icon:
+        type: string
+      wind_degree:
+        type: number
+      wind_speed:
+        type: number
+    type: object
+  domain.GeoJSONGeometry:
+    properties:
+      coordinates:
+        items:
+          type: number
+        type: array
+      type:
+        type: string
+    type: object
+  domain.GetFilterOptionsResponse:
+    properties:
+      confidence:
+        items:
+          $ref: '#/definitions/domain.FilterOption'
+        type: array
+      products:
+        items:
+          $ref: '#/definitions/domain.FilterOption'
+        type: array
+      satellites:
+        items:
+          $ref: '#/definitions/domain.FilterOption'
+        type: array
+    type: object
+  domain.GetHotspotsResponse:
+    properties:
+      hotspots:
+        items:
+          $ref: '#/definitions/domain.HotspotDetail'
+        type: array
+      pagination:
+        $ref: '#/definitions/domain.Pagination'
+    type: object
+  domain.GetLocationsResponse:
+    properties:
+      cities:
+        items:
+          $ref: '#/definitions/domain.LocationHierarchyItem'
+        type: array
+      districts:
+        items:
+          $ref: '#/definitions/domain.LocationHierarchyItem'
+        type: array
+      islands:
+        items:
+          $ref: '#/definitions/domain.IslandGroup'
+        type: array
+      provinces:
+        items:
+          $ref: '#/definitions/domain.LocationHierarchyItem'
+        type: array
+      subdistricts:
+        items:
+          $ref: '#/definitions/domain.LocationHierarchyItem'
+        type: array
+    type: object
+  domain.GetPeriodsResponse:
+    properties:
+      months:
+        items:
+          $ref: '#/definitions/domain.PeriodValue'
+        type: array
+      quarters:
+        items:
+          $ref: '#/definitions/domain.PeriodValue'
+        type: array
+      semesters:
+        items:
+          $ref: '#/definitions/domain.PeriodValue'
+        type: array
+      weeks:
+        items:
+          $ref: '#/definitions/domain.PeriodValue'
+        type: array
+      years:
+        items:
+          $ref: '#/definitions/domain.PeriodValue'
+        type: array
+    type: object
+  domain.GetStatsResponse:
+    properties:
+      affected_provinces:
+        type: integer
+      high_confidence:
+        type: integer
+      total_hotspots:
+        type: integer
+    type: object
+  domain.GetSummaryResponse:
+    properties:
+      confidence_distribution:
+        items:
+          $ref: '#/definitions/domain.DistributionCount'
+        type: array
+      monthly_stats:
+        items:
+          $ref: '#/definitions/domain.MonthlyStats'
+        type: array
+      satellite_distribution:
+        items:
+          $ref: '#/definitions/domain.DistributionCount'
+        type: array
+      stats:
+        $ref: '#/definitions/domain.GetStatsResponse'
+      today_stats:
+        $ref: '#/definitions/domain.GetTodayStatsResponse'
+      top_cities:
+        items:
+          $ref: '#/definitions/domain.LocationCount'
+        type: array
+      top_provinces:
+        items:
+          $ref: '#/definitions/domain.LocationCount'
+        type: array
+    type: object
+  domain.GetTodayStatsResponse:
+    properties:
+      today_affected_provinces:
+        type: integer
+      today_high_confidence:
+        type: integer
+      today_hotspots:
+        type: integer
+    type: object
+  domain.HotspotDetail:
+    properties:
+      acquired_at:
+        type: string
+      bright_t31:
+        type: number
+      bright_ti4:
+        type: number
+      bright_ti5:
+        type: number
+      brightness:
+        type: number
+      city_code:
+        type: string
+      city_name:
+        type: string
+      cloud_coverage:
+        type: integer
+      confidence_class:
+        type: string
+      district_code:
+        type: string
+      district_name:
+        type: string
+      frp:
+        type: number
+      humidity:
+        type: number
+      id:
+        type: string
+      latitude:
+        type: string
+      longitude:
+        type: string
+      precipitation:
+        type: number
+      pressure:
+        type: integer
+      product:
+        type: string
+      province_code:
+        type: string
+      province_name:
+        type: string
+      satellite_name:
+        type: string
+      solar_radiation:
+        type: number
+      subdistrict_code:
+        type: string
+      subdistrict_name:
+        type: string
+      temperature:
+        type: integer
+      uv_index:
+        type: integer
+      visibility:
+        type: integer
+      weather_conditions:
+        type: string
+      weather_icon:
+        type: string
+      wind_degree:
+        type: number
+      wind_speed:
+        type: number
+    type: object
+  domain.IslandGroup:
+    properties:
+      count:
+        type: integer
+      lat:
+        type: number
+      lng:
+        type: number
+      name:
+        type: string
+      provinces:
+        items:
+          $ref: '#/definitions/domain.LocationHierarchyItem'
+        type: array
+    type: object
+  domain.Location:
+    properties:
+      city_name:
+        type: string
+      desa:
+        type: string
+      district_name:
+        type: string
+      kab_kota:
+        type: string
+      kecamatan:
+        type: string
+      province_name:
+        type: string
+      provinsi:
+        type: string
+      pulau:
+        type: string
+      subdistrict_name:
+        type: string
+    type: object
+  domain.LocationCount:
+    properties:
+      count:
+        type: integer
+      name:
+        type: string
+    type: object
+  domain.LocationHierarchyItem:
+    properties:
+      code:
+        type: string
+      count:
+        type: integer
+      lat:
+        type: number
+      lng:
+        type: number
+      name:
+        type: string
+      pulau:
+        type: string
+    type: object
+  domain.MonthlyStats:
+    properties:
+      high_confidence:
+        type: integer
+      month:
+        type: string
+      total:
+        type: integer
+    type: object
+  domain.Pagination:
+    properties:
+      has_next:
+        type: boolean
+      limit:
+        type: integer
+      next_cursor:
+        type: string
+      total_count:
+        type: integer
+    type: object
+  domain.PeriodValue:
+    properties:
+      label:
+        type: string
+      value:
+        type: string
+    type: object
+  domain.Response-domain_GeoJSON:
+    properties:
+      data:
+        $ref: '#/definitions/domain.GeoJSON'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  domain.Response-domain_GetFilterOptionsResponse:
+    properties:
+      data:
+        $ref: '#/definitions/domain.GetFilterOptionsResponse'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  domain.Response-domain_GetHotspotsResponse:
+    properties:
+      data:
+        $ref: '#/definitions/domain.GetHotspotsResponse'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  domain.Response-domain_GetLocationsResponse:
+    properties:
+      data:
+        $ref: '#/definitions/domain.GetLocationsResponse'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  domain.Response-domain_GetPeriodsResponse:
+    properties:
+      data:
+        $ref: '#/definitions/domain.GetPeriodsResponse'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  domain.Response-domain_GetSummaryResponse:
+    properties:
+      data:
+        $ref: '#/definitions/domain.GetSummaryResponse'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+info:
+  contact: {}
+  description: REST API for Indonesia wildfire hotspot analytics (detections, GeoJSON,
+    summary, drill-down locations and periods).
+  title: Hotspot API
+  version: "1.0"
+paths:
+  /api/v1/hotspots/:
+    get:
+      description: Retrieve a paginated list of raw hotspot detections.
+      parameters:
+      - description: Max records to return (1-100)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Response-domain_GetHotspotsResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: List hotspots
+      tags:
+      - hotspots
+  /api/v1/hotspots/filter-options:
+    get:
+      description: Distinct confidence classes, satellite names, and products (NRT/SP)
+        for filter dropdowns.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Response-domain_GetFilterOptionsResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: Filter options
+      tags:
+      - hotspots
+  /api/v1/hotspots/geojson:
+    get:
+      description: Retrieve hotspot detections as a GeoJSON FeatureCollection with
+        cursor pagination. Supports date-range, time-period, location and product
+        (NRT/SP) filters.
+      parameters:
+      - description: Start date (RFC3339)
+        in: query
+        name: start_date
+        type: string
+      - description: End date (RFC3339)
+        in: query
+        name: end_date
+        type: string
+      - description: Filter by year
+        in: query
+        name: year
+        type: integer
+      - description: Filter by semester
+        in: query
+        name: semester
+        type: integer
+      - description: Filter by quarter
+        in: query
+        name: quarter
+        type: integer
+      - description: Filter by month
+        in: query
+        name: month
+        type: integer
+      - description: Filter by week
+        in: query
+        name: week
+        type: integer
+      - description: Filter by province code
+        in: query
+        name: province_code
+        type: string
+      - description: Filter by city code
+        in: query
+        name: city_code
+        type: string
+      - description: Filter by district code
+        in: query
+        name: district_code
+        type: string
+      - description: Filter by subdistrict code
+        in: query
+        name: subdistrict_code
+        type: string
+      - description: Filter by satellite name
+        in: query
+        name: satellite
+        type: string
+      - description: Filter by confidence class
+        in: query
+        name: confidence
+        type: string
+      - description: Filter by product
+        enum:
+        - NRT
+        - SP
+        in: query
+        name: product
+        type: string
+      - description: Pagination cursor from previous page
+        in: query
+        name: cursor
+        type: string
+      - description: Max features to return (1-50000, default 500)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Response-domain_GeoJSON'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: Hotspots as GeoJSON
+      tags:
+      - hotspots
+  /api/v1/hotspots/locations:
+    get:
+      description: Drill-down geographic hierarchy with hotspot counts. Returns islands
+        with grouped provinces at the top level, or cities/districts/subdistricts
+        as the location code is drilled down.
+      parameters:
+      - description: Drill into this province
+        in: query
+        name: province_code
+        type: string
+      - description: Drill into this city
+        in: query
+        name: city_code
+        type: string
+      - description: Drill into this district
+        in: query
+        name: district_code
+        type: string
+      - description: Filter by satellite name
+        in: query
+        name: satellite
+        type: string
+      - description: Filter by confidence class
+        in: query
+        name: confidence
+        type: string
+      - description: Filter by product
+        enum:
+        - NRT
+        - SP
+        in: query
+        name: product
+        type: string
+      - description: Start date (RFC3339)
+        in: query
+        name: start_date
+        type: string
+      - description: End date (RFC3339)
+        in: query
+        name: end_date
+        type: string
+      - description: Filter by year
+        in: query
+        name: year
+        type: integer
+      - description: Filter by semester
+        in: query
+        name: semester
+        type: integer
+      - description: Filter by quarter
+        in: query
+        name: quarter
+        type: integer
+      - description: Filter by month
+        in: query
+        name: month
+        type: integer
+      - description: Filter by week
+        in: query
+        name: week
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Response-domain_GetLocationsResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: Location hierarchy
+      tags:
+      - hotspots
+  /api/v1/hotspots/periods:
+    get:
+      description: Drill-down time period options (years then semesters, quarters,
+        months, weeks) based on the params supplied.
+      parameters:
+      - description: Selected year
+        in: query
+        name: year
+        type: integer
+      - description: Selected semester
+        in: query
+        name: semester
+        type: integer
+      - description: Selected quarter
+        in: query
+        name: quarter
+        type: integer
+      - description: Selected month
+        in: query
+        name: month
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Response-domain_GetPeriodsResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: Time period options
+      tags:
+      - hotspots
+  /api/v1/hotspots/summary:
+    get:
+      description: 'Aggregated dashboard summary: top provinces/cities, satellite
+        and confidence distribution, overall stats, monthly stats and today''s stats.'
+      parameters:
+      - description: Top provinces limit (1-100, default 10)
+        in: query
+        name: province_limit
+        type: integer
+      - description: Top cities limit (1-100, default 10)
+        in: query
+        name: city_limit
+        type: integer
+      - description: Start date (RFC3339)
+        in: query
+        name: start_date
+        type: string
+      - description: End date (RFC3339)
+        in: query
+        name: end_date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Response-domain_GetSummaryResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: Dashboard summary
+      tags:
+      - hotspots
+swagger: "2.0"

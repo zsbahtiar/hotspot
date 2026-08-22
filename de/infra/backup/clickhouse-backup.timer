@@ -1,0 +1,13 @@
+[Unit]
+Description=Daily ClickHouse Backup Timer
+
+[Timer]
+# Run daily at 2:00 AM WIB (UTC+7) = 19:00 UTC previous day
+OnCalendar=*-*-* 19:00:00
+# Run immediately if missed (e.g., server was off)
+Persistent=true
+# Random delay up to 5 minutes
+RandomizedDelaySec=5min
+
+[Install]
+WantedBy=timers.target

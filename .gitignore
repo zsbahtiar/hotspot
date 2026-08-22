@@ -40,3 +40,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Data besar (di-host di GitHub Release, unduh via scripts/fetch-seed.sh)
+de/infra/clickhouse/seed/*.native.gz
+de/data/*.duckdb
+
+# Salinan kerja submission (duplikat dari root project)
+/code/
+
+# Tooling / bukan bagian submission
+.claude/
+.codex/
+.scannerwork/

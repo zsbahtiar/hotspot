@@ -1,17 +1,34 @@
 import asyncio
+import json
+import os
+import random
+import threading
+import time
 from datetime import datetime
+from functools import wraps
 from io import StringIO
 from typing import Dict, List, Optional
+
 import polars as pl
-import time
-import json
-import random
-from functools import wraps
+import reverse_geocoder as rg
+
 from src.config import settings
+from src.utils.connections import http_manager, redis_manager
 from src.utils.logging import get_logger
-from src.utils.connections import redis_manager, http_manager
 
 logger = get_logger(__name__)
+
+
+def is_in_indonesia(latitude: float, longitude: float) -> bool:
+    try:
+        result = rg.search((latitude, longitude))
+        if result and len(result) > 0:
+            country_code = result[0].get("cc", "")
+            return country_code == "ID"
+        return False
+    except Exception as e:
+        logger.warning(f"Failed to check country for {latitude},{longitude}: {e}")
+        return True
 
 
 def retry_with_exponential_backoff(
@@ -19,7 +36,7 @@ def retry_with_exponential_backoff(
     base_delay: float = 1.0,
     max_delay: float = 60.0,
     backoff_factor: float = 2.0,
-    retryable_status_codes: List[int] = None
+    retryable_status_codes: List[int] = None,
 ):
     if retryable_status_codes is None:
         retryable_status_codes = [502, 503, 504, 429]
@@ -45,8 +62,12 @@ def retry_with_exponential_backoff(
                             break
 
                     network_error_patterns = [
-                        "connection", "timeout", "server error",
-                        "temporary", "unavailable", "overloaded"
+                        "connection",
+                        "timeout",
+                        "server error",
+                        "temporary",
+                        "unavailable",
+                        "overloaded",
                     ]
                     for pattern in network_error_patterns:
                         if pattern in error_message:
@@ -62,7 +83,7 @@ def retry_with_exponential_backoff(
                             logger.error(f"Non-retryable error in {func.__name__}: {e}")
                         raise
 
-                    delay = min(base_delay * (backoff_factor ** attempt), max_delay)
+                    delay = min(base_delay * (backoff_factor**attempt), max_delay)
                     jitter = random.uniform(0.1, 0.3) * delay
                     total_delay = delay + jitter
 
@@ -76,6 +97,7 @@ def retry_with_exponential_backoff(
             raise last_exception
 
         return wrapper
+
     return decorator
 
 
@@ -190,22 +212,135 @@ class NASAFIRMSClient:
 class LocationService:
     def __init__(self):
         self.base_url = settings.bmkg_api_base_url
+        self.x_api_key = settings.bmkg_api_key
+        self.use_offline = settings.use_offline_geocoder
+        self._duck = None
+        self._duck_lock = threading.Lock()
+
+    def _get_random_user_agent(self) -> str:
+        """Get a random user agent from the configured pool"""
+        return random.choice(settings.user_agents)
+
+    def _get_headers(self) -> Dict[str, str]:
+        """Browser-like headers required to avoid BMKG 403 (referer is mandatory)"""
+        user_agent = (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/120.0.0.0 Safari/537.36"
+        )
+        headers = {
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7",
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
+            "Priority": "u=1, i",
+            "Referer": settings.bmkg_referer,
+            "Origin": settings.bmkg_origin,
+            "Sec-Ch-Ua": '"Not=A?Brand";v="99", "Google Chrome";v="120", "Chromium";v="120"',
+            "Sec-Ch-Ua-Mobile": "?0",
+            "Sec-Ch-Ua-Platform": '"macOS"',
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
+            "User-Agent": user_agent,
+        }
+        if self.x_api_key:
+            headers["X-Api-Key"] = self.x_api_key
+        return headers
+
+    def _ensure_offline_db(self) -> str:
+        """Ensure the offline geocoder DuckDB exists locally (download once)."""
+        path = settings.geocoder_db_path
+        if not os.path.exists(path):
+            import urllib.request
+
+            os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+            logger.info(
+                f"Offline geocoder DB not found, downloading from {settings.geocoder_db_url} ..."
+            )
+            tmp = path + ".part"
+            urllib.request.urlretrieve(settings.geocoder_db_url, tmp)
+            os.replace(tmp, path)
+            logger.info(f"Offline geocoder DB ready at {path}")
+        return path
+
+    def _get_duck(self):
+        """Lazily open a read-only DuckDB connection with the spatial extension."""
+        if self._duck is None:
+            import duckdb
+
+            path = self._ensure_offline_db()
+            con = duckdb.connect(path, read_only=True)
+            con.execute("INSTALL spatial; LOAD spatial;")
+            self._duck = con
+        return self._duck
+
+    def _query_offline(self, longitude: float, latitude: float) -> Dict:
+        """Point-in-polygon reverse geocode; returns BMKG-shaped dict or {}."""
+        con = self._get_duck()
+        with self._duck_lock:
+            row = con.execute(
+                """
+                SELECT h.province_code, h.province_name,
+                       h.regency_code, h.regency_name,
+                       h.district_code, h.district_name,
+                       h.village_code, h.village_name
+                FROM locations l
+                JOIN hierarchy h ON l.code = h.code
+                WHERE ST_Contains(l.geom, ST_Point(?, ?)) AND l.level = 'village'
+                LIMIT 1
+                """,
+                [longitude, latitude],
+            ).fetchone()
+        if not row:
+            return {}
+        return {
+            "adm1": row[0],
+            "provinsi": row[1],
+            "adm2": row[2],
+            "kotkab": row[3],
+            "adm3": row[4],
+            "kecamatan": row[5],
+            "adm4": row[6],
+            "desa": row[7],
+        }
+
+    async def _resolve_offline(self, longitude: float, latitude: float) -> Dict:
+        location = await asyncio.to_thread(self._query_offline, longitude, latitude)
+        if not location:
+            logger.warning(
+                f"Coordinate {latitude},{longitude} not resolved by offline geocoder"
+            )
+        return location
 
     @retry_with_exponential_backoff(
-        max_retries=3,
-        base_delay=2.0,
-        max_delay=30.0,
-        backoff_factor=2.0,
-        retryable_status_codes=[502, 503, 504, 429, 500]
+        max_retries=5,
+        base_delay=3.0,
+        max_delay=40.0,
+        backoff_factor=1.8,
+        retryable_status_codes=[502, 503, 504, 429, 500],
     )
     async def get_location_by_coordinates(
         self, longitude: float, latitude: float
     ) -> Dict:
-        url = f"{self.base_url}/df/v1/adm/coord"
+        if self.use_offline:
+            return await self._resolve_offline(longitude, latitude)
+
+        if not is_in_indonesia(latitude, longitude):
+            logger.warning(
+                f"Coordinate {latitude},{longitude} rejected: not in Indonesia (country check)"
+            )
+            return {}
+
+        url = f"{self.base_url}/coord"
         params = {"lat": latitude, "lon": longitude}
 
         client = http_manager.get_client()
-        response = await client.get(url, params=params)
+        response = await client.get(
+            url,
+            params=params,
+            headers=self._get_headers(),
+        )
         response.raise_for_status()
         location = response.json()
 
@@ -228,7 +363,7 @@ class LocationService:
         self,
         hotspot_records: List[Dict],
         concurrent: bool = False,
-        max_concurrent: int = 10
+        max_concurrent: int = 10,
     ) -> List[Dict]:
         if concurrent:
             return await self._get_location_bulk_concurrent(
@@ -237,7 +372,9 @@ class LocationService:
         else:
             return await self._get_location_bulk_sequential(hotspot_records)
 
-    async def _get_location_bulk_sequential(self, hotspot_records: List[Dict]) -> List[Dict]:
+    async def _get_location_bulk_sequential(
+        self, hotspot_records: List[Dict]
+    ) -> List[Dict]:
         redis_client = await redis_manager.get_client()
 
         location_data = []
@@ -260,7 +397,11 @@ class LocationService:
                 api_hit = False
                 try:
                     geo_cache_key = f"geo_bmkg:{lat}:{lon}"
-                    geo_cached = await redis_client.get(geo_cache_key)
+                    geo_cached = (
+                        None
+                        if self.use_offline
+                        else await redis_client.get(geo_cache_key)
+                    )
 
                     if geo_cached:
                         location = json.loads(geo_cached)
@@ -268,7 +409,7 @@ class LocationService:
                         location = await self.get_location_by_coordinates(lon, lat)
                         api_hit = True
                         batch_api_hits += 1
-                        if location:
+                        if location and not self.use_offline:
                             ttl_seconds = settings.bmkg_cache_ttl_hours * 24 * 3600
                             await redis_client.setex(
                                 geo_cache_key, ttl_seconds, json.dumps(location)
@@ -292,13 +433,17 @@ class LocationService:
                     if processed % 100 == 0:
                         logger.info(f"Geocoded {processed}/{total_coords} coordinates")
 
-                    if api_hit:
+                    if api_hit and not self.use_offline:
                         await asyncio.sleep(settings.bmkg_request_delay_seconds)
 
                 except Exception as e:
                     logger.error(f"Failed to geocode {lat}, {lon}: {e}")
 
-            if batch_end < total_coords and batch_api_hits > 0:
+            if (
+                not self.use_offline
+                and batch_end < total_coords
+                and batch_api_hits > 0
+            ):
                 logger.info(
                     f"Batch Location complete ({batch_api_hits} API hits). Waiting {settings.bmkg_batch_delay_seconds}s..."
                 )
@@ -329,18 +474,23 @@ class LocationService:
             async with semaphore:
                 try:
                     geo_cache_key = f"geo_bmkg:{lat}:{lon}"
-                    geo_cached = await redis_client.get(geo_cache_key)
+                    geo_cached = (
+                        None
+                        if self.use_offline
+                        else await redis_client.get(geo_cache_key)
+                    )
 
                     if geo_cached:
                         location = json.loads(geo_cached)
                     else:
                         location = await self.get_location_by_coordinates(lon, lat)
-                        if location:
+                        if location and not self.use_offline:
                             ttl_seconds = settings.bmkg_cache_ttl_hours * 24 * 3600
                             await redis_client.setex(
                                 geo_cache_key, ttl_seconds, json.dumps(location)
                             )
-                        await asyncio.sleep(settings.bmkg_request_delay_seconds)
+                        if not self.use_offline:
+                            await asyncio.sleep(settings.bmkg_request_delay_seconds)
 
                     if location:
                         return {
@@ -364,7 +514,7 @@ class LocationService:
 
         results = []
         for i in range(0, len(tasks), 100):
-            batch_tasks = tasks[i:i+100]
+            batch_tasks = tasks[i : i + 100]
             batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
 
             for result in batch_results:
@@ -373,7 +523,7 @@ class LocationService:
                 elif result is not None:
                     results.append(result)
 
-            logger.info(f"Geocoded {min(i+100, len(tasks))}/{len(tasks)} coordinates")
+            logger.info(f"Geocoded {min(i + 100, len(tasks))}/{len(tasks)} coordinates")
 
         logger.info(f"Completed concurrent geocoding: {len(results)} locations")
         return results
@@ -389,7 +539,7 @@ class WeatherService:
         base_delay=2.0,
         max_delay=30.0,
         backoff_factor=2.0,
-        retryable_status_codes=[502, 503, 504, 429, 500, 422]
+        retryable_status_codes=[502, 503, 504, 429, 500, 422],
     )
     async def get_weather_by_coordinates(
         self, longitude: float, latitude: float, datetime_str: str = None
@@ -418,7 +568,7 @@ class WeatherService:
         self,
         hotspot_records: List[Dict],
         concurrent: bool = False,
-        max_concurrent: int = 10
+        max_concurrent: int = 10,
     ) -> List[Dict]:
         if concurrent:
             return await self._get_weather_bulk_concurrent(
@@ -427,7 +577,9 @@ class WeatherService:
         else:
             return await self._get_weather_bulk_sequential(hotspot_records)
 
-    async def _get_weather_bulk_sequential(self, hotspot_records: List[Dict]) -> List[Dict]:
+    async def _get_weather_bulk_sequential(
+        self, hotspot_records: List[Dict]
+    ) -> List[Dict]:
         redis_client = await redis_manager.get_client()
 
         weather_data = []
@@ -442,7 +594,9 @@ class WeatherService:
         total_coords = len(unique_coords)
         batch_size = settings.batch_size
 
-        logger.info(f"Processing {total_coords} unique weather coordinates (sequential)")
+        logger.info(
+            f"Processing {total_coords} unique weather coordinates (sequential)"
+        )
 
         processed = 0
         for batch_start in range(0, total_coords, batch_size):
@@ -538,16 +692,22 @@ class WeatherService:
                     if weather_cached:
                         weather = json.loads(weather_cached)
                     else:
-                        weather = await self.get_weather_by_coordinates(lon, lat, datetime_str)
+                        weather = await self.get_weather_by_coordinates(
+                            lon, lat, datetime_str
+                        )
                         if weather:
                             ttl_seconds = settings.visualcrossing_cache_ttl_hours * 3600
                             await redis_client.setex(
                                 weather_cache_key, ttl_seconds, json.dumps(weather)
                             )
-                        await asyncio.sleep(settings.visualcrossing_request_delay_seconds)
+                        await asyncio.sleep(
+                            settings.visualcrossing_request_delay_seconds
+                        )
 
                     if weather:
-                        return self._extract_weather_data(weather, lon, lat, acq_date, acq_time)
+                        return self._extract_weather_data(
+                            weather, lon, lat, acq_date, acq_time
+                        )
                     return None
                 except Exception as e:
                     logger.error(f"Failed to fetch weather for {lat}, {lon}: {e}")
@@ -560,7 +720,7 @@ class WeatherService:
 
         results = []
         for i in range(0, len(tasks), 100):
-            batch_tasks = tasks[i:i+100]
+            batch_tasks = tasks[i : i + 100]
             batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
 
             for result in batch_results:
@@ -569,7 +729,9 @@ class WeatherService:
                 elif result is not None:
                     results.append(result)
 
-            logger.info(f"Fetched weather for {min(i+100, len(tasks))}/{len(tasks)} coordinates")
+            logger.info(
+                f"Fetched weather for {min(i + 100, len(tasks))}/{len(tasks)} coordinates"
+            )
 
         logger.info(f"Completed concurrent weather fetch: {len(results)} records")
         return results

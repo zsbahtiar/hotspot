@@ -76,8 +76,6 @@ SETTINGS index_granularity = 8192;
 CREATE TABLE hotspot.dim_location
 (
     `id` String,
-    `latitude` String,
-    `longitude` String,
     `province_code` String,
     `province_name` String,
     `city_code` String,
@@ -86,6 +84,17 @@ CREATE TABLE hotspot.dim_location
     `district_name` String,
     `subdistrict_code` String,
     `subdistrict_name` String
+)
+ENGINE = ReplacingMergeTree
+PRIMARY KEY tuple(id)
+ORDER BY id
+SETTINGS index_granularity = 8192;
+
+CREATE TABLE hotspot.geo_coordinate_cache
+(
+    `latitude` String,
+    `longitude` String,
+    `location_id` String
 )
 ENGINE = ReplacingMergeTree
 PRIMARY KEY (latitude, longitude)
@@ -113,6 +122,7 @@ CREATE TABLE hotspot.dim_satellite
     `id` String,
     `satellite_name` String,
     `instrument` String,
+    `product` String,
     `version` String,
     `spatial_resolution_m` Int32,
     `temporal_resolution_hours` Int32,
@@ -225,3 +235,5 @@ ENGINE = ReplacingMergeTree(ingested_at)
 PARTITION BY toYYYYMM(acq_date)
 ORDER BY (latitude, longitude, acq_date, acq_time, satellite, instrument, version)
 SETTINGS index_granularity = 8192;
+
+ALTER TABLE hotspot.dim_location ADD INDEX idx_id id TYPE minmax GRANULARITY 1;
