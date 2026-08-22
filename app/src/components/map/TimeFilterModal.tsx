@@ -121,7 +121,6 @@ export default function ModalTime({
       try {
         const params: { year?: number; semester?: number; quarter?: number; month?: number } = {};
 
-        // Build params based on current selections
         if (type === "semester" && tahunValue) {
           params.year = parseInt(tahunValue);
         } else if (type === "kuartal" && tahunValue && semesterValue) {
@@ -130,7 +129,6 @@ export default function ModalTime({
         } else if (type === "bulan" && tahunValue && semesterValue && kuartalValue) {
           params.year = parseInt(tahunValue);
           params.semester = parseInt(semesterValue);
-          // Extract quarter number from "Q1", "Q2", etc.
           const quarterMatch = kuartalValue.match(/\d+/);
           if (quarterMatch) {
             params.quarter = parseInt(quarterMatch[0]);
@@ -142,7 +140,6 @@ export default function ModalTime({
           if (quarterMatch) {
             params.quarter = parseInt(quarterMatch[0]);
           }
-          // Get month value (1-12) from month name
           params.month = monthNames.indexOf(bulanValue) + 1;
         }
 
@@ -151,7 +148,6 @@ export default function ModalTime({
         let formattedData: FormattedDataItem[] = [];
 
         if (response?.data) {
-          // Map response based on type
           switch (type) {
             case "tahun":
               formattedData = response.data.years || [];
@@ -170,7 +166,6 @@ export default function ModalTime({
               break;
           }
 
-          // Sort data
           switch (type) {
             case "tahun":
               formattedData = formattedData.sort(
@@ -203,7 +198,6 @@ export default function ModalTime({
               break;
           }
 
-          // Set data to state
           switch (type) {
             case "tahun":
               setDataTahun(formattedData);
@@ -288,12 +282,10 @@ export default function ModalTime({
     ],
   );
 
-  // Load initial data on mount
   useEffect(() => {
     const loadInitialData = async () => {
       await getTimeData("tahun");
 
-      // Load dependent data if query values exist
       if (query.tahun) {
         await getTimeData("semester");
       }
@@ -309,8 +301,7 @@ export default function ModalTime({
     };
 
     loadInitialData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only run once on mount
+  }, []);
 
   useEffect(() => {
     if (tahunValue) {
@@ -382,10 +373,8 @@ export default function ModalTime({
   };
 
   const onSubmit = (formData: QueryData) => {
-    // Check if all fields are empty (clear filter scenario)
     const allEmpty = !formData.tahun && !formData.semester && !formData.kuartal && !formData.bulan && !formData.minggu;
 
-    // Check if any child field is filled but tahun is empty
     const hasChildWithoutParent = !formData.tahun && (formData.semester || formData.kuartal || formData.bulan || formData.minggu);
 
     if (hasChildWithoutParent) {
@@ -476,7 +465,6 @@ export default function ModalTime({
                 e.preventDefault();
                 e.stopPropagation();
 
-                // Reset dependent fields
                 if (type === "tahun") {
                   setTahunError(null);
                   reset({
@@ -573,7 +561,7 @@ export default function ModalTime({
           Filter Waktu Hotspot
         </h2>
 
-        {/* FORM WAKTU */}
+        {}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {renderSelect(
             "tahun",

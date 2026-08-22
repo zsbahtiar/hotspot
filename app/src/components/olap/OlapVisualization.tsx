@@ -25,7 +25,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { DateRangePicker } from "@/components/ui/date-range-picker-final";
 import { X, RefreshCw } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, satelliteLabel, productLabel } from "@/lib/utils";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -322,6 +322,7 @@ const OlapComponent = () => {
   const [openNames, setOpenNames] = useState<string[]>([]);
   const [dataConfidence, setDataConfidence] = useState<OlapData[]>([]);
   const [dataSatelite, setDataSatelite] = useState<OlapData[]>([]);
+  const [dataProduct, setDataProduct] = useState<OlapData[]>([]);
   const [barChartData, setBarChartData] = useState<ChartData<"bar"> | null>(
     null,
   );
@@ -330,6 +331,7 @@ const OlapComponent = () => {
   const [globalFilters, setGlobalFilters] = useState({
     confidence: undefined as string | undefined,
     satelite: undefined as string | undefined,
+    product: undefined as string | undefined,
     time: {} as TimeFilters,
     filterMode: undefined as "period" | "date" | undefined,
     dateRange: undefined as { from: Date; to?: Date } | undefined,
@@ -388,6 +390,9 @@ const OlapComponent = () => {
     if (globalFilters.satelite) {
       filters.satellite = globalFilters.satelite;
     }
+    if (globalFilters.product) {
+      filters.product = globalFilters.product;
+    }
 
     if (globalFilters.filterMode === "period") {
       if (globalFilters.time.tahun)
@@ -418,6 +423,7 @@ const OlapComponent = () => {
   }, [
     globalFilters.confidence,
     globalFilters.satelite,
+    globalFilters.product,
     globalFilters.time,
     globalFilters.filterMode,
     globalFilters.dateRange,
@@ -454,6 +460,7 @@ const OlapComponent = () => {
       "locations",
       locationFilters.confidence,
       locationFilters.satellite,
+      locationFilters.product,
       locationFilters.year,
       locationFilters.semester,
       locationFilters.quarter,
@@ -509,11 +516,13 @@ const OlapComponent = () => {
       dimension: "location",
       ...(globalFilters.confidence && { confidence: globalFilters.confidence }),
       ...(globalFilters.satelite && { satelite: globalFilters.satelite }),
+      ...(globalFilters.product && { product: globalFilters.product }),
       ...timeParams,
     };
   }, [
     globalFilters.confidence,
     globalFilters.satelite,
+    globalFilters.product,
     globalFilters.time,
     globalFilters.filterMode,
     globalFilters.dateRange,
@@ -727,8 +736,12 @@ const OlapComponent = () => {
       const satelliteData: OlapData[] = filterOptionsData.data.satellites.map(
         (sat) => [sat.name, 0],
       );
+      const productData: OlapData[] = filterOptionsData.data.products.map(
+        (prod) => [prod.name, 0],
+      );
       setDataConfidence(confidenceData);
       setDataSatelite(satelliteData);
+      setDataProduct(productData);
     }
   }, [filterOptionsData]);
 
@@ -1119,6 +1132,7 @@ const OlapComponent = () => {
       ...query,
       ...(globalFilters.confidence && { confidence: globalFilters.confidence }),
       ...(globalFilters.satelite && { satelite: globalFilters.satelite }),
+      ...(globalFilters.product && { product: globalFilters.product }),
       ...timeParams,
       dimension: "location",
       tipe: tipe,
@@ -1257,6 +1271,7 @@ const OlapComponent = () => {
     setGlobalFilters({
       confidence: undefined,
       satelite: undefined,
+      product: undefined,
       time: {},
       filterMode: undefined,
       dateRange: undefined,
@@ -1292,6 +1307,7 @@ const OlapComponent = () => {
         desa: undefined,
         confidence: undefined,
         satelite: undefined,
+        product: undefined,
         time: {},
         province_code: undefined,
         city_code: undefined,
@@ -1302,6 +1318,7 @@ const OlapComponent = () => {
       return {
         confidence: globalFilters.confidence?.toLowerCase(),
         satelite: globalFilters.satelite?.toLowerCase(),
+        product: globalFilters.product?.toUpperCase(),
         time: globalFilters.time,
         filterMode: globalFilters.filterMode,
         dateRange: globalFilters.dateRange,
@@ -1370,6 +1387,7 @@ const OlapComponent = () => {
     return (
       globalFilters.confidence ||
       globalFilters.satelite ||
+      globalFilters.product ||
       globalFilters.dateRange?.from ||
       Object.keys(globalFilters.time).length > 0 ||
       globalFilters.province_code ||
@@ -1658,7 +1676,36 @@ const OlapComponent = () => {
                   {dataSatelite &&
                     dataSatelite.map((sat: OlapData, i: number) => (
                       <SelectItem key={i} value={String(sat[0])}>
-                        {String(sat[0])}
+                        {satelliteLabel(String(sat[0]))}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="product-filter" className="text-sm font-medium">
+                Product
+              </Label>
+              <Select
+                value={globalFilters.product || "all"}
+                onValueChange={(value) =>
+                  setGlobalFilters({
+                    ...globalFilters,
+                    product: value === "all" ? undefined : value,
+                  })
+                }
+                disabled={activeMapLayer === "hotspot-locations"}
+              >
+                <SelectTrigger id="product-filter" className="w-full">
+                  <SelectValue placeholder="Semua Produk" />
+                </SelectTrigger>
+                <SelectContent className="z-[9999] bg-popover">
+                  <SelectItem value="all">Semua Produk</SelectItem>
+                  {dataProduct &&
+                    dataProduct.map((prod: OlapData, i: number) => (
+                      <SelectItem key={i} value={String(prod[0])}>
+                        {productLabel(String(prod[0]))}
                       </SelectItem>
                     ))}
                 </SelectContent>
@@ -2347,7 +2394,41 @@ const OlapComponent = () => {
                     {dataSatelite &&
                       dataSatelite.map((sat: OlapData, i: number) => (
                         <SelectItem key={i} value={String(sat[0])}>
-                          {String(sat[0])}
+                          {satelliteLabel(String(sat[0]))}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label
+                  htmlFor="product-filter-mobile"
+                  className="text-sm font-medium"
+                >
+                  Product
+                </Label>
+                <Select
+                  value={globalFilters.product || "all"}
+                  onValueChange={(value) =>
+                    setGlobalFilters({
+                      ...globalFilters,
+                      product: value === "all" ? undefined : value,
+                    })
+                  }
+                >
+                  <SelectTrigger
+                    id="product-filter-mobile"
+                    className="w-full"
+                  >
+                    <SelectValue placeholder="Semua Produk" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[9999] bg-popover">
+                    <SelectItem value="all">Semua Produk</SelectItem>
+                    {dataProduct &&
+                      dataProduct.map((prod: OlapData, i: number) => (
+                        <SelectItem key={i} value={String(prod[0])}>
+                          {productLabel(String(prod[0]))}
                         </SelectItem>
                       ))}
                   </SelectContent>

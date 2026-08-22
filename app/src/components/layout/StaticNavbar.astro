@@ -5,7 +5,6 @@
 <nav class="section-dark fixed w-full top-0 z-[99999]">
     <div class="max-w-[1100px] mx-auto px-6">
         <div class="flex justify-between items-center h-14">
-            <!-- Logo -->
             <a href="/" class="flex items-center gap-2 min-w-0">
                 <img src="/assets/ipb.webp" alt="IPB University" class="h-7 w-7 object-contain" />
                 <span class="text-base font-bold text-[#f3f7f1] tracking-tight">
@@ -13,7 +12,6 @@
                 </span>
             </a>
 
-            <!-- Desktop Navigation -->
             <div class="hidden md:flex items-center space-x-6">
                 <a
                     href="/"
@@ -45,7 +43,6 @@
                 </a>
             </div>
 
-            <!-- Theme Toggle + Mobile Menu Button -->
             <div class="flex items-center space-x-2">
                 <button
                     id="theme-toggle"
@@ -81,7 +78,6 @@
                     </svg>
                 </button>
 
-                <!-- Mobile menu button -->
                 <button
                     id="mobile-menu-button"
                     type="button"
@@ -118,7 +114,6 @@
             </div>
         </div>
 
-        <!-- Mobile menu -->
         <div
             id="mobile-menu"
             class="hidden md:hidden pb-4 border-t border-white/10 mt-2 pt-3"
@@ -174,14 +169,11 @@
 </style>
 
 <script>
-    // Set active menu based on current path
-    // Normalize path: remove trailing slash (except for root)
     let currentPath = window.location.pathname;
     if (currentPath !== "/" && currentPath.endsWith("/")) {
         currentPath = currentPath.slice(0, -1);
     }
 
-    // Map paths to nav IDs
     const pathMap: Record<string, string> = {
         "/": "home",
         "/map": "map",
@@ -189,24 +181,20 @@
         "/about": "about",
     };
 
-    // Get active nav ID based on current path
     const activeNavId = pathMap[currentPath] || "home";
 
-    // Set active state for desktop menu with underline
     const desktopNav = document.getElementById(`nav-${activeNavId}`);
     if (desktopNav) {
         desktopNav.classList.remove("text-[#b8c8b1]");
         desktopNav.classList.add("active", "text-[#f3f7f1]");
     }
 
-    // Set active state for mobile menu
     const mobileNav = document.getElementById(`nav-${activeNavId}-mobile`);
     if (mobileNav) {
         mobileNav.classList.remove("text-[#b8c8b1]");
         mobileNav.classList.add("text-[#f3f7f1]", "bg-white/5");
     }
 
-    // Theme toggle functionality
     const themeToggle = document.getElementById("theme-toggle");
     if (themeToggle) {
         themeToggle.addEventListener("click", () => {
@@ -222,7 +210,6 @@
         });
     }
 
-    // Mobile menu toggle
     const mobileMenuButton = document.getElementById("mobile-menu-button");
     const mobileMenu = document.getElementById("mobile-menu");
     const menuIcon = document.getElementById("menu-icon");

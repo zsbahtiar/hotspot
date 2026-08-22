@@ -1,6 +1,5 @@
 import tailwindcssAnimate from "tailwindcss-animate";
 
-/** @type {import('tailwindcss').Config} */
 const config = {
   darkMode: ["class"],
   content: [

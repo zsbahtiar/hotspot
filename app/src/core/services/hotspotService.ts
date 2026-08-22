@@ -24,6 +24,7 @@ export interface HotspotFilters {
   subdistrict_name?: string;
   confidence?: string;
   satellite?: string;
+  product?: string;
   min_lat?: number;
   max_lat?: number;
   min_lng?: number;
@@ -92,6 +93,10 @@ export class HotspotService {
 
     if (filters?.satellite) {
       params.satellite = filters.satellite;
+    }
+
+    if (filters?.product) {
+      params.product = filters.product;
     }
 
     if (filters?.province_name) {
@@ -177,12 +182,14 @@ export class HotspotService {
     data: {
       confidence: Array<{ id: string; name: string }>;
       satellites: Array<{ id: string; name: string }>;
+      products: Array<{ id: string; name: string }>;
     };
   }> {
     return this.httpClient.get<{
       data: {
         confidence: Array<{ id: string; name: string }>;
         satellites: Array<{ id: string; name: string }>;
+        products: Array<{ id: string; name: string }>;
       };
     }>("/api/v1/hotspots/filter-options");
   }
@@ -218,6 +225,7 @@ export class HotspotService {
     district_code?: string;
     confidence?: string;
     satellite?: string;
+    product?: string;
     year?: number;
     semester?: number;
     quarter?: number;

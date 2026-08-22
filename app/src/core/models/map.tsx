@@ -24,6 +24,7 @@ export interface MapComponentProps {
   filters?: {
     confidence?: string | null;
     satelite?: string | null;
+    product?: string | null;
     time?: {
       tahun?: string;
       semester?: string;

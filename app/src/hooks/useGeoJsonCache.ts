@@ -17,17 +17,15 @@ export interface CachedGeoJsonData {
 const DB_NAME = "HotspotGeoCache";
 const DB_VERSION = 1;
 const STORE_NAME = "geojson";
-const CACHE_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours
+const CACHE_EXPIRY = 24 * 60 * 60 * 1000;
 const LOCALSTORAGE_KEY = "hotspot_geojson_cache";
 
-// Check if IndexedDB is available and working
 const isIndexedDBAvailable = async (): Promise<boolean> => {
   if (typeof window === "undefined" || !window.indexedDB) {
     return false;
   }
 
   try {
-    // Test if IndexedDB actually works (some browsers lie about support)
     const testDB = await new Promise<boolean>((resolve) => {
       const request = indexedDB.open("__test__", 1);
       request.onsuccess = () => {
@@ -45,12 +43,10 @@ const isIndexedDBAvailable = async (): Promise<boolean> => {
   }
 };
 
-// LocalStorage helper functions (fallback when IndexedDB not available)
 const storeDataLocalStorage = async (key: string, data: any): Promise<void> => {
   try {
     const jsonString = JSON.stringify(data);
     const sizeInMB = new Blob([jsonString]).size / (1024 * 1024);
-    // Check if data is too large for localStorage (> 4MB is risky)
     if (sizeInMB > 4) {
       console.warn(
         `[Cache] Data too large (${sizeInMB.toFixed(2)}MB), skipping localStorage cache`,
@@ -65,18 +61,15 @@ const storeDataLocalStorage = async (key: string, data: any): Promise<void> => {
       error.message?.includes("quota")
     ) {
       console.warn("[Cache] localStorage quota exceeded, clearing old cache");
-      // Clear all cache items to free up space
       Object.keys(localStorage).forEach((storageKey) => {
         if (storageKey.startsWith(LOCALSTORAGE_KEY)) {
           localStorage.removeItem(storageKey);
         }
       });
-      // Don't retry - just skip caching for now
       console.warn("[Cache] Skipping cache due to storage constraints");
     } else {
       console.error("[Cache] localStorage error:", error);
     }
-    // Don't throw - allow app to continue without cache
   }
 };
 
@@ -98,7 +91,6 @@ const removeDataLocalStorage = async (key: string): Promise<void> => {
   }
 };
 
-// IndexedDB helper functions
 const openDB = (): Promise<IDBDatabase> => {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -116,7 +108,6 @@ const openDB = (): Promise<IDBDatabase> => {
 };
 
 const storeData = async (key: string, data: any): Promise<void> => {
-  // Try IndexedDB first (works on both desktop and modern mobile browsers)
   const hasIndexedDB = await isIndexedDBAvailable();
 
   if (hasIndexedDB) {
@@ -137,7 +128,6 @@ const storeData = async (key: string, data: any): Promise<void> => {
         "[Cache] IndexedDB store failed, trying localStorage:",
         error,
       );
-      // Fallback to localStorage
       return storeDataLocalStorage(key, data);
     }
   } else {
@@ -146,7 +136,6 @@ const storeData = async (key: string, data: any): Promise<void> => {
 };
 
 const getData = async (key: string): Promise<any> => {
-  // Try IndexedDB first
   const hasIndexedDB = await isIndexedDBAvailable();
 
   if (hasIndexedDB) {
@@ -166,7 +155,6 @@ const getData = async (key: string): Promise<any> => {
       });
     } catch (error) {
       console.warn("[Cache] IndexedDB get failed, trying localStorage:", error);
-      // Fallback to localStorage
       return getDataLocalStorage(key);
     }
   } else {
@@ -175,7 +163,6 @@ const getData = async (key: string): Promise<any> => {
 };
 
 const removeData = async (key: string): Promise<void> => {
-  // Try both storages
   const hasIndexedDB = await isIndexedDBAvailable();
 
   if (hasIndexedDB) {
@@ -194,7 +181,6 @@ const removeData = async (key: string): Promise<void> => {
     }
   }
 
-  // Also try localStorage (in case data was stored there)
   await removeDataLocalStorage(key);
 };
 
@@ -229,7 +215,6 @@ export const useGeoJsonCache = () => {
         "[GeoJSON Cache] Error saving to cache (continuing without cache):",
         error,
       );
-      // Set cached data anyway so it's available in memory
       setCachedData({
         island: data[0],
         province: data[1],
@@ -267,7 +252,6 @@ export const useGeoJsonCache = () => {
         `[GeoJSON Cache] Error saving ${level} to cache (continuing without cache):`,
         error,
       );
-      // Don't throw - allow app to continue
     }
   };
 
@@ -276,7 +260,6 @@ export const useGeoJsonCache = () => {
       level: keyof Omit<CachedGeoJsonData, "timestamp">,
     ): Promise<GeoJsonFeatureCollection> => {
       try {
-        // Use production server directly for both development and production
         const urls: Record<string, string> = {
           island: "https://hotspot.zsbahtiar.com/maps/batas_pulau.geojson.gz",
           province:
@@ -301,7 +284,6 @@ export const useGeoJsonCache = () => {
       } catch (error) {
         console.error(`Error fetching ${level} GeoJSON:`, error);
 
-        // Return empty GeoJSON as last resort
         return {
           type: "FeatureCollection",
           features: [],
@@ -333,9 +315,7 @@ export const useGeoJsonCache = () => {
           }
         }
 
-        // Load all data if no specific level requested
         if (!level) {
-          // Load individual files to avoid large parallel requests
           const levels: (keyof Omit<CachedGeoJsonData, "timestamp">)[] = [
             "island",
             "province",

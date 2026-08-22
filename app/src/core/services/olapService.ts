@@ -53,6 +53,7 @@ export const getDistrictCodeByName = (districtName: string): string | undefined 
 export interface LocationFilters {
   confidence?: string;
   satellite?: string;
+  product?: string;
   year?: number;
   semester?: number;
   quarter?: number;
@@ -67,6 +68,7 @@ const buildFilterParams = (filters?: LocationFilters) => {
   const params: Record<string, any> = {};
   if (filters.confidence) params.confidence = filters.confidence;
   if (filters.satellite) params.satellite = filters.satellite;
+  if (filters.product) params.product = filters.product;
   if (filters.year) params.year = filters.year;
   if (filters.semester) params.semester = filters.semester;
   if (filters.quarter) params.quarter = filters.quarter;
@@ -82,6 +84,7 @@ const hasFilters = (filters?: LocationFilters) => {
   return !!(
     filters.confidence ||
     filters.satellite ||
+    filters.product ||
     filters.year ||
     filters.semester ||
     filters.quarter ||

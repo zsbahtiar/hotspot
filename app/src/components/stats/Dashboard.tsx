@@ -9,6 +9,7 @@ import {
 import { useLatestHotspots, useSummary } from "@/core/hooks/useHotspotQueries";
 import { Tooltip } from "react-tooltip";
 import { monthNames } from "@/core/models/time";
+import { satelliteLabel } from "@/lib/utils";
 import {
   ChartSkeleton,
   CardSkeleton,
@@ -49,7 +50,7 @@ const ReportedHotspotsSection = ({
   return (
     <section className="py-10 px-6 bg-[#faf8f5] dark:bg-background">
       <div className="max-w-[1100px] mx-auto">
-        {/* Header with Toggle */}
+        {}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
             <h2 className="text-xl font-extrabold text-[#192d17] dark:text-[#f3f7f1]">
@@ -195,7 +196,6 @@ const ReportedHotspotsSection = ({
   );
 };
 
-// Latest Hotspots Section
 interface LatestHotspotsSectionProps {
   latestHotspots: any[];
   isLoading: boolean;
@@ -225,7 +225,7 @@ const LatestHotspotsSection = ({
           </a>
         </div>
 
-        {/* Table with Border Card */}
+        {}
         <div className="bg-white dark:bg-[#121812] rounded-xl border border-[#d4ddd0] dark:border-[#2a3a28] overflow-hidden">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-12">
@@ -287,7 +287,9 @@ const LatestHotspotsSection = ({
                         </td>
                         <td className="py-4 px-5">
                           <span className="text-sm font-medium text-[#3d6b35] dark:text-[#8fc483]">
-                            {hotspot.satellite_name || "N/A"}
+                            {hotspot.satellite_name
+                              ? satelliteLabel(hotspot.satellite_name)
+                              : "N/A"}
                           </span>
                         </td>
                         <td className="py-4 px-5 text-right">
@@ -546,7 +548,6 @@ const Main = ({
     };
   }, [summaryData, summaryRes]);
 
-  // Update hero counter elements
   useEffect(() => {
     const totalCounter = document.getElementById("total-counter");
     const todayCounter = document.getElementById("today-counter");
@@ -573,11 +574,9 @@ const Main = ({
       totalReports.textContent = formatNumber(total);
     }
     if (todayChange && stats.todayHotspots !== undefined) {
-      // Calculate change percentage (simplified)
       const change = stats.todayHotspots > 0 ? `+${stats.todayHotspots}` : "0";
       todayChange.textContent = change;
     }
-    // Hide static chart placeholder since we show chart in dashboard
     if (heroChart) {
       heroChart.style.display = "none";
     }
@@ -671,7 +670,7 @@ const Main = ({
 
       <section className="py-12 px-6 bg-[#faf8f5] dark:bg-background">
         <div className="max-w-[1100px] mx-auto">
-          {/* Header */}
+          {}
           <div className="mb-8">
             <h2 className="text-2xl font-extrabold text-[#192d17] dark:text-[#f3f7f1] mb-3 leading-tight">
               Tren Titik Panas
@@ -683,9 +682,9 @@ const Main = ({
             </p>
           </div>
 
-          {/* Two Column Grid: Chart + Latest Hotspots */}
+          {}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-            {/* Left: Chart Card */}
+            {}
             <div className="bg-white dark:bg-[#121812] rounded-xl border border-[#d4ddd0] dark:border-[#2a3a28] p-5 shadow-sm h-full">
               <div className="mb-3">
                 <p className="text-[0.62rem] font-semibold uppercase tracking-[0.1em] text-[#6b7a64] mb-1">
@@ -706,7 +705,7 @@ const Main = ({
                 {year}
               </p>
 
-              {/* Confidence Distribution */}
+              {}
               <div className="mt-5 pt-5 border-t border-[#e8ece6] dark:border-[#2a3a28]">
                 <p className="text-[0.62rem] font-semibold uppercase tracking-[0.1em] text-[#6b7a64] mb-3">
                   Distribusi Confidence Level
@@ -777,7 +776,7 @@ const Main = ({
               </div>
             </div>
 
-            {/* Right: Latest Hotspots Card */}
+            {}
             <div className="bg-white dark:bg-[#121812] rounded-xl border border-[#d4ddd0] dark:border-[#2a3a28] overflow-hidden shadow-sm flex flex-col h-full">
               <div className="flex items-center justify-between px-5 py-4 border-b border-[#e8ece6] dark:border-[#2a3a28]">
                 <div>

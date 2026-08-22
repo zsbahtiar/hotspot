@@ -13,7 +13,7 @@ const MitigationSection = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Pencegahan */}
+          {}
           <div className="bg-white dark:bg-[#121812] rounded-xl border border-[#d4ddd0] dark:border-[#2a3a28] p-5">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-lg bg-[#3d6b35]/10 flex items-center justify-center">
@@ -67,7 +67,7 @@ const MitigationSection = () => {
             </ul>
           </div>
 
-          {/* Pemadaman */}
+          {}
           <div className="bg-white dark:bg-[#121812] rounded-xl border border-[#d4ddd0] dark:border-[#2a3a28] p-5">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-lg bg-[#c07f10]/10 flex items-center justify-center">
@@ -129,7 +129,7 @@ const MitigationSection = () => {
             </ul>
           </div>
 
-          {/* Penanganan Pasca Karhutla */}
+          {}
           <div className="bg-white dark:bg-[#121812] rounded-xl border border-[#d4ddd0] dark:border-[#2a3a28] p-5">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-lg bg-[#709663]/10 flex items-center justify-center">

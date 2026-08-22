@@ -56,14 +56,12 @@ import OfflineBanner from '@/components/layout/OfflineBanner';
       });
     };
 
-    // Progressive loading strategy
     if ('requestIdleCallback' in window) {
       requestIdleCallback(loadOlapComponent, { timeout: 2000 });
     } else {
       setTimeout(loadOlapComponent, 500);
     }
 
-    // Fallback: load if user interacts
     ['click', 'touch', 'scroll', 'keydown'].forEach(event => {
       document.addEventListener(event, loadOlapComponent, { once: true });
     });

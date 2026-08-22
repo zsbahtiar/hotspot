@@ -56,6 +56,7 @@ export interface HotspotFeatureGeo extends GeoJSON.Feature {
     location: LocationInfo;
     time?: string;
     satellite?: string;
+    product?: string;
     hotspot_count?: number;
     hotspot_time?: string;
     minggu?: string;
@@ -90,6 +91,7 @@ export type HotspotFeature = {
     location: LocationInfo;
     time?: string;
     satellite?: string;
+    product?: string;
     hotspot_count?: number;
     hotspot_time?: string;
   } & MeasurementInfo & WeatherInfo;
@@ -102,6 +104,7 @@ export type HotspotFeature = {
     location: LocationInfo;
     time?: string;
     satellite?: string;
+    product?: string;
     hotspot_count?: number;
     hotspot_time?: string;
   } & MeasurementInfo;
@@ -119,6 +122,7 @@ export interface BackendHotspotData {
   confidence: ConfidenceLevel;
   satellite_name: string;
   instrument: string;
+  product?: string;
   frp: number;
   brightness: number;
   location: LocationInfo;

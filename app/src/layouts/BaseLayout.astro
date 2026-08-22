@@ -52,7 +52,6 @@ const { title = "OLAP Hotspot", description = "" } = Astro.props;
             type="image/webp"
         />
 
-        <!-- Open Graph Meta Tags -->
         <meta property="og:title" content={title} />
         <meta property="og:description" content={description} />
         <meta property="og:type" content="website" />
@@ -64,7 +63,6 @@ const { title = "OLAP Hotspot", description = "" } = Astro.props;
         <meta property="og:locale" content="id_ID" />
         <meta property="og:site_name" content="OLAP Hotspot" />
 
-        <!-- Twitter Card Meta Tags -->
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={title} />
         <meta name="twitter:description" content={description} />
@@ -75,7 +73,6 @@ const { title = "OLAP Hotspot", description = "" } = Astro.props;
 
         <title>{title}</title>
 
-        <!-- Structured Data (JSON-LD) -->
         <script type="application/ld+json">
             {
                 "@context": "https://schema.org",
@@ -113,7 +110,6 @@ const { title = "OLAP Hotspot", description = "" } = Astro.props;
                 document.documentElement.classList.add(theme);
             })();
         </script>
-        <!-- Optimized resource loading -->
         <link rel="dns-prefetch" href="//tile.openstreetmap.org" />
         <link rel="dns-prefetch" href="//a.tile.openstreetmap.org" />
         <link rel="dns-prefetch" href="//b.tile.openstreetmap.org" />

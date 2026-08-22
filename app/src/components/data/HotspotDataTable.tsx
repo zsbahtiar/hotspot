@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DateRangePicker } from "@/components/ui/date-range-picker-final";
-import { cn } from "@/lib/utils";
+import { cn, satelliteLabel, productLabel } from "@/lib/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Table,
@@ -306,12 +306,14 @@ export default function HotspotTable() {
   const [dates, setDates] = useState<{ from: Date; to?: Date } | undefined>();
   const [selectedConfidence, setSelectedConfidence] = useState<string[]>([]);
   const [selectedSatellites, setSelectedSatellites] = useState<string[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [exportFormat, setExportFormat] = useState<"xlsx" | "csv">("xlsx");
   const [viewMode, setViewMode] = useState<"detail" | "akumulasi">("detail");
   const [sortBy, setSortBy] = useState<string>("properties.hotspot_time");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [confidenceOptions, setConfidenceOptions] = useState<Array<{ id: string; name: string }>>([]);
   const [satelliteOptions, setSatelliteOptions] = useState<Array<{ id: string; name: string }>>([]);
+  const [productOptions, setProductOptions] = useState<Array<{ id: string; name: string }>>([]);
 
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [prevCursors, setPrevCursors] = useState<string[]>([]);
@@ -379,6 +381,10 @@ export default function HotspotTable() {
       filters.satellite = selectedSatellites[0];
     }
 
+    if (selectedProducts.length > 0) {
+      filters.product = selectedProducts[0];
+    }
+
     return filters;
   };
 
@@ -424,7 +430,7 @@ export default function HotspotTable() {
     setTotalCount(0);
     setHasMore(false);
     fetchData();
-  }, [dates, selectedConfidence, selectedSatellites]);
+  }, [dates, selectedConfidence, selectedSatellites, selectedProducts]);
 
   const goToNextPage = () => {
     if (!hasMore || loading) return;
@@ -455,6 +461,7 @@ export default function HotspotTable() {
         const response = await hotspotService.getFilterOptions();
         setConfidenceOptions(response.data.confidence);
         setSatelliteOptions(response.data.satellites);
+        setProductOptions(response.data.products);
       } catch (error) {
         console.error("Failed to fetch filter options:", error);
       }
@@ -567,7 +574,8 @@ export default function HotspotTable() {
             Kota: item.properties.location.kab_kota,
             Kecamatan: item.properties.location.kecamatan,
             Desa: item.properties.location.desa,
-            Satelit: item.properties.satellite,
+            Satelit: satelliteLabel(item.properties.satellite),
+            Produk: productLabel(item.properties.product),
             Confidence: item.properties.confidence,
             Jumlah: item.properties.hotspot_count,
             Latitude: item.geometry.coordinates[1],
@@ -584,7 +592,7 @@ export default function HotspotTable() {
               month: 'short',
               year: 'numeric'
             }),
-            Satelit: item.satelit,
+            Satelit: satelliteLabel(item.satelit),
             Confidence: item.confidence,
             Provinsi: item.provinsi,
             Kota: item.kota,
@@ -779,7 +787,29 @@ export default function HotspotTable() {
                   <SelectItem value="all">Semua satelit</SelectItem>
                   {satelliteOptions.map((sat) => (
                     <SelectItem key={sat.id} value={sat.id}>
-                      {sat.name}
+                      {satelliteLabel(sat.name)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="product-filter" className="mb-2 text-sm">
+                Produk
+              </Label>
+              <Select
+                value={selectedProducts[0] || "all"}
+                onValueChange={(value) => setSelectedProducts(value === "all" ? [] : [value])}
+              >
+                <SelectTrigger id="product-filter" className="text-sm">
+                  <SelectValue placeholder="Semua produk" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua produk</SelectItem>
+                  {productOptions.map((prod) => (
+                    <SelectItem key={prod.id} value={prod.id}>
+                      {productLabel(prod.name)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -809,6 +839,7 @@ export default function HotspotTable() {
                       {sortHeader("Kecamatan", "properties.location.kecamatan")}
                       {sortHeader("Desa", "properties.location.desa")}
                       {sortHeader("Satelit", "properties.satellite")}
+                      {sortHeader("Produk", "properties.product")}
                       {sortHeader("Confidence", "properties.confidence")}
                       {sortHeader("Jumlah", "properties.hotspot_count")}
                       {sortHeader("Koordinat", "geometry.coordinates")}
@@ -903,7 +934,10 @@ export default function HotspotTable() {
                             {(item as HotspotFeature).properties.location.desa}
                           </TableCell>
                           <TableCell className="px-3 py-3 text-sm text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
-                            {(item as HotspotFeature).properties.satellite}
+                            {satelliteLabel((item as HotspotFeature).properties.satellite)}
+                          </TableCell>
+                          <TableCell className="px-3 py-3 text-sm text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
+                            {productLabel((item as HotspotFeature).properties.product)}
                           </TableCell>
                           <TableCell className="px-3 py-3 text-sm text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap uppercase">
                             {(item as HotspotFeature).properties.confidence}
@@ -968,7 +1002,7 @@ export default function HotspotTable() {
                             </div>
                           </TableCell>
                           <TableCell className="px-3 py-3 text-sm text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
-                            {(item as AccumulatedData).satelit}
+                            {satelliteLabel((item as AccumulatedData).satelit)}
                           </TableCell>
                           <TableCell className="px-3 py-3 text-sm text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap uppercase">
                             {(item as AccumulatedData).confidence}
@@ -1001,7 +1035,7 @@ export default function HotspotTable() {
           </div>
 
                     <div className="flex justify-between items-center px-5 py-4 border-t border-[#d4ddd0] dark:border-[#2a3a28] bg-[#f9faf8] dark:bg-[#1a221a]">
-            {/* Page Info */}
+            {}
             <div className="text-[0.75rem] text-[#6b7a64]">
               Halaman <span className="font-semibold text-[#192d17] dark:text-[#f3f7f1]">{apiPage}</span>
               {totalCount > 0 && (
@@ -1009,7 +1043,7 @@ export default function HotspotTable() {
               )}
             </div>
 
-            {/* Pagination Buttons - Pill Style */}
+            {}
             <div className="flex items-center gap-1 bg-[#f0f4ee] dark:bg-[#1a221a] rounded-full p-1 border border-[#d4ddd0] dark:border-[#2a3a28]">
               <button
                 onClick={goToFirstPage}

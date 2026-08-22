@@ -24,6 +24,7 @@ import type { MapComponentProps, MarkerClusterType } from "@/core/models/map";
 import type { CustomFeature, GeoData } from "@/core/models/location";
 import type { HotspotFeatureGeo } from "@/core/models/hotspot";
 import { formatNumber, extractTime, translateWeatherCondition } from "@/core/utils/formatters";
+import { satelliteLabel, productLabel } from "@/lib/utils";
 import MapControlPanel from "@/components/map/MapControls";
 import MapLegend from "@/components/map/MapLegend";
 import MapZoomControls from "@/components/map/ZoomControls";
@@ -46,6 +47,7 @@ const toLocalRFC3339 = (date: Date): string => {
 const fetchHotspotData = async (filters?: {
   confidence?: string | null;
   satellite?: string | null;
+  product?: string | null;
   year?: number;
   semester?: number;
   quarter?: number;
@@ -370,6 +372,10 @@ const MapComponent: React.FC<MapComponentProps> = ({
       params.satellite = filters.satelite;
     }
 
+    if (filters?.product) {
+      params.product = filters.product;
+    }
+
     if (filters?.filterMode === "period" && filters?.time) {
       if (filters.time.tahun) {
         params.year = parseInt(filters.time.tahun);
@@ -529,6 +535,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
     const hasActiveFilters =
       filters?.confidence ||
       filters?.satelite ||
+      filters?.product ||
       filters?.dateRange?.from ||
       (filters?.time && Object.keys(filters.time).length > 0) ||
       filters?.province_code ||
@@ -560,6 +567,14 @@ const MapComponent: React.FC<MapComponentProps> = ({
         filters?.satelite &&
         hotspot.properties?.satellite?.toLowerCase() !==
           filters.satelite?.toLowerCase()
+      ) {
+        return;
+      }
+
+      if (
+        filters?.product &&
+        hotspot.properties?.product?.toLowerCase() !==
+          filters.product?.toLowerCase()
       ) {
         return;
       }
@@ -1167,7 +1182,19 @@ const MapComponent: React.FC<MapComponentProps> = ({
                                     Satelit
                                   </span>
                                   <span className="font-medium text-foreground">
-                                    {feature.properties?.satellite || "-"}
+                                    {feature.properties?.satellite
+                                    ? satelliteLabel(feature.properties.satellite)
+                                    : "-"}
+                                  </span>
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground block">
+                                    Produk
+                                  </span>
+                                  <span className="font-medium text-foreground">
+                                    {feature.properties?.product
+                                    ? productLabel(feature.properties.product)
+                                    : "-"}
                                   </span>
                                 </div>
                                 <div>

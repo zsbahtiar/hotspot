@@ -5,7 +5,6 @@ import StaticFooter from "@/components/layout/StaticFooter.astro";
 import StaticMitigationSection from "@/components/layout/StaticMitigationSection.astro";
 import DashboardWithTheme from "@/components/DashboardWithTheme";
 
-// Calculate year in frontmatter for proper prop serialization
 const currentYear = new Date().getFullYear();
 ---
 
@@ -20,7 +19,6 @@ const currentYear = new Date().getFullYear();
             <div
                 class="flex flex-col md:flex-row md:items-end md:justify-between gap-8"
             >
-                <!-- Left: Main Counter -->
                 <div>
                     <p
                         class="text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-[#b8c8b1] mb-2"
@@ -38,7 +36,6 @@ const currentYear = new Date().getFullYear();
                     </p>
                 </div>
 
-                <!-- Right: Today Stats Box -->
                 <div class="pace-box min-w-[180px]">
                     <p
                         class="text-[0.62rem] font-semibold uppercase tracking-[0.1em] text-[#b8c8b1] mb-1"
@@ -54,7 +51,6 @@ const currentYear = new Date().getFullYear();
                 </div>
             </div>
 
-            <!-- Quick Actions -->
             <div class="flex flex-wrap gap-3 mt-8">
                 <a
                     href="/map"
@@ -99,17 +95,14 @@ const currentYear = new Date().getFullYear();
         </div>
     </section>
 
-    <!-- Dashboard Content - React Component (Loaded on idle) -->
     <DashboardWithTheme client:idle currentYear={currentYear} />
 
     <StaticFooter />
 
     <script>
-        // Use requestIdleCallback for non-critical tasks
         const requestIdleCallback =
             window.requestIdleCallback || ((cb) => setTimeout(cb, 1));
 
-        // Defer Service Worker registration to idle time
         requestIdleCallback(() => {
             if ("serviceWorker" in navigator) {
                 navigator.serviceWorker.register("/sw.js").catch(() => {});

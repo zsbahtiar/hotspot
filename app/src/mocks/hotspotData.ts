@@ -3,7 +3,6 @@ const today = new Date().toISOString().split('T')[0];
 export const mockHotspotData = {
   query: {},
   features: [
-    // 2025 - Tahun Ini
     {
       type: "Feature",
       geometry: {
@@ -67,7 +66,6 @@ export const mockHotspotData = {
         }
       }
     },
-    // 2024
     {
       type: "Feature",
       geometry: {
@@ -152,7 +150,6 @@ export const mockHotspotData = {
         }
       }
     },
-    // 2023
     {
       type: "Feature",
       geometry: {
@@ -216,7 +213,6 @@ export const mockHotspotData = {
         }
       }
     },
-    // 2022
     {
       type: "Feature",
       geometry: {
@@ -280,7 +276,6 @@ export const mockHotspotData = {
         }
       }
     },
-    // 2021
     {
       type: "Feature",
       geometry: {
@@ -344,7 +339,6 @@ export const mockHotspotData = {
         }
       }
     },
-    // 2020
     {
       type: "Feature",
       geometry: {

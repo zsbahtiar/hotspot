@@ -9,7 +9,6 @@ const Navbar = () => {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Suppress hydration warnings
     const suppressHydration = () => {
       const originalError = console.error;
       console.error = (...args) => {

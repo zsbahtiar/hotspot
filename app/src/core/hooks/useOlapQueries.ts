@@ -5,9 +5,6 @@ import { OlapService } from "@/core/services/olapService";
 import type { QueryData } from "@/core/models/query";
 import type { HotspotFilters } from "@/core/services/hotspotService";
 
-/**
- * Hook to query OLAP dimension
- */
 export function useOlapQuery(dimension: string, query?: QueryData) {
   return useQuery({
     queryKey: ["olap", dimension, query],
@@ -16,9 +13,6 @@ export function useOlapQuery(dimension: string, query?: QueryData) {
   });
 }
 
-/**
- * Hook to fetch map data from OLAP
- */
 export function useOlapMapData(query?: QueryData) {
   return useQuery({
     queryKey: ["olap", "map", query],
@@ -27,9 +21,6 @@ export function useOlapMapData(query?: QueryData) {
   });
 }
 
-/**
- * Hook to fetch time data from OLAP
- */
 export function useOlapTimeData() {
   return useQuery({
     queryKey: ["olap", "time"],
@@ -38,9 +29,6 @@ export function useOlapTimeData() {
   });
 }
 
-/**
- * Hook to fetch dashboard data from OLAP (parallel execution)
- */
 export function useOlapDashboardData(filters?: HotspotFilters) {
   return useQuery({
     queryKey: ["olap", "dashboard", filters],
