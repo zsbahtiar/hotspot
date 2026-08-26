@@ -40,6 +40,7 @@ export interface Env {
   WEATHER_DAILY_BUDGET: string; // e.g. "1000"
   WEATHER_BATCH: string; // per-run cap, e.g. "40"
   WEATHER_WINDOW_DAYS: string; // how far back to look for missing weather, e.g. "30"
+  WEATHER_HISTORY_FROM_YEAR?: string; // earliest year the historical sweep backfills, e.g. "2015"
   LOG_LEVEL?: string; // error | warn | info | debug
   ETL_TOKEN?: string;
 }
@@ -92,16 +93,32 @@ async function runWeatherBackfill(env: Env) {
   if (remaining <= 0) return { phase: "weather", budget_exhausted: true, used };
 
   const since = new Date(Date.now() - windowDays * 86400000);
-  const sinceIso = `${utcDateKey(since)} 00:00:00.000`;
+  const liveSinceIso = `${utcDateKey(since)} 00:00:00.000`;
   // Each job is one VisualCrossing subrequest; cap per-run work so a large
   // WEATHER_BATCH (paid/unlimited mode) can't blow the 1000 subrequest/invocation limit.
   const SUBREQ_SAFE_MAX = 700;
   const take = Math.min(capped ? Math.min(remaining, perRun) : perRun, SUBREQ_SAFE_MAX);
-  const jobs = await fetchMissingWeather(env.DB, sinceIso, take);
-  if (jobs.length === 0) return { phase: "weather", pending: 0 };
 
-  // Sequential on purpose: VisualCrossing rate-limits, so one request at a time
-  // avoids 429s. A failed fetch just leaves that pair pending for the next run.
+  // Fresh data first: fill the recent window before touching history.
+  const liveJobs = await fetchMissingWeather(env.DB, liveSinceIso, take);
+  if (liveJobs.length > 0) {
+    const r = await processWeatherJobs(env, liveJobs, capped, used, dateKey);
+    return { phase: "weather", scope: "live", capped, processed: liveJobs.length, ...r };
+  }
+
+  // Window is clean -> sweep the historical tail one bounded year-slice per run.
+  return await runHistoricalSweep(env, liveSinceIso, take, capped, used, dateKey);
+}
+
+// Fetch VisualCrossing for each job (sequential; VC rate-limits), then write
+// dim_weather_condition + fact_weather and bump the budget counter when capping.
+async function processWeatherJobs(
+  env: Env,
+  jobs: Awaited<ReturnType<typeof fetchMissingWeather>>,
+  capped: boolean,
+  used: number,
+  dateKey: string,
+) {
   const weatherRows = [];
   let calls = 0;
   let failed = 0;
@@ -116,12 +133,48 @@ async function runWeatherBackfill(env: Env) {
       failed++;
     }
   }
-
   const { factWeather, newWeatherConditions } = await buildWeatherFacts(env.DB, weatherRows, jobs);
   const res = await loadWeatherFacts(env.DB, env.CACHE, newWeatherConditions, factWeather);
   if (capped) await addBudget(env.CACHE, dateKey, calls); // count VC calls only when capping
+  return { ...res, failed, budget_used: capped ? used + calls : null };
+}
 
-  return { phase: "weather", capped, processed: jobs.length, ...res, failed, budget_used: capped ? used + calls : null };
+// Backfills the pre-window tail (old hotspots that never got weather) one year at
+// a time, bounded so each run's anti-join stays cheap. A KV cursor advances past
+// each cleared year; once it passes the current year the sweep is done and idle.
+async function runHistoricalSweep(
+  env: Env,
+  liveSinceIso: string,
+  take: number,
+  capped: boolean,
+  used: number,
+  dateKey: string,
+) {
+  const fromYear = parseInt(env.WEATHER_HISTORY_FROM_YEAR || "2015", 10);
+  const nowYear = new Date().getUTCFullYear();
+  const cursor = await env.CACHE.get("whist:year");
+  let year = cursor ? parseInt(cursor, 10) : fromYear;
+  if (!Number.isFinite(year) || year < fromYear) year = fromYear;
+  if (year > nowYear) return { phase: "weather", scope: "history", done: true };
+
+  const sliceSince = `${year}-01-01 00:00:00.000`;
+  let sliceUntil = `${year + 1}-01-01 00:00:00.000`;
+  if (sliceUntil > liveSinceIso) sliceUntil = liveSinceIso; // never overlap the live window
+
+  const jobs =
+    sliceSince < sliceUntil
+      ? await fetchMissingWeather(env.DB, sliceSince, take, sliceUntil)
+      : [];
+  if (jobs.length === 0) {
+    await env.CACHE.put("whist:year", String(year + 1)); // year clean -> advance
+    return { phase: "weather", scope: "history", year, cleared: true, next: year + 1 };
+  }
+  const r = await processWeatherJobs(env, jobs, capped, used, dateKey);
+  // If the whole slice fit in one run, the year is fully attempted -> advance so a
+  // permanently-unresolvable pair (e.g. no VC data) can never stall the sweep.
+  const exhausted = jobs.length < take;
+  if (exhausted) await env.CACHE.put("whist:year", String(year + 1));
+  return { phase: "weather", scope: "history", year, processed: jobs.length, advanced: exhausted, ...r };
 }
 
 export default {

@@ -100,13 +100,18 @@ export async function fetchMissingWeather(
   db: D1Database,
   sinceIso: string,
   limit: number,
+  untilIso?: string,
 ): Promise<WeatherJob[]> {
   const scanLimit = Math.max(limit * 10, 500);
+  // Optional upper bound keeps the anti-join scan inside a bounded slice (e.g. a
+  // single year) so a sparse historical tail doesn't force a full-table scan.
+  const upper = untilIso ? "AND acquired_at < ?" : "";
   const sql = `
     SELECT location_id, period_id, latitude, longitude,
            substr(acquired_at, 1, 10) AS date_value
     FROM fact_hotspot
     WHERE acquired_at >= ?
+      ${upper}
       AND NOT EXISTS (
         SELECT 1 FROM fact_weather fw
         WHERE fw.location_id = fact_hotspot.location_id
@@ -114,7 +119,8 @@ export async function fetchMissingWeather(
       )
     ORDER BY acquired_at DESC
     LIMIT ?`;
-  const res = await db.prepare(sql).bind(sinceIso, scanLimit).all<WeatherJob>();
+  const binds = untilIso ? [sinceIso, untilIso, scanLimit] : [sinceIso, scanLimit];
+  const res = await db.prepare(sql).bind(...binds).all<WeatherJob>();
   const seen = new Set<string>();
   const jobs: WeatherJob[] = [];
   for (const r of res.results ?? []) {

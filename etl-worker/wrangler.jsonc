@@ -23,6 +23,7 @@
     "WEATHER_DAILY_BUDGET": "0",
     "WEATHER_BATCH": "300",
     "WEATHER_WINDOW_DAYS": "7",
+    "WEATHER_HISTORY_FROM_YEAR": "2015",
     "LOG_LEVEL": "info"
   },
   // Secrets (set with `wrangler secret put <NAME>`):
