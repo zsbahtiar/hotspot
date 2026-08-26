@@ -1,0 +1,19 @@
+# Copy to .dev.vars for local `wrangler dev`. These are secrets/overrides that
+# are NOT committed. In production set them with `wrangler secret put <NAME>`.
+
+# Required for the ingest phase (NASA FIRMS).
+NASA_FIRMS_API_KEY=your_firms_key
+
+# Required for weather backfill. Leave unset to skip weather entirely.
+VISUALCROSSING_API_KEY=your_visualcrossing_key
+
+# Optional X-Api-Key for BMKG geocoding.
+BMKG_API_KEY=
+
+# Guards the manual POST /run trigger.
+ETL_TOKEN=devtoken
+
+# Weather daily budget flag:
+#   1000  -> cap VisualCrossing at 1000 records/day (free plan)
+#   0     -> no cap (paid plan / unlimited)
+WEATHER_DAILY_BUDGET=1000

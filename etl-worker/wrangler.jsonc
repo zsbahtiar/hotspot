@@ -1,0 +1,49 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "hotspot-etl",
+  "account_id": "a1ae3650881114625f08b13d45732b29",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-01-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  // Two schedules routed by event.cron in src/index.ts:
+  //   */15 - ingest hotspots + enqueue weather
+  //   */5  - drain weather_queue within the VisualCrossing free budget
+  "triggers": {
+    "crons": ["*/15 * * * *", "*/5 * * * *"]
+  },
+  "vars": {
+    "NASA_FIRMS_BASE_URL": "https://firms.modaps.eosdis.nasa.gov",
+    "BMKG_API_BASE_URL": "https://cuaca.bmkg.go.id/api/df/v1/adm",
+    "BMKG_REFERER": "https://cuaca.bmkg.go.id/",
+    "BMKG_ORIGIN": "https://cuaca.bmkg.go.id",
+    "VISUALCROSSING_BASE_URL": "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline",
+    "FIRMS_SOURCES": "MODIS_NRT,MODIS_SP,VIIRS_NOAA20_NRT,VIIRS_NOAA20_SP,VIIRS_NOAA21_NRT,VIIRS_SNPP_NRT,VIIRS_SNPP_SP",
+    "INDONESIA_BBOX": "95,-11,141,6",
+    "WEATHER_DAILY_BUDGET": "1000",
+    "WEATHER_BATCH": "40",
+    "WEATHER_WINDOW_DAYS": "7",
+    "LOG_LEVEL": "info"
+  },
+  // Secrets (set with `wrangler secret put <NAME>`):
+  //   NASA_FIRMS_API_KEY   - required for FIRMS
+  //   VISUALCROSSING_API_KEY - required for weather (else fact_weather is skipped)
+  //   BMKG_API_KEY         - optional X-Api-Key for BMKG geocode
+  //   ETL_TOKEN            - shared secret for the manual POST /run trigger
+  //
+  // Shares the SAME D1 database and KV namespace as api-worker so the API sees
+  // new data and its cache is invalidated. Replace ids after creating resources.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "hotspot",
+      "database_id": "cac31682-9d99-4bc8-af10-eb1ec90fe0dc"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "CACHE",
+      "id": "55d28599e3a94e55991ebdc33bd6c707"
+    }
+  ]
+}
