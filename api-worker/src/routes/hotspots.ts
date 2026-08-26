@@ -282,7 +282,7 @@ app.get("/summary", async (c) => {
   if (!startDate) startDate = defaultStart();
   if (!endDate) endDate = defaultEnd();
 
-  const key = `summary:v2:province_limit:${provinceLimit}:city_limit:${cityLimit}:start:${sqlDate(startDate)}:end:${sqlDate(endDate)}:tz:${timezone}`;
+  const key = `summary:v3:province_limit:${provinceLimit}:city_limit:${cityLimit}:start:${sqlDate(startDate)}:end:${sqlDate(endDate)}:tz:${timezone}`;
   const cached = await cache.get<SummaryResponse>(key);
   if (cached) {
     c.header("Cache-Control", "public, s-maxage=4800, max-age=2400");

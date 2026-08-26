@@ -369,12 +369,15 @@ export async function getTodayStats(
   tz: string,
 ): Promise<TodayStatsResponse> {
   const [dayStartUtc, dayEndUtc] = tzDayBoundsUtc(tz, 0);
+  // LEFT JOIN: a hotspot still counts even if its location/confidence FK is orphaned
+  // (e.g. left over from the region-grain dim_location change); an INNER JOIN would
+  // silently undercount vs the raw fact rows the geojson endpoint returns.
   const sql = `SELECT count(*) AS today_hotspots,
       count(DISTINCT dl.province_name) AS today_affected_provinces,
       COALESCE(SUM(CASE WHEN dc.confidence_class = 'HIGH' THEN 1 ELSE 0 END), 0) AS today_high_confidence
     FROM fact_hotspot fh
-    JOIN dim_confidence dc ON fh.confidence_id = dc.id
-    JOIN dim_location dl ON fh.location_id = dl.id
+    LEFT JOIN dim_confidence dc ON fh.confidence_id = dc.id
+    LEFT JOIN dim_location dl ON fh.location_id = dl.id
     WHERE fh.acquired_at >= ? AND fh.acquired_at < ?`;
   const row = await db.prepare(sql).bind(toSqlTs(dayStartUtc), toSqlTs(dayEndUtc)).first<TodayStatsResponse>();
   return (
@@ -395,8 +398,8 @@ export async function getYesterdayStats(
       count(DISTINCT dl.province_name) AS yesterday_affected_provinces,
       COALESCE(SUM(CASE WHEN dc.confidence_class = 'HIGH' THEN 1 ELSE 0 END), 0) AS yesterday_high_confidence
     FROM fact_hotspot fh
-    JOIN dim_confidence dc ON fh.confidence_id = dc.id
-    JOIN dim_location dl ON fh.location_id = dl.id
+    LEFT JOIN dim_confidence dc ON fh.confidence_id = dc.id
+    LEFT JOIN dim_location dl ON fh.location_id = dl.id
     WHERE fh.acquired_at >= ? AND fh.acquired_at < ?`;
   const row = await db.prepare(sql).bind(toSqlTs(dayStartUtc), toSqlTs(dayEndUtc)).first<YesterdayStatsResponse>();
   return (
