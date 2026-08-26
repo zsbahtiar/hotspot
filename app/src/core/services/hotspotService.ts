@@ -116,6 +116,41 @@ export class HotspotService {
     );
   }
 
+  // Lean GeoJSON for the cluster map (no per-point weather/frp) so tens of
+  // thousands of markers fit. Heavy fields are fetched per point via getHotspotDetail.
+  async getHotspotsMarkers(
+    filters?: HotspotFilters,
+  ): Promise<BackendGeoJSONResponse> {
+    const params: Record<string, any> = {};
+    if (filters?.limit) params.limit = filters.limit;
+    if (filters?.start_date) params.start_date = filters.start_date;
+    if (filters?.end_date) params.end_date = filters.end_date;
+    if (filters?.year) params.year = filters.year;
+    if (filters?.semester) params.semester = filters.semester;
+    if (filters?.quarter) params.quarter = filters.quarter;
+    if (filters?.month) params.month = filters.month;
+    if (filters?.week) params.week = filters.week;
+    if (filters?.confidence) params.confidence = filters.confidence;
+    if (filters?.satellite) params.satellite = filters.satellite;
+    if (filters?.product) params.product = filters.product;
+    if (filters?.province_name) params.province_code = filters.province_name;
+    if (filters?.city_name) params.city_code = filters.city_name;
+    if (filters?.cursor) params.cursor = filters.cursor;
+    return this.httpClient.get<BackendGeoJSONResponse>(
+      "/api/v1/hotspots/markers",
+      params,
+    );
+  }
+
+  // Full detail (frp, brightness, weather, ...) for one hotspot, for the popup.
+  async getHotspotDetail(id: string): Promise<any> {
+    const res = await this.httpClient.get<{ data: any }>(
+      "/api/v1/hotspots/detail",
+      { id },
+    );
+    return res.data;
+  }
+
   async fetchMapData(filters?: HotspotFilters): Promise<HotspotDataGeo> {
     const response = await this.getHotspotsGeoJSON(filters);
     return response.data;

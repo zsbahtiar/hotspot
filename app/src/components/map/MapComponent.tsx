@@ -66,11 +66,12 @@ const fetchHotspotData = async (filters?: {
   }
 
   const apiFilters: any = {
-    limit: 50000,
+    limit: 30000,
     ...filters,
   };
 
-  const response = await hotspotService.getHotspotsGeoJSON(apiFilters);
+  // Lean markers for the cluster map (no OOM); popup fetches full detail on click.
+  const response = await hotspotService.getHotspotsMarkers(apiFilters);
   return response.data;
 };
 
@@ -272,6 +273,20 @@ const MapComponent: React.FC<MapComponentProps> = ({
     () => ({ from: new Date(), to: new Date() }),
   );
   const [loadingLevel, setLoadingLevel] = useState<string | null>(null);
+  // Markers are lean; when a popup opens we lazily fetch the point's full detail
+  // (frp, brightness, weather) and merge it into the feature so the popup shows it.
+  const [, setDetailTick] = useState(0);
+  const fetchMarkerDetail = useCallback(async (feature: any) => {
+    const id = feature?.properties?.id;
+    if (!id || feature.properties.__detailed) return;
+    try {
+      const detail = await hotspotService.getHotspotDetail(id);
+      Object.assign(feature.properties, detail, { __detailed: true });
+      setDetailTick((t) => t + 1);
+    } catch {
+      /* leave the lean popup as-is on failure */
+    }
+  }, []);
 
   const {
     cachedData: geoJsonCacheData,
@@ -445,7 +460,8 @@ const MapComponent: React.FC<MapComponentProps> = ({
   });
 
   const hotspotData: HotspotFeatureGeo[] = useMemo(() => {
-    return hotspotApiResponse?.features || [];
+    // markers return lean features (heavy fields fetched via /detail on popup open)
+    return (hotspotApiResponse?.features || []) as HotspotFeatureGeo[];
   }, [hotspotApiResponse]);
 
 
@@ -1145,6 +1161,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
                       key={index}
                       position={[latitude, longitude]}
                       icon={customMarker(confidence)}
+                      eventHandlers={{ popupopen: () => fetchMarkerDetail(feature) }}
                     >
                       <Popup>
                         <div
