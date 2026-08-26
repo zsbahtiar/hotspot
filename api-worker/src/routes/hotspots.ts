@@ -282,7 +282,7 @@ app.get("/summary", async (c) => {
   if (!startDate) startDate = defaultStart();
   if (!endDate) endDate = defaultEnd();
 
-  const key = `summary:province_limit:${provinceLimit}:city_limit:${cityLimit}:start:${sqlDate(startDate)}:end:${sqlDate(endDate)}:tz:${timezone}`;
+  const key = `summary:v2:province_limit:${provinceLimit}:city_limit:${cityLimit}:start:${sqlDate(startDate)}:end:${sqlDate(endDate)}:tz:${timezone}`;
   const cached = await cache.get<SummaryResponse>(key);
   if (cached) {
     c.header("Cache-Control", "public, s-maxage=4800, max-age=2400");
@@ -291,7 +291,7 @@ app.get("/summary", async (c) => {
 
   const [
     topProvinces, topCities, satelliteDistribution, stats,
-    monthlyStats, todayStats, confidenceDistribution,
+    monthlyStats, todayStats, confidenceDistribution, yesterdayStats,
   ] = await Promise.all([
     repo.getTopProvinces(c.env.DB, startDate, endDate, provinceLimit),
     repo.getTopCities(c.env.DB, startDate, endDate, cityLimit),
@@ -300,6 +300,7 @@ app.get("/summary", async (c) => {
     repo.getMonthlyStats(c.env.DB, startDate, endDate, timezone),
     repo.getTodayStats(c.env.DB, timezone),
     repo.getConfidenceDistribution(c.env.DB, startDate, endDate),
+    repo.getYesterdayStats(c.env.DB, timezone),
   ]);
 
   const result: SummaryResponse = {
@@ -309,6 +310,7 @@ app.get("/summary", async (c) => {
     stats,
     monthly_stats: monthlyStats,
     today_stats: todayStats,
+    yesterday_stats: yesterdayStats,
     confidence_distribution: confidenceDistribution,
   };
   c.executionCtx.waitUntil(cache.set(key, result, TTL.summary));

@@ -94,6 +94,12 @@ export interface TodayStatsResponse {
   today_high_confidence: number;
 }
 
+export interface YesterdayStatsResponse {
+  yesterday_hotspots: number;
+  yesterday_affected_provinces: number;
+  yesterday_high_confidence: number;
+}
+
 export interface SummaryResponse {
   top_provinces: LocationCount[];
   top_cities: LocationCount[];
@@ -101,6 +107,9 @@ export interface SummaryResponse {
   stats: StatsResponse | null;
   monthly_stats: MonthlyStats[];
   today_stats: TodayStatsResponse | null;
+  // Same tz-aware day window as today_stats but for yesterday, so the home counter
+  // can show a real "vs kemarin" delta regardless of the queried range.
+  yesterday_stats: YesterdayStatsResponse | null;
   confidence_distribution: DistributionCount[];
 }
 

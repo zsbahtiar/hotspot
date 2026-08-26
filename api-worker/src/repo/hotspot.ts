@@ -7,6 +7,7 @@ import type {
   MonthlyStats,
   StatsResponse,
   TodayStatsResponse,
+  YesterdayStatsResponse,
   FilterOption,
   PeriodsResponse,
   LocationsResponse,
@@ -346,21 +347,28 @@ export async function getStats(
   return row ?? { total_hotspots: 0, high_confidence: 0, affected_provinces: 0 };
 }
 
-export async function getTodayStats(
-  db: D1Database,
-  tz: string,
-): Promise<TodayStatsResponse> {
-  // "Today" is in the client's timezone. Data is stored UTC, so we compute the
-  // UTC bounds of the tz-local day and filter on the indexed acquired_at range
-  // (a ~1-day window, unlike a full-table date() scan). The rollup can't do this
-  // because it is bucketed by UTC date and a tz day straddles two UTC dates.
+// UTC bounds of a tz-local day relative to "now", shifted by dayOffset (0 = today,
+// -1 = yesterday). The tz comes from the offset the client sent, so the day window
+// matches what the user sees. Filtering on this range uses the indexed acquired_at
+// (a ~1-day window) rather than a full-table date() scan; the UTC-bucketed rollup
+// can't do it because a tz day straddles two UTC dates.
+function tzDayBoundsUtc(tz: string, dayOffset: number): [Date, Date] {
   const offH = tzOffsetHours(tz || "UTC");
   const now = new Date();
   const tzNow = new Date(now.getTime() + offH * 3600000);
   const dayStartUtc = new Date(
-    Date.UTC(tzNow.getUTCFullYear(), tzNow.getUTCMonth(), tzNow.getUTCDate()) - offH * 3600000,
+    Date.UTC(tzNow.getUTCFullYear(), tzNow.getUTCMonth(), tzNow.getUTCDate() + dayOffset) -
+      offH * 3600000,
   );
   const dayEndUtc = new Date(dayStartUtc.getTime() + 86400000);
+  return [dayStartUtc, dayEndUtc];
+}
+
+export async function getTodayStats(
+  db: D1Database,
+  tz: string,
+): Promise<TodayStatsResponse> {
+  const [dayStartUtc, dayEndUtc] = tzDayBoundsUtc(tz, 0);
   const sql = `SELECT count(*) AS today_hotspots,
       count(DISTINCT dl.province_name) AS today_affected_provinces,
       COALESCE(SUM(CASE WHEN dc.confidence_class = 'HIGH' THEN 1 ELSE 0 END), 0) AS today_high_confidence
@@ -374,6 +382,28 @@ export async function getTodayStats(
       today_hotspots: 0,
       today_affected_provinces: 0,
       today_high_confidence: 0,
+    }
+  );
+}
+
+export async function getYesterdayStats(
+  db: D1Database,
+  tz: string,
+): Promise<YesterdayStatsResponse> {
+  const [dayStartUtc, dayEndUtc] = tzDayBoundsUtc(tz, -1);
+  const sql = `SELECT count(*) AS yesterday_hotspots,
+      count(DISTINCT dl.province_name) AS yesterday_affected_provinces,
+      COALESCE(SUM(CASE WHEN dc.confidence_class = 'HIGH' THEN 1 ELSE 0 END), 0) AS yesterday_high_confidence
+    FROM fact_hotspot fh
+    JOIN dim_confidence dc ON fh.confidence_id = dc.id
+    JOIN dim_location dl ON fh.location_id = dl.id
+    WHERE fh.acquired_at >= ? AND fh.acquired_at < ?`;
+  const row = await db.prepare(sql).bind(toSqlTs(dayStartUtc), toSqlTs(dayEndUtc)).first<YesterdayStatsResponse>();
+  return (
+    row ?? {
+      yesterday_hotspots: 0,
+      yesterday_affected_provinces: 0,
+      yesterday_high_confidence: 0,
     }
   );
 }
