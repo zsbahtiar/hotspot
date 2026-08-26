@@ -75,6 +75,112 @@ const fetchHotspotData = async (filters?: {
   return response.data;
 };
 
+// The heavy per-point fields (FRP, brightness, weather) are not in the lean
+// markers; this component fetches them on its own when a popup opens. It is
+// scoped to the popup, so loading detail does not re-render the whole map.
+function HotspotDetailSections({ id }: { id?: string }) {
+  const [d, setD] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    if (!id) return;
+    let alive = true;
+    setLoading(true);
+    hotspotService
+      .getHotspotDetail(id)
+      .then((res) => {
+        if (alive) setD(res);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [id]);
+
+  if (loading && !d) {
+    return (
+      <div className="mt-3 pt-3 border-t border-border text-sm text-muted-foreground flex items-center gap-2">
+        <Loader2 className="w-4 h-4 animate-spin" /> Memuat pengukuran & cuaca…
+      </div>
+    );
+  }
+  if (!d) return null;
+
+  const hasWeather = !!d.weather_conditions;
+  return (
+    <>
+      <div className="mt-3 pt-3 border-t border-border">
+        <h4 className="font-bold text-foreground mb-2">Pengukuran</h4>
+        <ul className="space-y-1.5 text-sm">
+          {d.frp > 0 && (
+            <li className="flex justify-between">
+              <span className="text-muted-foreground">FRP:</span>
+              <strong className="text-foreground text-right font-medium">{d.frp.toFixed(2)} MW</strong>
+            </li>
+          )}
+          {d.brightness > 0 && (
+            <li className="flex justify-between">
+              <span className="text-muted-foreground">Brightness:</span>
+              <strong className="text-foreground text-right font-medium">{d.brightness.toFixed(2)} K</strong>
+            </li>
+          )}
+          {d.bright_t31 > 0 && (
+            <li className="flex justify-between">
+              <span className="text-muted-foreground">Bright T31:</span>
+              <strong className="text-foreground text-right font-medium">{d.bright_t31.toFixed(2)} K</strong>
+            </li>
+          )}
+          {d.bright_ti4 > 0 && (
+            <li className="flex justify-between">
+              <span className="text-muted-foreground">Bright TI4:</span>
+              <strong className="text-foreground text-right font-medium">{d.bright_ti4.toFixed(2)} K</strong>
+            </li>
+          )}
+          {d.bright_ti5 > 0 && (
+            <li className="flex justify-between">
+              <span className="text-muted-foreground">Bright TI5:</span>
+              <strong className="text-foreground text-right font-medium">{d.bright_ti5.toFixed(2)} K</strong>
+            </li>
+          )}
+        </ul>
+      </div>
+      {hasWeather ? (
+        <div className="mt-3 pt-3 border-t border-border">
+          <h4 className="font-bold text-foreground mb-2">Cuaca</h4>
+          <ul className="space-y-1.5 text-sm">
+            <li className="flex justify-between">
+              <span className="text-muted-foreground">Kondisi:</span>
+              <strong className="text-foreground text-right font-medium">{translateWeatherCondition(d.weather_conditions)}</strong>
+            </li>
+            <li className="flex justify-between">
+              <span className="text-muted-foreground">Suhu:</span>
+              <strong className="text-foreground text-right font-medium">{d.temperature}°C</strong>
+            </li>
+            <li className="flex justify-between">
+              <span className="text-muted-foreground">Kelembaban:</span>
+              <strong className="text-foreground text-right font-medium">{Number(d.humidity).toFixed(1)}%</strong>
+            </li>
+            <li className="flex justify-between">
+              <span className="text-muted-foreground">Angin:</span>
+              <strong className="text-foreground text-right font-medium">{d.wind_speed} km/h ({d.wind_degree}°)</strong>
+            </li>
+            <li className="flex justify-between">
+              <span className="text-muted-foreground">Awan:</span>
+              <strong className="text-foreground text-right font-medium">{d.cloud_coverage}%</strong>
+            </li>
+          </ul>
+        </div>
+      ) : (
+        <div className="mt-3 pt-3 border-t border-border text-xs text-muted-foreground">
+          Data cuaca belum tersedia untuk titik ini.
+        </div>
+      )}
+    </>
+  );
+}
+
 interface CustomAttributionControlProps {
   position: L.ControlPosition;
   attributionText: string;
@@ -273,20 +379,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
     () => ({ from: new Date(), to: new Date() }),
   );
   const [loadingLevel, setLoadingLevel] = useState<string | null>(null);
-  // Markers are lean; when a popup opens we lazily fetch the point's full detail
-  // (frp, brightness, weather) and merge it into the feature so the popup shows it.
-  const [, setDetailTick] = useState(0);
-  const fetchMarkerDetail = useCallback(async (feature: any) => {
-    const id = feature?.properties?.id;
-    if (!id || feature.properties.__detailed) return;
-    try {
-      const detail = await hotspotService.getHotspotDetail(id);
-      Object.assign(feature.properties, detail, { __detailed: true });
-      setDetailTick((t) => t + 1);
-    } catch {
-      /* leave the lean popup as-is on failure */
-    }
-  }, []);
 
   const {
     cachedData: geoJsonCacheData,
@@ -1161,7 +1253,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
                       key={index}
                       position={[latitude, longitude]}
                       icon={customMarker(confidence)}
-                      eventHandlers={{ popupopen: () => fetchMarkerDetail(feature) }}
                     >
                       <Popup>
                         <div
@@ -1315,136 +1406,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
                               </ul>
                             </div>
 
-                            {(feature.properties?.frp !== undefined || feature.properties?.brightness !== undefined) && (
-                              <div className="mt-3 pt-3 border-t border-border">
-                                <h4 className="font-bold text-foreground mb-2 flex items-center">
-                                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                  </svg>
-                                  Pengukuran
-                                </h4>
-                                <ul className="space-y-1.5 text-sm">
-                                  {feature.properties?.frp !== undefined && feature.properties.frp > 0 && (
-                                    <li className="flex justify-between">
-                                      <span className="text-muted-foreground">FRP:</span>
-                                      <strong className="text-foreground text-right font-medium">
-                                        {feature.properties.frp.toFixed(2)} MW
-                                      </strong>
-                                    </li>
-                                  )}
-                                  {feature.properties?.brightness !== undefined && feature.properties.brightness > 0 && (
-                                    <li className="flex justify-between">
-                                      <span className="text-muted-foreground">Brightness:</span>
-                                      <strong className="text-foreground text-right font-medium">
-                                        {feature.properties.brightness.toFixed(2)} K
-                                      </strong>
-                                    </li>
-                                  )}
-                                  {feature.properties?.bright_t31 !== undefined && feature.properties.bright_t31 > 0 && (
-                                    <li className="flex justify-between">
-                                      <span className="text-muted-foreground">Bright T31:</span>
-                                      <strong className="text-foreground text-right font-medium">
-                                        {feature.properties.bright_t31.toFixed(2)} K
-                                      </strong>
-                                    </li>
-                                  )}
-                                  {feature.properties?.bright_ti4 !== undefined && feature.properties.bright_ti4 > 0 && (
-                                    <li className="flex justify-between">
-                                      <span className="text-muted-foreground">Bright TI4:</span>
-                                      <strong className="text-foreground text-right font-medium">
-                                        {feature.properties.bright_ti4.toFixed(2)} K
-                                      </strong>
-                                    </li>
-                                  )}
-                                  {feature.properties?.bright_ti5 !== undefined && feature.properties.bright_ti5 > 0 && (
-                                    <li className="flex justify-between">
-                                      <span className="text-muted-foreground">Bright TI5:</span>
-                                      <strong className="text-foreground text-right font-medium">
-                                        {feature.properties.bright_ti5.toFixed(2)} K
-                                      </strong>
-                                    </li>
-                                  )}
-                                </ul>
-                              </div>
-                            )}
-
-                            {(feature.properties?.temperature !== undefined || feature.properties?.weather_conditions) && (
-                              <div className="mt-3 pt-3 border-t border-border">
-                                <h4 className="font-bold text-foreground mb-2 flex items-center">
-                                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-                                  </svg>
-                                  Cuaca
-                                </h4>
-                                <ul className="space-y-1.5 text-sm">
-                                  {feature.properties?.weather_conditions && (
-                                    <li className="flex justify-between">
-                                      <span className="text-muted-foreground">Kondisi:</span>
-                                      <strong className="text-foreground text-right font-medium">
-                                        {translateWeatherCondition(feature.properties.weather_conditions)}
-                                      </strong>
-                                    </li>
-                                  )}
-                                  {feature.properties?.temperature !== undefined && (
-                                    <li className="flex justify-between">
-                                      <span className="text-muted-foreground">Suhu:</span>
-                                      <strong className="text-foreground text-right font-medium">
-                                        {feature.properties.temperature}°C
-                                      </strong>
-                                    </li>
-                                  )}
-                                  {feature.properties?.humidity !== undefined && (
-                                    <li className="flex justify-between">
-                                      <span className="text-muted-foreground">Kelembaban:</span>
-                                      <strong className="text-foreground text-right font-medium">
-                                        {feature.properties.humidity.toFixed(1)}%
-                                      </strong>
-                                    </li>
-                                  )}
-                                  {feature.properties?.wind_speed !== undefined && (
-                                    <li className="flex justify-between">
-                                      <span className="text-muted-foreground">Angin:</span>
-                                      <strong className="text-foreground text-right font-medium">
-                                        {feature.properties.wind_speed} km/h
-                                        {feature.properties?.wind_degree !== undefined && ` (${feature.properties.wind_degree}°)`}
-                                      </strong>
-                                    </li>
-                                  )}
-                                  {feature.properties?.cloud_coverage !== undefined && (
-                                    <li className="flex justify-between">
-                                      <span className="text-muted-foreground">Awan:</span>
-                                      <strong className="text-foreground text-right font-medium">
-                                        {feature.properties.cloud_coverage}%
-                                      </strong>
-                                    </li>
-                                  )}
-                                  {feature.properties?.pressure !== undefined && feature.properties.pressure > 0 && (
-                                    <li className="flex justify-between">
-                                      <span className="text-muted-foreground">Tekanan:</span>
-                                      <strong className="text-foreground text-right font-medium">
-                                        {feature.properties.pressure} hPa
-                                      </strong>
-                                    </li>
-                                  )}
-                                  {feature.properties?.uv_index !== undefined && feature.properties.uv_index > 0 && (
-                                    <li className="flex justify-between">
-                                      <span className="text-muted-foreground">UV Index:</span>
-                                      <strong className="text-foreground text-right font-medium">
-                                        {feature.properties.uv_index}
-                                      </strong>
-                                    </li>
-                                  )}
-                                  {feature.properties?.precipitation !== undefined && feature.properties.precipitation > 0 && (
-                                    <li className="flex justify-between">
-                                      <span className="text-muted-foreground">Curah Hujan:</span>
-                                      <strong className="text-foreground text-right font-medium">
-                                        {feature.properties.precipitation} mm
-                                      </strong>
-                                    </li>
-                                  )}
-                                </ul>
-                              </div>
-                            )}
+                            <HotspotDetailSections id={feature.properties?.id} />
                           </div>
                         </div>
                       </Popup>
