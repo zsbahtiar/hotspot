@@ -93,10 +93,15 @@ async function runWeatherBackfill(env: Env) {
 
   const since = new Date(Date.now() - windowDays * 86400000);
   const sinceIso = `${utcDateKey(since)} 00:00:00.000`;
-  const take = capped ? Math.min(remaining, perRun) : perRun;
+  // Each job is one VisualCrossing subrequest; cap per-run work so a large
+  // WEATHER_BATCH (paid/unlimited mode) can't blow the 1000 subrequest/invocation limit.
+  const SUBREQ_SAFE_MAX = 700;
+  const take = Math.min(capped ? Math.min(remaining, perRun) : perRun, SUBREQ_SAFE_MAX);
   const jobs = await fetchMissingWeather(env.DB, sinceIso, take);
   if (jobs.length === 0) return { phase: "weather", pending: 0 };
 
+  // Sequential on purpose: VisualCrossing rate-limits, so one request at a time
+  // avoids 429s. A failed fetch just leaves that pair pending for the next run.
   const weatherRows = [];
   let calls = 0;
   let failed = 0;

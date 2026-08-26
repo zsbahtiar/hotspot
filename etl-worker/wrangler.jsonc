@@ -20,8 +20,8 @@
     "VISUALCROSSING_BASE_URL": "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline",
     "FIRMS_SOURCES": "MODIS_NRT,MODIS_SP,VIIRS_NOAA20_NRT,VIIRS_NOAA20_SP,VIIRS_NOAA21_NRT,VIIRS_SNPP_NRT,VIIRS_SNPP_SP",
     "INDONESIA_BBOX": "95,-11,141,6",
-    "WEATHER_DAILY_BUDGET": "1000",
-    "WEATHER_BATCH": "40",
+    "WEATHER_DAILY_BUDGET": "0",
+    "WEATHER_BATCH": "300",
     "WEATHER_WINDOW_DAYS": "7",
     "LOG_LEVEL": "info"
   },
