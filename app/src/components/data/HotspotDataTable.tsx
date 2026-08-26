@@ -950,12 +950,14 @@ export default function HotspotTable() {
                             {(item as HotspotFeature).geometry.coordinates[0]}
                           </TableCell>
                           <TableCell className="px-3 py-3 text-sm text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
-                            {(item as HotspotFeature).properties.temperature !== undefined
+                            {(item as HotspotFeature).properties.weather_conditions &&
+                            (item as HotspotFeature).properties.temperature !== undefined
                               ? `${(item as HotspotFeature).properties.temperature}°C`
                               : "-"}
                           </TableCell>
                           <TableCell className="px-3 py-3 text-sm text-[#192d17] dark:text-[#f3f7f1] whitespace-nowrap">
-                            {(item as HotspotFeature).properties.humidity !== undefined
+                            {(item as HotspotFeature).properties.weather_conditions &&
+                            (item as HotspotFeature).properties.humidity !== undefined
                               ? `${(item as HotspotFeature).properties.humidity?.toFixed(1)}%`
                               : "-"}
                           </TableCell>
