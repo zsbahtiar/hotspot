@@ -52,3 +52,6 @@ de/data/*.duckdb
 .claude/
 .codex/
 .scannerwork/
+
+# Materi tesis pribadi (besar, bukan bagian repo kode)
+yang dikumpulkan/
