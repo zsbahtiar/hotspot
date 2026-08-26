@@ -74,26 +74,40 @@ async function getAllTotal(cache: Cache, db: D1Database): Promise<number> {
   return total;
 }
 
-function transformToGeoJSON(hotspots: HotspotDetail[]): GeoJSON {
+// lite=true drops the heavy per-point fields (frp, brightness, weather) so tens
+// of thousands of markers fit in the Worker's memory. Those fields are fetched
+// per point via /detail when a marker is clicked.
+function transformToGeoJSON(hotspots: HotspotDetail[], lite = false): GeoJSON {
   const features: GeoJSONFeature[] = [];
   for (const h of hotspots) {
     const lat = parseFloat(h.latitude);
     const lon = parseFloat(h.longitude);
     if (Number.isNaN(lat) || Number.isNaN(lon)) continue;
     const ts = h.acquired_at;
-    features.push({
-      type: "Feature",
-      geometry: { type: "Point", coordinates: [lon, lat] },
-      properties: {
-        id: h.id,
-        acquired_at: ts,
-        time: ts,
-        hotspot_time: ts,
-        hotspot_count: 1,
-        confidence: h.confidence_class,
-        confidence_class: h.confidence_class,
-        satellite: h.satellite_name,
-        satellite_name: h.satellite_name,
+    const properties: Record<string, unknown> = {
+      id: h.id,
+      acquired_at: ts,
+      time: ts,
+      hotspot_time: ts,
+      hotspot_count: 1,
+      confidence: h.confidence_class,
+      confidence_class: h.confidence_class,
+      satellite: h.satellite_name,
+      satellite_name: h.satellite_name,
+      location: {
+        province_name: h.province_name,
+        city_name: h.city_name,
+        district_name: h.district_name,
+        subdistrict_name: h.subdistrict_name,
+        provinsi: h.province_name,
+        kab_kota: h.city_name,
+        kecamatan: h.district_name,
+        desa: h.subdistrict_name,
+        pulau: extractIslandFromProvinceCode(h.province_code),
+      },
+    };
+    if (!lite) {
+      Object.assign(properties, {
         instrument: "",
         product: h.product,
         frp: h.frp,
@@ -101,17 +115,6 @@ function transformToGeoJSON(hotspots: HotspotDetail[]): GeoJSON {
         bright_t31: h.bright_t31,
         bright_ti4: h.bright_ti4,
         bright_ti5: h.bright_ti5,
-        location: {
-          province_name: h.province_name,
-          city_name: h.city_name,
-          district_name: h.district_name,
-          subdistrict_name: h.subdistrict_name,
-          provinsi: h.province_name,
-          kab_kota: h.city_name,
-          kecamatan: h.district_name,
-          desa: h.subdistrict_name,
-          pulau: extractIslandFromProvinceCode(h.province_code),
-        },
         temperature: h.temperature,
         humidity: h.humidity,
         wind_speed: h.wind_speed,
@@ -124,7 +127,12 @@ function transformToGeoJSON(hotspots: HotspotDetail[]): GeoJSON {
         solar_radiation: h.solar_radiation,
         weather_conditions: h.weather_conditions,
         weather_icon: h.weather_icon,
-      },
+      });
+    }
+    features.push({
+      type: "Feature",
+      geometry: { type: "Point", coordinates: [lon, lat] },
+      properties,
     });
   }
   return { type: "FeatureCollection", features };
@@ -196,6 +204,65 @@ app.get("/geojson", async (c) => {
   c.executionCtx.waitUntil(cache.set(key, geo, TTL.geojson));
   c.header("Cache-Control", "public, s-maxage=4800, max-age=2400");
   return c.json(envelope("Hotspots GeoJSON retrieved successfully", geo));
+});
+
+// GET /hotspots/markers  (lean GeoJSON for the cluster map: no weather/frp/brightness,
+// so tens of thousands of points fit. Fetch heavy fields per point via /detail.)
+app.get("/markers", async (c) => {
+  const cache = new Cache(c.env.CACHE);
+  const f = emptyFilters();
+  f.cursor = strParam(c, "cursor");
+  f.satelliteId = strParam(c, "satellite");
+  f.productId = strParam(c, "product");
+  f.confidenceId = strParam(c, "confidence");
+  f.provinceCode = strParam(c, "province_code");
+  f.cityCode = strParam(c, "city_code");
+  f.districtCode = strParam(c, "district_code");
+  f.subdistrictCode = strParam(c, "subdistrict_code");
+  f.startDate = parseRFC3339(c.req.query("start_date"));
+  f.endDate = parseRFC3339(c.req.query("end_date"));
+  f.year = intParam(c, "year");
+  f.semester = intParam(c, "semester");
+  f.quarter = intParam(c, "quarter");
+  f.month = intParam(c, "month");
+  f.week = intParam(c, "week");
+  if (f.year > 0 && !f.startDate && !f.endDate) {
+    f.startDate = new Date(Date.UTC(f.year, 0, 1, 0, 0, 0, 0));
+    f.endDate = new Date(Date.UTC(f.year, 11, 31, 23, 59, 59, 999));
+  }
+  f.limit = boundedInt(c, "limit", 10000, 1, 30000); // lean features -> higher cap
+  if (!f.startDate) f.startDate = defaultStart();
+  if (!f.endDate) f.endDate = defaultEnd();
+
+  const key = hotspotCacheKey("markers", f);
+  const cached = await cache.get<GeoJSON>(key);
+  if (cached) {
+    c.header("Cache-Control", "public, s-maxage=4800, max-age=2400");
+    return c.json(envelope("Markers retrieved successfully", cached));
+  }
+
+  const total = isAllView(f) ? await getAllTotal(cache, c.env.DB) : undefined;
+  const result = await repo.getHotspots(c.env.DB, f, total);
+  const geo = transformToGeoJSON(result.hotspots, true); // lite
+  geo.pagination = result.pagination;
+  c.executionCtx.waitUntil(cache.set(key, geo, TTL.geojson));
+  c.header("Cache-Control", "public, s-maxage=4800, max-age=2400");
+  return c.json(envelope("Markers retrieved successfully", geo));
+});
+
+// GET /hotspots/detail?id=<opaque id>  (full fields for one point, for the popup)
+app.get("/detail", async (c) => {
+  const idParam = strParam(c, "id");
+  if (!idParam) return c.json({ message: "id is required", success: false }, 400);
+  let rawId = idParam;
+  try {
+    rawId = atob(idParam);
+  } catch {
+    rawId = idParam; // accept a raw id too
+  }
+  const detail = await repo.getById(c.env.DB, rawId);
+  if (!detail) return c.json({ message: "resource not found", success: false }, 404);
+  return c.json(envelope("Hotspot detail retrieved successfully", detail));
 });
 
 // GET /hotspots/summary

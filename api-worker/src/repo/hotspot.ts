@@ -189,6 +189,39 @@ export async function getHotspots(
   };
 }
 
+// Full detail for a single hotspot by its (raw) id, used by the /detail popup.
+export async function getById(db: D1Database, id: string): Promise<HotspotDetail | null> {
+  const sql = `
+    SELECT
+      fh.id AS id, fh.acquired_at AS acquired_at, fh.latitude AS latitude, fh.longitude AS longitude,
+      fh.frp AS frp, fh.brightness AS brightness, fh.bright_t31 AS bright_t31,
+      fh.bright_ti4 AS bright_ti4, fh.bright_ti5 AS bright_ti5,
+      dc.confidence_class AS confidence_class,
+      ds.satellite_name AS satellite_name, ds.product AS product,
+      dl.province_code AS province_code, dl.province_name AS province_name,
+      dl.city_code AS city_code, dl.city_name AS city_name,
+      dl.district_code AS district_code, dl.district_name AS district_name,
+      dl.subdistrict_code AS subdistrict_code, dl.subdistrict_name AS subdistrict_name,
+      COALESCE(fw.temperature, 0) AS temperature, COALESCE(fw.humidity, 0) AS humidity,
+      COALESCE(fw.wind_speed, 0) AS wind_speed, COALESCE(fw.wind_degree, 0) AS wind_degree,
+      COALESCE(fw.visibility, 0) AS visibility, COALESCE(fw.cloud_coverage, 0) AS cloud_coverage,
+      COALESCE(fw.pressure, 0) AS pressure, COALESCE(fw.uv_index, 0) AS uv_index,
+      COALESCE(fw.precipitation, 0) AS precipitation, COALESCE(fw.solar_radiation, 0) AS solar_radiation,
+      COALESCE(dwc.conditions, '') AS weather_conditions, COALESCE(dwc.icon, '') AS weather_icon
+    FROM (SELECT * FROM fact_hotspot WHERE id = ?) fh
+    INNER JOIN dim_confidence dc ON fh.confidence_id = dc.id
+    INNER JOIN dim_satellite ds ON fh.satellite_id = ds.id
+    INNER JOIN dim_location dl ON fh.location_id = dl.id
+    LEFT JOIN fact_weather fw ON fh.location_id = fw.location_id AND fh.period_id = fw.period_id
+    LEFT JOIN dim_weather_condition dwc ON fw.weather_condition_id = dwc.id
+    LIMIT 1`;
+  const row = await db.prepare(sql).bind(id).first<HotspotDetail>();
+  if (!row) return null;
+  row.acquired_at = toRFC3339(row.acquired_at);
+  row.id = btoa(row.id);
+  return row;
+}
+
 export async function getTopProvinces(
   db: D1Database,
   start: Date | null,
