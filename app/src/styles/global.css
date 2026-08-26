@@ -452,3 +452,35 @@
 .dark .struktur-item[style*="background: #fefcf8"] {
     background: #1e261e !important;
 }
+
+/* Wave loader: staggered bobbing dashes shown in place of a number while it
+   loads. Bars inherit currentColor and scale with the parent font-size (em),
+   so it fits both the big total counter and the smaller "HARI INI" number.
+   Replaced by the real value once JS sets textContent on the container. */
+.wave-loader {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.16em;
+    height: 1em;
+    vertical-align: middle;
+    line-height: 1;
+}
+.wave-loader > span {
+    display: inline-block;
+    width: 0.4em;
+    height: 0.14em;
+    border-radius: 999px;
+    background: currentColor;
+    animation: wave-bob 1.05s ease-in-out infinite;
+}
+.wave-loader > span:nth-child(1) { animation-delay: 0s; }
+.wave-loader > span:nth-child(2) { animation-delay: 0.12s; }
+.wave-loader > span:nth-child(3) { animation-delay: 0.24s; }
+.wave-loader > span:nth-child(4) { animation-delay: 0.36s; }
+@keyframes wave-bob {
+    0%, 100% { transform: translateY(0.2em); opacity: 0.35; }
+    50% { transform: translateY(-0.2em); opacity: 0.9; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .wave-loader > span { animation: none; opacity: 0.5; }
+}

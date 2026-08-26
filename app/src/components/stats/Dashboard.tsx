@@ -557,11 +557,14 @@ const Main = ({
     const totalReports = document.getElementById("total-reports");
     const todayChange = document.getElementById("today-change");
     const heroChart = document.getElementById("hero-chart-container");
+    // Keep the wave loader until the summary actually arrives (today's count can
+    // legitimately be 0, so gate on data presence, not on the value).
+    const loaded = !!summaryRes?.data;
 
-    if (totalCounter && stats.totalHotspots) {
+    if (totalCounter && loaded) {
       totalCounter.textContent = formatNumber(stats.totalHotspots);
     }
-    if (todayCounter && stats.todayHotspots !== undefined) {
+    if (todayCounter && loaded) {
       todayCounter.textContent = formatNumber(stats.todayHotspots);
     }
     if (lastUpdate) {
@@ -575,7 +578,7 @@ const Main = ({
       const total = summaryData.monthly.reduce((sum, m) => sum + m.total, 0);
       totalReports.textContent = formatNumber(total);
     }
-    if (todayChange) {
+    if (todayChange && loaded) {
       const today = stats.todayHotspots;
       const yesterday = stats.yesterdayHotspots;
       const diff = today - yesterday;
@@ -602,7 +605,7 @@ const Main = ({
     if (heroChart) {
       heroChart.style.display = "none";
     }
-  }, [stats, summaryData]);
+  }, [stats, summaryData, summaryRes]);
 
   const latestHotspots = latestHotspotsRes?.data?.hotspots || [];
 
