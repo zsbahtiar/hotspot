@@ -19,7 +19,9 @@ class StagingExtractor:
         self.batch_id = str(ULID())
         self.ingested_at = datetime.now(pytz.UTC)
 
-    async def extract_to_staging(self, date_str: str) -> Dict[str, pl.DataFrame]:
+    async def extract_to_staging(
+        self, date_str: str, enrich_weather: bool = True
+    ) -> Dict[str, pl.DataFrame]:
         logger.info(
             f"Starting staging extraction for {date_str} with batch_id: {self.batch_id}"
         )
@@ -29,11 +31,18 @@ class StagingExtractor:
 
         staging_data = {}
 
+        async def _skip_weather():
+            return None
+
         hotspot_df = await self._extract_raw_hotspot_data(date_str, query_date_str)
         if hotspot_df is not None and not hotspot_df.is_empty():
+            # When enrich_weather is False the weather step is skipped here and
+            # handled asynchronously by the weather backfill DAG instead.
             location_df, weather_df = await asyncio.gather(
                 self._extract_and_load_location_data(hotspot_df),
-                self._extract_raw_weather_data(hotspot_df),
+                self._extract_raw_weather_data(hotspot_df)
+                if enrich_weather
+                else _skip_weather(),
                 return_exceptions=True,
             )
 

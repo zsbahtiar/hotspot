@@ -48,7 +48,11 @@ def extract_to_staging(**context):
         extractor = StagingExtractor()
 
         try:
-            staging_data = await extractor.extract_to_staging(date_str)
+            # Weather is decoupled: ingest hotspots now, enqueue weather for the
+            # backfill DAG (see hotspot_weather_backfill).
+            staging_data = await extractor.extract_to_staging(
+                date_str, enrich_weather=False
+            )
 
             if not staging_data:
                 logger.warning(f"No staging data extracted for {date_str}")
@@ -195,6 +199,8 @@ def transform_to_hotspot(**context):
                         await loader.load_fact_with_staging(table_name, df, date_str)
                         tables_loaded.append(f"{table_name}: {len(df)} records")
 
+            # Weather is not loaded here; hotspots missing weather are picked up by
+            # the hotspot_weather_backfill DAG (derived from the data, no queue).
             logger.info(f"Hotspot transformation completed: {tables_loaded}")
             return {
                 "batch_id": batch_id,
