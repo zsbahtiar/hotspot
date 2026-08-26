@@ -59,6 +59,7 @@ async function runIngest(env: Env) {
 
   const geocoder = new Geocoder(env.DB);
   await geocoder.preloadLocations();
+  await geocoder.preloadBoundaries();
   const locationByCoord = await geocoder.resolve(
     hotspots.map((h) => ({ lat: h.latitude, lng: h.longitude })),
   );
