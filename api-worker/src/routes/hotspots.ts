@@ -244,8 +244,8 @@ app.get("/markers", async (c) => {
   }
 
   const total = isAllView(f) ? await getAllTotal(cache, c.env.DB) : undefined;
-  const result = await repo.getHotspots(c.env.DB, f, total);
-  const geo = transformToGeoJSON(result.hotspots, true); // lite
+  const result = await repo.getHotspots(c.env.DB, f, total, true); // lean query (no weather join)
+  const geo = transformToGeoJSON(result.hotspots, true); // lite properties
   geo.pagination = result.pagination;
   c.executionCtx.waitUntil(cache.set(key, geo, TTL.geojson));
   c.header("Cache-Control", "public, s-maxage=4800, max-age=2400");

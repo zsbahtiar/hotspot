@@ -80,6 +80,7 @@ export async function getHotspots(
   db: D1Database,
   f: HotspotFilters,
   precomputedTotal?: number,
+  lean = false,
 ): Promise<GetHotspotsResponse> {
   const start = toSqlTs(f.startDate!);
   const end = toSqlTs(f.endDate!);
@@ -122,6 +123,25 @@ export async function getHotspots(
   }
   innerArgs.push(limit + 1);
 
+  // lean skips the fact_weather join entirely (markers do not use weather), so the
+  // query never touches the 4.9M-row weather table and returns smaller rows.
+  const weatherSelect = lean
+    ? `0 AS temperature, 0 AS humidity, 0 AS wind_speed, 0 AS wind_degree,
+      0 AS visibility, 0 AS cloud_coverage, 0 AS pressure, 0 AS uv_index,
+      0 AS precipitation, 0 AS solar_radiation, '' AS weather_conditions, '' AS weather_icon`
+    : `COALESCE(fw.temperature, 0) AS temperature, COALESCE(fw.humidity, 0) AS humidity,
+      COALESCE(fw.wind_speed, 0) AS wind_speed, COALESCE(fw.wind_degree, 0) AS wind_degree,
+      COALESCE(fw.visibility, 0) AS visibility, COALESCE(fw.cloud_coverage, 0) AS cloud_coverage,
+      COALESCE(fw.pressure, 0) AS pressure, COALESCE(fw.uv_index, 0) AS uv_index,
+      COALESCE(fw.precipitation, 0) AS precipitation, COALESCE(fw.solar_radiation, 0) AS solar_radiation,
+      COALESCE(dwc.conditions, '') AS weather_conditions, COALESCE(dwc.icon, '') AS weather_icon`;
+  const weatherJoin = lean
+    ? ""
+    : `LEFT JOIN (
+      SELECT * FROM fact_weather WHERE acquired_at >= ? AND acquired_at <= ?
+    ) fw ON fh.location_id = fw.location_id AND fh.period_id = fw.period_id
+    LEFT JOIN dim_weather_condition dwc ON fw.weather_condition_id = dwc.id`;
+
   const sql = `
     SELECT
       fh.id AS id, fh.acquired_at AS acquired_at, fh.latitude AS latitude, fh.longitude AS longitude,
@@ -133,12 +153,7 @@ export async function getHotspots(
       dl.city_code AS city_code, dl.city_name AS city_name,
       dl.district_code AS district_code, dl.district_name AS district_name,
       dl.subdistrict_code AS subdistrict_code, dl.subdistrict_name AS subdistrict_name,
-      COALESCE(fw.temperature, 0) AS temperature, COALESCE(fw.humidity, 0) AS humidity,
-      COALESCE(fw.wind_speed, 0) AS wind_speed, COALESCE(fw.wind_degree, 0) AS wind_degree,
-      COALESCE(fw.visibility, 0) AS visibility, COALESCE(fw.cloud_coverage, 0) AS cloud_coverage,
-      COALESCE(fw.pressure, 0) AS pressure, COALESCE(fw.uv_index, 0) AS uv_index,
-      COALESCE(fw.precipitation, 0) AS precipitation, COALESCE(fw.solar_radiation, 0) AS solar_radiation,
-      COALESCE(dwc.conditions, '') AS weather_conditions, COALESCE(dwc.icon, '') AS weather_icon
+      ${weatherSelect}
     FROM (
       SELECT * FROM fact_hotspot
       WHERE acquired_at >= ? AND acquired_at <= ?${filters.sql}${cursorClause}
@@ -148,17 +163,13 @@ export async function getHotspots(
     INNER JOIN dim_confidence dc ON fh.confidence_id = dc.id
     INNER JOIN dim_satellite ds ON fh.satellite_id = ds.id
     INNER JOIN dim_location dl ON fh.location_id = dl.id
-    -- LEFT JOIN so hotspots whose weather has not been backfilled yet still appear
-    -- (weather enrichment is now asynchronous via the weather_queue).
-    LEFT JOIN (
-      SELECT * FROM fact_weather WHERE acquired_at >= ? AND acquired_at <= ?
-    ) fw ON fh.location_id = fw.location_id AND fh.period_id = fw.period_id
-    LEFT JOIN dim_weather_condition dwc ON fw.weather_condition_id = dwc.id
+    ${weatherJoin}
     ORDER BY fh.acquired_at DESC, fh.id DESC`;
 
+  // The weather subquery adds the trailing start/end binds; lean has no such join.
   const res = await db
     .prepare(sql)
-    .bind(...innerArgs, start, end)
+    .bind(...(lean ? innerArgs : [...innerArgs, start, end]))
     .all<HotspotDetail>();
   let rows = res.results ?? [];
 
