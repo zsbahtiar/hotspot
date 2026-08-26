@@ -534,6 +534,7 @@ const Main = ({
     const backendStats = summaryRes?.data?.stats;
     const topProvincesData = summaryData?.top_provinces || [];
     const todayStats = summaryRes?.data?.today_stats;
+    const yesterdayStats = summaryRes?.data?.yesterday_stats;
 
     const topProvince = topProvincesData[0]?.name || "N/A";
 
@@ -545,6 +546,7 @@ const Main = ({
       todayHotspots: todayStats?.today_hotspots || 0,
       todayHighConfidence: todayStats?.today_high_confidence || 0,
       todayAffectedProvinces: todayStats?.today_affected_provinces || 0,
+      yesterdayHotspots: yesterdayStats?.yesterday_hotspots || 0,
     };
   }, [summaryData, summaryRes]);
 
@@ -573,9 +575,29 @@ const Main = ({
       const total = summaryData.monthly.reduce((sum, m) => sum + m.total, 0);
       totalReports.textContent = formatNumber(total);
     }
-    if (todayChange && stats.todayHotspots !== undefined) {
-      const change = stats.todayHotspots > 0 ? `+${stats.todayHotspots}` : "0";
-      todayChange.textContent = change;
+    if (todayChange) {
+      const today = stats.todayHotspots;
+      const yesterday = stats.yesterdayHotspots;
+      const diff = today - yesterday;
+      const pct =
+        yesterday > 0
+          ? Math.round((diff / yesterday) * 100)
+          : today > 0
+            ? 100
+            : 0;
+      const sign = diff > 0 ? "+" : "";
+      todayChange.textContent = `${sign}${formatNumber(diff)} (${sign}${pct}%)`;
+      // More hotspots is worse: up = warning (orange), down = good (green).
+      const arrow = document.getElementById("today-change-arrow");
+      if (arrow) {
+        arrow.textContent = diff > 0 ? "▲" : diff < 0 ? "▼" : "▬";
+        arrow.className =
+          diff > 0
+            ? "text-[#e4991b] text-sm"
+            : diff < 0
+              ? "text-[#5fb87a] text-sm"
+              : "text-[#b8c8b1] text-sm";
+      }
     }
     if (heroChart) {
       heroChart.style.display = "none";

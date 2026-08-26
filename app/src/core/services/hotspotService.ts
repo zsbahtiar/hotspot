@@ -389,6 +389,11 @@ export class HotspotService {
         today_affected_provinces: number;
         today_high_confidence: number;
       };
+      yesterday_stats: {
+        yesterday_hotspots: number;
+        yesterday_affected_provinces: number;
+        yesterday_high_confidence: number;
+      } | null;
       confidence_distribution: Array<{ name: string; count: number }>;
     };
   }> {
@@ -412,6 +417,11 @@ export class HotspotService {
           today_affected_provinces: number;
           today_high_confidence: number;
         };
+        yesterday_stats: {
+          yesterday_hotspots: number;
+          yesterday_affected_provinces: number;
+          yesterday_high_confidence: number;
+        } | null;
         confidence_distribution: Array<{ name: string; count: number }>;
       };
     }>("/api/v1/hotspots/summary", params);
