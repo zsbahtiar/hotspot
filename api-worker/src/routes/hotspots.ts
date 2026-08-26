@@ -84,16 +84,15 @@ function transformToGeoJSON(hotspots: HotspotDetail[], lite = false): GeoJSON {
     const lon = parseFloat(h.longitude);
     if (Number.isNaN(lat) || Number.isNaN(lon)) continue;
     const ts = h.acquired_at;
+    // Minimal fields the cluster map actually reads (marker colour, client-side
+    // filter by confidence/satellite/product/time, location grouping).
     const properties: Record<string, unknown> = {
       id: h.id,
-      acquired_at: ts,
       time: ts,
-      hotspot_time: ts,
       hotspot_count: 1,
       confidence: h.confidence_class,
-      confidence_class: h.confidence_class,
       satellite: h.satellite_name,
-      satellite_name: h.satellite_name,
+      product: h.product,
       location: {
         province_name: h.province_name,
         city_name: h.city_name,
@@ -108,8 +107,11 @@ function transformToGeoJSON(hotspots: HotspotDetail[], lite = false): GeoJSON {
     };
     if (!lite) {
       Object.assign(properties, {
+        acquired_at: ts,
+        hotspot_time: ts,
+        confidence_class: h.confidence_class,
+        satellite_name: h.satellite_name,
         instrument: "",
-        product: h.product,
         frp: h.frp,
         brightness: h.brightness,
         bright_t31: h.bright_t31,
