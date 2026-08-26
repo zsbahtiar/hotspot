@@ -1,0 +1,12 @@
+node_modules/
+.wrangler/
+.dev.vars
+*.log
+
+# Generated seed data (large: full facts, rollups, geocoder). Keep only the tiny
+# hand-made smoke seed used for local tests.
+seed/full/
+seed/agg/
+seed/geocoder/
+seed/*.sql
+!seed/smoke_seed.sql
