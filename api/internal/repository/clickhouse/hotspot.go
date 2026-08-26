@@ -293,7 +293,7 @@ func (r *HotspotRepository) GetHotspots(ctx context.Context, req domain.GetHotsp
         INNER JOIN hotspot.dim_location dl
             ON fh.location_id = dl.id
 
-        INNER JOIN (
+        LEFT JOIN (
             SELECT *
             FROM hotspot.fact_weather
             WHERE acquired_at >= ?
@@ -302,7 +302,7 @@ func (r *HotspotRepository) GetHotspots(ctx context.Context, req domain.GetHotsp
             ON fh.location_id = fw.location_id
             AND fh.period_id = fw.period_id
 
-        INNER JOIN hotspot.dim_weather_condition dwc
+        LEFT JOIN hotspot.dim_weather_condition dwc
             ON fw.weather_condition_id = dwc.id
 
         ORDER BY fh.acquired_at DESC, fh.id DESC`
